@@ -16,5 +16,5 @@ export async function createBoard(name: string): Promise<number> {
     name,
     position,
   ]);
-  return result.lastInsertId;
+  return result.lastInsertId ?? 0;
 }

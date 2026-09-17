@@ -19,7 +19,7 @@ export async function createList(boardId: number, name: string): Promise<number>
     "INSERT INTO list (board_id, name, position) VALUES ($1, $2, $3)",
     [boardId, name, position],
   );
-  return result.lastInsertId;
+  return result.lastInsertId ?? 0;
 }
 
 export async function renameList(id: number, name: string): Promise<void> {

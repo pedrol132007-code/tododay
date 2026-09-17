@@ -20,7 +20,7 @@ export async function createCard(listId: number, title: string): Promise<number>
     "INSERT INTO card (list_id, title, position) VALUES ($1, $2, $3)",
     [listId, title, position],
   );
-  return result.lastInsertId;
+  return result.lastInsertId ?? 0;
 }
 
 export async function renameCard(id: number, title: string): Promise<void> {
@@ -58,4 +58,13 @@ export async function moveCard(id: number, direction: "up" | "down"): Promise<vo
 
   await db.execute("UPDATE card SET position = $1 WHERE id = $2", [neighbor.position, current.id]);
   await db.execute("UPDATE card SET position = $1 WHERE id = $2", [current.position, neighbor.id]);
+}
+
+export async function countCards(listId: number): Promise<number> {
+  const db = await getDb();
+  const rows = await db.select<{ count: number }[]>(
+    "SELECT COUNT(*) as count FROM card WHERE list_id = $1",
+    [listId],
+  );
+  return rows[0]?.count ?? 0;
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import type { List as ListType } from "../../types";
-import { useCards, useCreateCard } from "../../hooks/useCards";
+import { useCardCount, useCards, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useMoveList, useRenameList } from "../../hooks/useLists";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
@@ -15,6 +15,7 @@ interface ListProps {
 
 export function List({ list, boardId, isFirst, isLast }: ListProps) {
   const { data: cards } = useCards(list.id);
+  const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(boardId);
   const deleteList = useDeleteList(boardId);
@@ -22,7 +23,7 @@ export function List({ list, boardId, isFirst, isLast }: ListProps) {
   const [newCardTitle, setNewCardTitle] = useState("");
 
   const cardList = cards ?? [];
-  const canDelete = cardList.length === 0;
+  const canDelete = cardCount !== undefined && cardCount === 0;
 
   function handleAddCard() {
     const title = newCardTitle.trim();

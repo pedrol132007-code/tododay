@@ -42,8 +42,9 @@ A camada `db/*.ts` continua sem lógica — quem decide o valor de `position` (c
 
 ## Interação
 
-- Handle de arraste dedicado: ícone `⠿` à esquerda do título em `Card` e no cabeçalho de `List`, separado do texto editável (`InlineEditableText`, duplo-clique) e do botão `×` — evita disputa de gesto entre arrastar, editar e excluir/arquivar.
-- Teclado: focar o handle e usar as setas move o item (comportamento padrão do `KeyboardSensor`); Espaço/Enter pega e solta.
+- Sem handle dedicado: o card inteiro e o cabeçalho da lista inteiro são a área de arraste (padrão comum em kanbans — Trello inclusive). O `PointerSensor` só inicia o arraste depois de ~8px de movimento com o botão pressionado (`activationConstraint`), então um clique simples (duplo-clique pra editar, clique no botão `×`) nunca é interpretado como arraste.
+- **Proteção específica para o input de edição:** dentro do `InlineEditableText`, o `<input>` do modo de edição para a propagação de `pointerdown` (`e.stopPropagation()`), garantindo que selecionar texto arrastando o mouse dentro do input (ex.: pra apagar parte do título) nunca seja capturado como início de um drag do card/lista — evita a interação ficar "bagunçada" nesse ponto específico, que é o único lugar onde um gesto de arrastar-o-mouse tem um significado nativo concorrente (seleção de texto).
+- Teclado: focar o card/cabeçalho da lista (elemento fica tabável via `attributes` do dnd-kit) e usar as setas move o item (comportamento padrão do `KeyboardSensor`); Espaço/Enter pega e solta.
 
 ## Erros e rebalanceamento
 

@@ -29,7 +29,9 @@ Pré-requisitos (uma vez só):
 
 1. [Node.js LTS](https://nodejs.org)
 2. Rust via [rustup](https://rustup.rs)
-3. Windows: WebView2 Runtime (já vem no Windows 11) + Microsoft C++ Build Tools (workload "Desktop development with C++", via Visual Studio Installer)
+3. Windows: WebView2 Runtime (já vem no Windows 11) + um linker C. Duas opções:
+   - Microsoft C++ Build Tools (workload "Desktop development with C++", via Visual Studio Installer) — toolchain MSVC padrão do Rust no Windows.
+   - **Sem admin/Visual Studio:** `scoop install mingw` e depois `rustup toolchain install stable-x86_64-pc-windows-gnu` + `rustup override set stable-x86_64-pc-windows-gnu` dentro de `src-tauri/`. Evita o instalador da Microsoft; usado neste ambiente de dev.
 
 Depois:
 
@@ -37,6 +39,8 @@ Depois:
 npm install
 npm run tauri dev
 ```
+
+Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git (`usr/bin/link.exe`, uma ferramenta de hard link) pode sombrear o linker correto no PATH. Rode pelo PowerShell/cmd nesse caso, ou garanta que o PATH do MinGW/MSVC vem antes do Git no PATH.
 
 Isso abre a janela do app com hot-reload do frontend. O banco SQLite (`kanban.db`) é criado automaticamente no diretório de dados do app na primeira execução, com o schema aplicado pelas migrations.
 

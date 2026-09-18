@@ -3,14 +3,17 @@ import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
 import { useRenameCard, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { Checklist } from "./Checklist";
+import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
 
 interface CardDetailPanelProps {
   card: CardType;
+  boardId: number;
   onClose: () => void;
 }
 
-export function CardDetailPanel({ card, onClose }: CardDetailPanelProps) {
+export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps) {
   const renameCard = useRenameCard(card.list_id);
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
@@ -66,6 +69,8 @@ export function CardDetailPanel({ card, onClose }: CardDetailPanelProps) {
           />
         </label>
 
+        <LabelPicker boardId={boardId} cardId={card.id} />
+
         <div className="flex flex-col gap-1">
           <span className="text-sm text-text-muted">Descrição</span>
           <MarkdownEditor
@@ -74,6 +79,8 @@ export function CardDetailPanel({ card, onClose }: CardDetailPanelProps) {
             onSaveAndClose={onClose}
           />
         </div>
+
+        <Checklist cardId={card.id} />
       </motion.aside>
     </div>
   );

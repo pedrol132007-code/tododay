@@ -378,7 +378,9 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
         </DragOverlay>
       </DndContext>
       <AnimatePresence>
-        {selectedCard && <CardDetailPanel card={selectedCard} onClose={() => setSelectedCardId(null)} />}
+        {selectedCard && (
+          <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />
+        )}
       </AnimatePresence>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   useCardLabels,
   useCreateLabel,
@@ -62,56 +63,64 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
         </button>
       </div>
 
-      {open && (
-        <div className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-bg-elevated p-3">
-          {(boardLabels ?? []).map((label) => (
-            <div key={label.id} className="flex items-center gap-2">
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="mt-2 flex flex-col gap-2 rounded-lg border border-border bg-bg-elevated p-3"
+          >
+            {(boardLabels ?? []).map((label) => (
+              <div key={label.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCardLabel.mutate({ labelId: label.id, on: !cardLabelIds.has(label.id) })}
+                  style={{ backgroundColor: label.color }}
+                  className={`flex-1 rounded-lg px-2 py-1 text-left text-xs text-bg-base ${
+                    cardLabelIds.has(label.id) ? "ring-2 ring-accent-yellow" : ""
+                  }`}
+                >
+                  {label.name}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteLabel.mutate(label.id)}
+                  aria-label={`Excluir label ${label.name}`}
+                  className="text-text-muted hover:text-accent-pink"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="color"
+                value={newColor}
+                onChange={(e) => setNewColor(e.target.value)}
+                className="h-7 w-8 shrink-0 rounded border border-border bg-transparent"
+                aria-label="Cor da nova label"
+              />
+              <input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                placeholder="Nova label..."
+                className="flex-1 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple"
+              />
               <button
                 type="button"
-                onClick={() => setCardLabel.mutate({ labelId: label.id, on: !cardLabelIds.has(label.id) })}
-                style={{ backgroundColor: label.color }}
-                className={`flex-1 rounded-lg px-2 py-1 text-left text-xs text-bg-base ${
-                  cardLabelIds.has(label.id) ? "ring-2 ring-text-primary" : ""
-                }`}
+                onClick={handleCreate}
+                className="rounded-lg bg-accent-purple px-2 py-1 text-xs font-medium text-bg-base hover:opacity-90"
               >
-                {label.name}
-              </button>
-              <button
-                type="button"
-                onClick={() => deleteLabel.mutate(label.id)}
-                aria-label={`Excluir label ${label.name}`}
-                className="text-text-muted hover:text-accent-pink"
-              >
-                ×
+                Adicionar
               </button>
             </div>
-          ))}
-
-          <div className="flex items-center gap-2 pt-1">
-            <input
-              type="color"
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value)}
-              className="h-7 w-8 shrink-0 rounded border border-border bg-transparent"
-              aria-label="Cor da nova label"
-            />
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              placeholder="Nova label..."
-              className="flex-1 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple"
-            />
-            <button
-              type="button"
-              onClick={handleCreate}
-              className="rounded-lg bg-accent-purple px-2 py-1 text-xs font-medium text-bg-base hover:opacity-90"
-            >
-              Adicionar
-            </button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

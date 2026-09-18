@@ -31,6 +31,15 @@ export function Checklist({ cardId }: ChecklistProps) {
     <div className="flex flex-col gap-2">
       <span className="text-sm text-text-muted">Checklist{total > 0 ? ` — ${done}/${total}` : ""}</span>
 
+      {total > 0 && (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
+          <div
+            className="h-full rounded-full bg-accent-purple transition-[width] duration-300"
+            style={{ width: `${(done / total) * 100}%` }}
+          />
+        </div>
+      )}
+
       <div className="flex flex-col gap-1">
         {(items ?? []).map((item) => (
           <div key={item.id} className="flex items-center gap-2 rounded-lg px-1 py-0.5 hover:bg-bg-elevated">

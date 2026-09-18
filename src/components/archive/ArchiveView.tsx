@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
 
 interface ArchiveViewProps {
@@ -33,8 +34,11 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
       ) : (
         <div className="flex flex-col gap-2">
           {(cards ?? []).map((card) => (
-            <div
+            <motion.div
               key={card.id}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
               className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-elevated px-3 py-2"
             >
               <span className="flex-1 text-text-primary">{card.title}</span>
@@ -62,7 +66,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
               >
                 {confirmingId === card.id ? "Confirmar exclusão?" : "Excluir"}
               </button>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}

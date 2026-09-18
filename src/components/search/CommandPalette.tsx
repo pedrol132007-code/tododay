@@ -56,11 +56,18 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
                 key={result.id}
                 type="button"
                 onClick={() => onNavigate(result)}
-                className="flex flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-bg-elevated"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-bg-elevated"
               >
-                <span className="text-text-primary">{result.title}</span>
-                <span className="text-xs text-text-muted">
-                  {result.type === "card" ? "Card" : "Coluna"} · {result.board_name}
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${
+                    result.type === "card" ? "bg-accent-purple" : "bg-accent-yellow"
+                  }`}
+                />
+                <span className="flex flex-col items-start">
+                  <span className="text-text-primary">{result.title}</span>
+                  <span className="text-xs text-text-muted">
+                    {result.type === "card" ? "Card" : "Coluna"} · {result.board_name}
+                  </span>
                 </span>
               </button>
             ))}

@@ -46,9 +46,9 @@ export interface ChecklistItem {
 }
 
 export interface SearchResult {
+  type: "card" | "list";
   id: number;
   title: string;
-  list_id: number;
   board_id: number;
   board_name: string;
 }

@@ -34,7 +34,7 @@ export default function App() {
   function handleNavigate(result: SearchResult) {
     setActiveBoardId(result.board_id);
     setShowArchive(false);
-    setPendingCardId(result.id);
+    setPendingCardId(result.type === "card" ? result.id : null);
     setPaletteOpen(false);
   }
 

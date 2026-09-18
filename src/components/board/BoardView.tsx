@@ -4,6 +4,7 @@ import {
   DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  closestCenter,
   pointerWithin,
   useSensor,
   useSensors,
@@ -143,6 +144,12 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     const activeData = active.data.current as { type?: string } | undefined;
+    // Each branch below is responsible for clearing dragPreview exactly once: either
+    // synchronously (no real move happened, so there's nothing to wait for) or after its
+    // mutation(s) settle (so renderedBoard never falls back to the stale computedBoard while
+    // the SQLite write + query invalidation are still in flight). clearingAsync tracks which
+    // case we're in so the fallback at the bottom only fires for the synchronous case.
+    let clearingAsync = false;
 
     if (activeData?.type === "list" && over) {
       const activeId = String(active.id);
@@ -158,8 +165,18 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
             .map((l) => ({ id: l.id, position: l.position }));
           const targetIndex = reordered.findIndex((l) => l.id === movedList.id);
           const { position, rebalanced } = resolveInsertPosition(siblings, targetIndex);
-          if (rebalanced) updateListPositions.mutate(rebalanced);
-          updateListPosition.mutate({ id: movedList.id, position });
+
+          // Populate dragPreview with the already-known final order immediately: unlike
+          // cards, list drags never update dragPreview during onDragOver (the live visual
+          // reorder comes from dnd-kit's own useSortable transform), so without this the
+          // board would fall back to the stale pre-drag computedBoard the instant the drag
+          // ends, then flash forward again once the query invalidates.
+          setDragPreview(reordered);
+          const pending: Promise<unknown>[] = [];
+          if (rebalanced) pending.push(updateListPositions.mutateAsync(rebalanced));
+          pending.push(updateListPosition.mutateAsync({ id: movedList.id, position }));
+          void Promise.allSettled(pending).then(() => setDragPreview(null));
+          clearingAsync = true;
         }
       }
     }
@@ -177,16 +194,26 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
           .filter((c) => c.id !== movedCard.id)
           .map((c) => ({ id: c.id, position: c.position }));
         const { position, rebalanced } = resolveInsertPosition(siblings, targetIndex);
-        if (rebalanced) updateCardPositions.mutate(rebalanced);
+
+        const pending: Promise<unknown>[] = [];
+        if (rebalanced) pending.push(updateCardPositions.mutateAsync(rebalanced));
         if (targetList.id !== dragSourceListId) {
-          moveCardToList.mutate({ id: movedCard.id, listId: targetList.id, position });
+          pending.push(moveCardToList.mutateAsync({ id: movedCard.id, listId: targetList.id, position }));
         } else {
-          updateCardPosition.mutate({ id: movedCard.id, position });
+          pending.push(updateCardPosition.mutateAsync({ id: movedCard.id, position }));
         }
+        // dragPreview already holds the correct final order (built incrementally by
+        // handleDragOver) — keep showing it until the write settles instead of clearing it
+        // immediately, which would otherwise briefly fall back to the stale computedBoard.
+        void Promise.allSettled(pending).then(() => setDragPreview(null));
+        clearingAsync = true;
       }
     }
 
-    setDragPreview(null);
+    // Nothing was committed for this drop (no-op drag, dropped outside a droppable, or an
+    // unrecognized active type) — there's nothing to wait for, so clear immediately rather
+    // than leaving a stale preview stuck on screen.
+    if (!clearingAsync) setDragPreview(null);
     setActiveCard(null);
     setActiveList(null);
     setDragSourceListId(null);
@@ -220,7 +247,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
       <h1 className="mb-6 text-2xl font-semibold text-text-primary">{boardName}</h1>
       <DndContext
         sensors={sensors}
-        collisionDetection={pointerWithin}
+        collisionDetection={(args) => (args.pointerCoordinates ? pointerWithin(args) : closestCenter(args))}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}

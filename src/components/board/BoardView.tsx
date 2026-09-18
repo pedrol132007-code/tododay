@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -88,11 +88,13 @@ type DragItemData = { type?: string; listId?: number };
 interface BoardViewProps {
   boardId: number;
   boardName: string;
+  initialSelectedCardId?: number | null;
+  onInitialCardHandled?: () => void;
 }
 
 type BoardList = ListType & { cards: CardType[] };
 
-export function BoardView({ boardId, boardName }: BoardViewProps) {
+export function BoardView({ boardId, boardName, initialSelectedCardId, onInitialCardHandled }: BoardViewProps) {
   const { data: lists, isLoading, error } = useLists(boardId);
   const listData = lists ?? [];
   const cardQueries = useCardsByListIds(listData.map((list) => list.id));
@@ -111,6 +113,13 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const selectedCard = computedBoard.flatMap((l) => l.cards).find((c) => c.id === selectedCardId) ?? null;
+
+  useEffect(() => {
+    if (initialSelectedCardId == null) return;
+    if (!computedBoard.some((l) => l.cards.some((c) => c.id === initialSelectedCardId))) return;
+    setSelectedCardId(initialSelectedCardId);
+    onInitialCardHandled?.();
+  }, [initialSelectedCardId, computedBoard, onInitialCardHandled]);
 
   const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
   const { data: labelsByCard } = useLabelsForCards(allCardIds);

@@ -145,9 +145,26 @@ export function BoardView({
     node.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     setHighlightedListId(initialHighlightListId);
     onInitialListHandled?.();
+  }, [initialHighlightListId, computedBoard, onInitialListHandled]);
+
+  // Separate from the effect above on purpose: that one re-runs on every computedBoard change
+  // (including the ones the highlight glow's own rAF loop causes via setHighlightRect below), and
+  // if this timer lived there, each of those re-runs would cancel-and-never-refire it — the
+  // highlight would never clear on its own. Depending only on highlightedListId means it's set
+  // exactly once per highlight and this timer fires exactly once, reliably.
+  useEffect(() => {
+    if (highlightedListId == null) return;
     const timer = setTimeout(() => setHighlightedListId(null), 1600);
     return () => clearTimeout(timer);
-  }, [initialHighlightListId, computedBoard, onInitialListHandled]);
+  }, [highlightedListId]);
+
+  // Switching boards reuses this same BoardView instance (App.tsx doesn't key it by boardId), so
+  // a highlight left over from a search navigation on the previous board must be cleared
+  // explicitly — otherwise the fixed-position glow can briefly reappear once a list with the same
+  // id (or the previous board itself) comes back into listRefs.
+  useEffect(() => {
+    setHighlightedListId(null);
+  }, [boardId]);
 
   // Tracks the highlighted column's on-screen position every frame (not just once) so the glow
   // — rendered `position: fixed` to escape the board row's scroll clipping — keeps following the

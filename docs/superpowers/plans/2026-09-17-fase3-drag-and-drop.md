@@ -1,6 +1,6 @@
 # Fase 3 — Drag and Drop Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the Fase 2 arrow-button reordering with real drag-and-drop: reorder cards within a list, move cards between lists, and reorder columns — all persisted through fractional positions in SQLite.
 
@@ -34,19 +34,19 @@
 - Consumes: nothing.
 - Produces: `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` available to import from Task 6 onward; `npm test` runs Vitest, consumed by Task 2.
 
-- [ ] **Step 1: Install the drag-and-drop libraries**
+- [x] **Step 1: Install the drag-and-drop libraries**
 
 Run: `npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`
 
-- [ ] **Step 2: Install Vitest as a dev dependency**
+- [x] **Step 2: Install Vitest as a dev dependency**
 
 Run: `npm install -D vitest`
 
-- [ ] **Step 3: Add the `test` script to `package.json`**
+- [x] **Step 3: Add the `test` script to `package.json`**
 
 In `package.json`, add `"test": "vitest run"` to the `"scripts"` object (alongside `"dev"`, `"build"`, `"preview"`, `"tauri"`).
 
-- [ ] **Step 4: Write `vitest.config.ts`**
+- [x] **Step 4: Write `vitest.config.ts`**
 
 ```ts
 import { defineConfig } from "vitest/config";
@@ -58,7 +58,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json package-lock.json vitest.config.ts
@@ -77,7 +77,7 @@ git commit -m "Add dnd-kit and Vitest dependencies"
 - Consumes: nothing (pure module).
 - Produces: `positionBetween(prev: number | null, next: number | null): number`, `needsRebalance(prev: number, next: number): boolean`, `rebalance<T extends { position: number }>(items: T[]): T[]`, `resolveInsertPosition(siblings: { id: number; position: number }[], targetIndex: number): { position: number; rebalanced?: { id: number; position: number }[] }`. All four consumed by Task 8 (`BoardView`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `src/lib/position.test.ts`:
 
@@ -159,12 +159,12 @@ describe("resolveInsertPosition", () => {
 });
 ```
 
-- [ ] **Step 2: Run the tests and verify they fail**
+- [x] **Step 2: Run the tests and verify they fail**
 
 Run: `npm test`
 Expected: FAIL — `Cannot find module './position'` (the module doesn't exist yet).
 
-- [ ] **Step 3: Write `src/lib/position.ts`**
+- [x] **Step 3: Write `src/lib/position.ts`**
 
 ```ts
 export function positionBetween(prev: number | null, next: number | null): number {
@@ -201,12 +201,12 @@ export function resolveInsertPosition(
 }
 ```
 
-- [ ] **Step 4: Run the tests and verify they pass**
+- [x] **Step 4: Run the tests and verify they pass**
 
 Run: `npm test`
 Expected: PASS — all 9 tests green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/lib/position.ts src/lib/position.test.ts
@@ -225,7 +225,7 @@ git commit -m "Add fractional position algorithm with rebalancing"
 - Consumes: `getDb` from `./client` (unchanged).
 - Produces: `updateCardPosition(id, position): Promise<void>`, `updateCardPositions(items): Promise<void>`, `moveCardToList(id, listId, position): Promise<void>` (`cards.ts`); `updateListPosition(id, position): Promise<void>`, `updateListPositions(items): Promise<void>` (`lists.ts`). All consumed by Task 4's hooks. Removes `moveCard` and `moveList`.
 
-- [ ] **Step 1: Replace `moveCard` in `src/db/cards.ts`**
+- [x] **Step 1: Replace `moveCard` in `src/db/cards.ts`**
 
 Delete the existing `moveCard` function (the one that takes `direction: "up" | "down"` and swaps with a neighbor) and add these in its place:
 
@@ -250,7 +250,7 @@ export async function moveCardToList(id: number, listId: number, position: numbe
 
 The rest of `src/db/cards.ts` (`listCards`, `createCard`, `renameCard`, `archiveCard`, `countCards`) is unchanged.
 
-- [ ] **Step 2: Replace `moveList` in `src/db/lists.ts`**
+- [x] **Step 2: Replace `moveList` in `src/db/lists.ts`**
 
 Delete the existing `moveList` function (the one that takes `direction: "left" | "right"`) and add these in its place:
 
@@ -270,7 +270,7 @@ export async function updateListPositions(items: { id: number; position: number 
 
 The rest of `src/db/lists.ts` (`listLists`, `createList`, `renameList`, `deleteList`) is unchanged.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/db/cards.ts src/db/lists.ts
@@ -289,7 +289,7 @@ git commit -m "Replace arrow-swap moves with position setters in the DB layer"
 - Consumes: Task 3's db functions; `useQueries` from `@tanstack/react-query`.
 - Produces: `useCardsByListIds(listIds: number[])` (returns an array of query results, same order as `listIds`), `useUpdateCardPosition()`, `useUpdateCardPositions()`, `useMoveCardToList()` (`useCards.ts`); `useUpdateListPosition(boardId)`, `useUpdateListPositions(boardId)` (`useLists.ts`). All consumed by Task 8 (`BoardView`). Removes `useMoveCard` and `useMoveList`.
 
-- [ ] **Step 1: Rewrite `src/hooks/useCards.ts`**
+- [x] **Step 1: Rewrite `src/hooks/useCards.ts`**
 
 Replace the whole file:
 
@@ -396,7 +396,7 @@ export function useMoveCardToList() {
 }
 ```
 
-- [ ] **Step 2: Rewrite `src/hooks/useLists.ts`**
+- [x] **Step 2: Rewrite `src/hooks/useLists.ts`**
 
 Replace the whole file:
 
@@ -463,7 +463,7 @@ export function useUpdateListPositions(boardId: number) {
 }
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/hooks/useCards.ts src/hooks/useLists.ts
@@ -481,7 +481,7 @@ git commit -m "Add position-mutation hooks, remove arrow-swap hooks"
 - Consumes: nothing new.
 - Produces: same `<InlineEditableText>` public API as Fase 2, unchanged. Consumed by Tasks 6 and 7.
 
-- [ ] **Step 1: Add `onPointerDown` to the edit-mode `<input>`**
+- [x] **Step 1: Add `onPointerDown` to the edit-mode `<input>`**
 
 In `src/components/ui/InlineEditableText.tsx`, add an `onPointerDown` handler to the `<input>` element (inside the `if (editing)` branch):
 
@@ -504,7 +504,7 @@ In `src/components/ui/InlineEditableText.tsx`, add an `onPointerDown` handler to
   }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/ui/InlineEditableText.tsx
@@ -522,7 +522,7 @@ git commit -m "Stop pointerdown propagation in inline-edit input to protect text
 - Consumes: `Card` type (`../../types`), `useRenameCard`/`useArchiveCard` (Task 4 — `useMoveCard` no longer exists), `InlineEditableText` (Task 5), `useSortable` from `@dnd-kit/sortable`, `CSS` from `@dnd-kit/utilities`.
 - Produces: `<Card card={CardType} />` (no more `isFirst`/`isLast`), consumed by Task 7's `List`.
 
-- [ ] **Step 1: Replace `src/components/board/Card.tsx`**
+- [x] **Step 1: Replace `src/components/board/Card.tsx`**
 
 ```tsx
 import { useSortable } from "@dnd-kit/sortable";
@@ -585,7 +585,7 @@ export function Card({ card }: CardProps) {
 
 `touch-none` on the outer `<div>` prevents the browser's own touch-scroll gesture from fighting the pointer sensor (recommended by `@dnd-kit` for any draggable element).
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/board/Card.tsx
@@ -603,7 +603,7 @@ git commit -m "Make Card draggable via dnd-kit, remove up/down arrows"
 - Consumes: `List` type (`../../types`), `Card` type (`../../types`), `useCards` (no longer used — cards now arrive as a prop) / `useCardCount`/`useCreateCard` (Task 4, unchanged), `useRenameList`/`useDeleteList` (Task 4 — `useMoveList` no longer exists), `InlineEditableText` (Task 5), `Card` (Task 6), `useSortable`/`SortableContext`/`verticalListSortingStrategy` from `@dnd-kit/sortable`, `useDroppable` from `@dnd-kit/core`, `CSS` from `@dnd-kit/utilities`.
 - Produces: `<List list={ListType} cards={CardType[]} />` (no more `boardId`/`isFirst`/`isLast` — `list.board_id` replaces the `boardId` prop), consumed by Task 8's `BoardView`.
 
-- [ ] **Step 1: Replace `src/components/board/List.tsx`**
+- [x] **Step 1: Replace `src/components/board/List.tsx`**
 
 ```tsx
 import { useState } from "react";
@@ -716,7 +716,7 @@ export function List({ list, cards }: ListProps) {
 
 Note the drag listeners (`sortable.attributes`/`sortable.listeners`) are on the **header row only**, not on the outer container — the outer container also holds the cards, which are themselves draggable via Task 6; attaching listeners to the whole container would make a pointerdown on a card also try to activate the list's own drag.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/board/List.tsx
@@ -734,7 +734,7 @@ git commit -m "Make List header draggable and its card area droppable, remove le
 - Consumes: `useLists`/`useCreateList`/`useUpdateListPosition`/`useUpdateListPositions` (Task 4), `useCardsByListIds`/`useUpdateCardPosition`/`useUpdateCardPositions`/`useMoveCardToList` (Task 4), `resolveInsertPosition` (Task 2), `List` (Task 7), `DndContext`/`DragOverlay`/`PointerSensor`/`KeyboardSensor`/`pointerWithin`/`useSensor`/`useSensors`/`useDroppable` from `@dnd-kit/core`, `SortableContext`/`arrayMove`/`horizontalListSortingStrategy`/`sortableKeyboardCoordinates` from `@dnd-kit/sortable`.
 - Produces: the fully wired drag-and-drop board, consumed by nothing else (leaf of the component tree along with `App`).
 
-- [ ] **Step 1: Replace `src/components/board/BoardView.tsx`**
+- [x] **Step 1: Replace `src/components/board/BoardView.tsx`**
 
 ```tsx
 import { useState } from "react";
@@ -1025,7 +1025,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add src/components/board/BoardView.tsx
@@ -1040,7 +1040,7 @@ git commit -m "Wire dnd-kit into BoardView: cross-list card drag and column reor
 
 **Interfaces:** none.
 
-- [ ] **Step 1: Install and launch**
+- [x] **Step 1: Install and launch**
 
 ```bash
 npm install
@@ -1048,30 +1048,30 @@ npm run tauri dev
 ```
 Expected: window opens showing the existing board(s) from Fase 2, cards and lists with no arrow buttons anymore.
 
-- [ ] **Step 2: Reorder cards within a list**
+- [x] **Step 2: Reorder cards within a list**
 
 Drag a card up/down within the same list by its body. Confirm it visually follows the cursor, other cards make room, and after dropping the new order persists (visible immediately, and still there after closing and reopening the app).
 
-- [ ] **Step 3: Move a card to a different list**
+- [x] **Step 3: Move a card to a different list**
 
 Drag a card from one list into another (drop it on top of an existing card, and separately drop it into empty space below all cards). Confirm both work, and confirm dropping into a list with **zero cards** also works (the "Nenhum card ainda." placeholder should accept the drop).
 
-- [ ] **Step 4: Reorder columns**
+- [x] **Step 4: Reorder columns**
 
 Drag a list by its header (title area) to a different position. Confirm the column order changes and persists after restarting the app.
 
-- [ ] **Step 5: Confirm editing and archiving still work**
+- [x] **Step 5: Confirm editing and archiving still work**
 
 Double-click a card title or list name to rename it (confirm dragging doesn't start accidentally, and that clicking-and-dragging inside the rename input selects text instead of dragging the card). Click "×" on a card to archive it. Confirm the list delete button is still disabled when the list has cards, and enabled once empty.
 
-- [ ] **Step 6: Keyboard drag**
+- [x] **Step 6: Keyboard drag**
 
 Tab to focus a card (or a list header), press Space to pick it up, use arrow keys to move it, press Space again to drop. Confirm this works for both cards and lists.
 
-- [ ] **Step 7: Rebalancing (optional stress test)**
+- [x] **Step 7: Rebalancing (optional stress test)**
 
 Reorder the same card into the same in-between spot repeatedly (e.g., drag it one position and back, several times) — this is the scenario most likely to collapse the float gap. Confirm the app doesn't error out; if you want to verify a rebalance actually fired, `src/lib/position.ts`'s own unit tests (Task 2) already cover the logic in isolation.
 
-- [ ] **Step 8: Report back**
+- [x] **Step 8: Report back**
 
 Tell me what you saw (all working / anything that didn't match). If everything matches, Fase 3 is done.

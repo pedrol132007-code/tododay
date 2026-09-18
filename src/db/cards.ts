@@ -69,6 +69,26 @@ export async function moveCardToList(id: number, listId: number, position: numbe
   await db.execute("UPDATE card SET list_id = $1, position = $2 WHERE id = $3", [listId, position, id]);
 }
 
+export async function listArchivedCards(boardId: number): Promise<Card[]> {
+  const db = await getDb();
+  return db.select<Card[]>(
+    `SELECT card.* FROM card JOIN list ON card.list_id = list.id
+     WHERE list.board_id = $1 AND card.archived_at IS NOT NULL
+     ORDER BY card.archived_at DESC`,
+    [boardId],
+  );
+}
+
+export async function restoreCard(id: number): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE card SET archived_at = NULL WHERE id = $1", [id]);
+}
+
+export async function deleteCardPermanently(id: number): Promise<void> {
+  const db = await getDb();
+  await db.execute("DELETE FROM card WHERE id = $1", [id]);
+}
+
 export async function countCards(listId: number): Promise<number> {
   const db = await getDb();
   const rows = await db.select<{ count: number }[]>(

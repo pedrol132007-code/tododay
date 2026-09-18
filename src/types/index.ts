@@ -44,3 +44,11 @@ export interface ChecklistItem {
   done: boolean;
   position: number;
 }
+
+export interface SearchResult {
+  id: number;
+  title: string;
+  list_id: number;
+  board_id: number;
+  board_name: string;
+}

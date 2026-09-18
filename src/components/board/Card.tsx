@@ -47,7 +47,10 @@ export function Card({ card }: CardProps) {
         />
         <button
           type="button"
-          onClick={() => archiveCard.mutate(card.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            archiveCard.mutate(card.id);
+          }}
           className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base"
           aria-label="Arquivar card"
         >

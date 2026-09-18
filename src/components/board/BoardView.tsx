@@ -453,7 +453,7 @@ export function BoardView({
         </DragOverlay>
       </DndContext>
       <AnimatePresence>
-        {highlightRect && (
+        {highlightedListId != null && computedBoard.some((l) => l.id === highlightedListId) && highlightRect && (
           // `position: fixed` (not absolute) so this escapes the board row's overflow-x-auto
           // clipping entirely — an ancestor scroll container can't clip a fixed-position
           // descendant. Negative z-index keeps it painted behind the (non-positioned) list

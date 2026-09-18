@@ -22,6 +22,8 @@ import {
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { AnimatePresence } from "framer-motion";
+import { CardDetailPanel } from "../card-detail/CardDetailPanel";
 import {
   useCardsByListIds,
   useMoveCardToList,
@@ -104,6 +106,9 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
     ...list,
     cards: cardQueries[index]?.data ?? [],
   }));
+
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const selectedCard = computedBoard.flatMap((l) => l.cards).find((c) => c.id === selectedCardId) ?? null;
 
   const [dragPreview, setDragPreview] = useState<BoardList[] | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
@@ -325,7 +330,9 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
                 Nenhuma lista ainda.
               </div>
             ) : (
-              renderedBoard.map((list) => <List key={list.id} list={list} cards={list.cards} />)
+              renderedBoard.map((list) => (
+                <List key={list.id} list={list} cards={list.cards} onOpenDetail={setSelectedCardId} />
+              ))
             )}
           </SortableContext>
           <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
@@ -357,6 +364,9 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
           ) : null}
         </DragOverlay>
       </DndContext>
+      <AnimatePresence>
+        {selectedCard && <CardDetailPanel card={selectedCard} onClose={() => setSelectedCardId(null)} />}
+      </AnimatePresence>
     </div>
   );
 }

@@ -36,28 +36,21 @@ export async function archiveCard(id: number): Promise<void> {
   await db.execute("UPDATE card SET archived_at = datetime('now') WHERE id = $1", [id]);
 }
 
-export async function moveCard(id: number, direction: "up" | "down"): Promise<void> {
+export async function updateCardPosition(id: number, position: number): Promise<void> {
   const db = await getDb();
-  const rows = await db.select<{ id: number; list_id: number; position: number }[]>(
-    "SELECT id, list_id, position FROM card WHERE id = $1",
-    [id],
-  );
-  const current = rows[0];
-  if (!current) return;
+  await db.execute("UPDATE card SET position = $1 WHERE id = $2", [position, id]);
+}
 
-  const neighborQuery =
-    direction === "up"
-      ? "SELECT id, position FROM card WHERE list_id = $1 AND archived_at IS NULL AND position < $2 ORDER BY position DESC LIMIT 1"
-      : "SELECT id, position FROM card WHERE list_id = $1 AND archived_at IS NULL AND position > $2 ORDER BY position ASC LIMIT 1";
-  const neighborRows = await db.select<{ id: number; position: number }[]>(neighborQuery, [
-    current.list_id,
-    current.position,
-  ]);
-  const neighbor = neighborRows[0];
-  if (!neighbor) return;
+export async function updateCardPositions(items: { id: number; position: number }[]): Promise<void> {
+  const db = await getDb();
+  for (const item of items) {
+    await db.execute("UPDATE card SET position = $1 WHERE id = $2", [item.position, item.id]);
+  }
+}
 
-  await db.execute("UPDATE card SET position = $1 WHERE id = $2", [neighbor.position, current.id]);
-  await db.execute("UPDATE card SET position = $1 WHERE id = $2", [current.position, neighbor.id]);
+export async function moveCardToList(id: number, listId: number, position: number): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE card SET list_id = $1, position = $2 WHERE id = $3", [listId, position, id]);
 }
 
 export async function countCards(listId: number): Promise<number> {

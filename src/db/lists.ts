@@ -32,26 +32,14 @@ export async function deleteList(id: number): Promise<void> {
   await db.execute("DELETE FROM list WHERE id = $1", [id]);
 }
 
-export async function moveList(id: number, direction: "left" | "right"): Promise<void> {
+export async function updateListPosition(id: number, position: number): Promise<void> {
   const db = await getDb();
-  const rows = await db.select<{ id: number; board_id: number; position: number }[]>(
-    "SELECT id, board_id, position FROM list WHERE id = $1",
-    [id],
-  );
-  const current = rows[0];
-  if (!current) return;
+  await db.execute("UPDATE list SET position = $1 WHERE id = $2", [position, id]);
+}
 
-  const neighborQuery =
-    direction === "left"
-      ? "SELECT id, position FROM list WHERE board_id = $1 AND position < $2 ORDER BY position DESC LIMIT 1"
-      : "SELECT id, position FROM list WHERE board_id = $1 AND position > $2 ORDER BY position ASC LIMIT 1";
-  const neighborRows = await db.select<{ id: number; position: number }[]>(neighborQuery, [
-    current.board_id,
-    current.position,
-  ]);
-  const neighbor = neighborRows[0];
-  if (!neighbor) return;
-
-  await db.execute("UPDATE list SET position = $1 WHERE id = $2", [neighbor.position, current.id]);
-  await db.execute("UPDATE list SET position = $1 WHERE id = $2", [current.position, neighbor.id]);
+export async function updateListPositions(items: { id: number; position: number }[]): Promise<void> {
+  const db = await getDb();
+  for (const item of items) {
+    await db.execute("UPDATE list SET position = $1 WHERE id = $2", [item.position, item.id]);
+  }
 }

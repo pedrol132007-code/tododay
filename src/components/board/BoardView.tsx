@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -58,6 +58,10 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
   const [activeList, setActiveList] = useState<ListType | null>(null);
   const [dragSourceListId, setDragSourceListId] = useState<number | null>(null);
+  // Bumped on every drag start so a deferred dragPreview clear scheduled by an earlier drag's
+  // drop (see handleDragEnd) can detect that a newer drag has since started and skip itself,
+  // instead of nulling out the newer drag's live preview mid-flight.
+  const dragEpochRef = useRef(0);
 
   const renderedBoard = dragPreview ?? computedBoard;
 
@@ -74,6 +78,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
   }
 
   function handleDragStart(event: DragStartEvent) {
+    dragEpochRef.current += 1;
     const data = event.active.data.current as { type?: string } | undefined;
     setDragPreview(computedBoard);
     if (data?.type === "card") {
@@ -175,7 +180,10 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
           const pending: Promise<unknown>[] = [];
           if (rebalanced) pending.push(updateListPositions.mutateAsync(rebalanced));
           pending.push(updateListPosition.mutateAsync({ id: movedList.id, position }));
-          void Promise.allSettled(pending).then(() => setDragPreview(null));
+          const epoch = dragEpochRef.current;
+          void Promise.allSettled(pending).then(() => {
+            if (dragEpochRef.current === epoch) setDragPreview(null);
+          });
           clearingAsync = true;
         }
       }
@@ -205,7 +213,10 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
         // dragPreview already holds the correct final order (built incrementally by
         // handleDragOver) — keep showing it until the write settles instead of clearing it
         // immediately, which would otherwise briefly fall back to the stale computedBoard.
-        void Promise.allSettled(pending).then(() => setDragPreview(null));
+        const epoch = dragEpochRef.current;
+        void Promise.allSettled(pending).then(() => {
+          if (dragEpochRef.current === epoch) setDragPreview(null);
+        });
         clearingAsync = true;
       }
     }

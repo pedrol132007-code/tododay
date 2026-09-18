@@ -31,6 +31,22 @@ export async function renameCard(id: number, title: string): Promise<void> {
   ]);
 }
 
+export async function updateCardDescription(id: number, description: string): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE card SET description = $1, updated_at = datetime('now') WHERE id = $2",
+    [description, id],
+  );
+}
+
+export async function updateCardDueDate(id: number, dueDate: string | null): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE card SET due_date = $1, updated_at = datetime('now') WHERE id = $2",
+    [dueDate, id],
+  );
+}
+
 export async function archiveCard(id: number): Promise<void> {
   const db = await getDb();
   await db.execute("UPDATE card SET archived_at = datetime('now') WHERE id = $1", [id]);

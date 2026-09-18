@@ -35,6 +35,7 @@ export function InlineEditableText({ value, onSave, className }: InlineEditableT
           if (e.key === "Enter") commit();
           if (e.key === "Escape") cancel();
         }}
+        onPointerDown={(e) => e.stopPropagation()}
       />
     );
   }

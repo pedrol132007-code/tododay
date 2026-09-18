@@ -40,12 +40,22 @@ export default function App() {
     setPaletteOpen(false);
   }
 
+  // A manual board switch means any search-navigation target still pending is stale — if the
+  // target board's lists hadn't finished loading yet, BoardView never got the chance to consume
+  // it, and without this it would sit in state and could fire a highlight later, on whatever
+  // future board happens to contain a list with that same id.
+  function handleSelectBoard(id: number) {
+    setActiveBoardId(id);
+    setPendingCardId(null);
+    setPendingListId(null);
+  }
+
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">
-        <BoardSwitcher activeBoardId={activeBoardId} onSelect={setActiveBoardId} />
+        <BoardSwitcher activeBoardId={activeBoardId} onSelect={handleSelectBoard} />
         {activeBoard && (
           <button
             type="button"

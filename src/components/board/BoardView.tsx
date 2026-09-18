@@ -5,6 +5,8 @@ import {
   KeyboardSensor,
   PointerSensor,
   closestCenter,
+  closestCorners,
+  getFirstCollision,
   pointerWithin,
   useSensor,
   useSensors,
@@ -12,6 +14,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
+  type KeyboardCoordinateGetter,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -29,6 +32,52 @@ import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions 
 import { resolveInsertPosition } from "../../lib/position";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
+
+// Lists only ever reorder sideways. The default sortableKeyboardCoordinates scans every
+// droppable in the board — including cards inside other lists — so Left/Right ends up jumping
+// to whatever's geometrically closest instead of hopping straight to the next column, which
+// feels like tabbing through unrelated elements. This variant restricts a list's keyboard drag
+// to ArrowLeft/ArrowRight and only considers other list columns as targets; cards keep the
+// default behavior.
+const keyboardCoordinateGetter: KeyboardCoordinateGetter = (event, args) => {
+  const activeType = args.context.active?.data.current?.type;
+  if (activeType !== "list") return sortableKeyboardCoordinates(event, args);
+
+  const isHorizontal = event.code === "ArrowLeft" || event.code === "ArrowRight";
+  const isVertical = event.code === "ArrowUp" || event.code === "ArrowDown";
+  if (!isHorizontal && !isVertical) return undefined;
+
+  event.preventDefault();
+  if (isVertical) return undefined;
+
+  const {
+    context: { active, collisionRect, droppableRects, droppableContainers, over },
+  } = args;
+  if (!active || !collisionRect) return undefined;
+
+  const filteredContainers = droppableContainers.getEnabled().filter((entry) => {
+    if (!entry || entry.disabled || entry.data.current?.type !== "list") return false;
+    const rect = droppableRects.get(entry.id);
+    if (!rect) return false;
+    return event.code === "ArrowLeft" ? collisionRect.left > rect.left : collisionRect.left < rect.left;
+  });
+
+  const collisions = closestCorners({
+    active,
+    collisionRect,
+    droppableRects,
+    droppableContainers: filteredContainers,
+    pointerCoordinates: null,
+  });
+  let closestId = getFirstCollision(collisions, "id");
+  if (closestId === over?.id && collisions.length > 1) {
+    closestId = collisions[1].id;
+  }
+  if (closestId == null) return undefined;
+
+  const newRect = droppableRects.get(closestId);
+  return newRect ? { x: newRect.left, y: newRect.top } : undefined;
+};
 
 interface BoardViewProps {
   boardId: number;
@@ -67,7 +116,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(KeyboardSensor, { coordinateGetter: keyboardCoordinateGetter }),
   );
 
   function handleAddList() {

@@ -166,20 +166,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
     if (activeData?.type === "card" && dragPreview && dragSourceListId !== null) {
       const activeId = String(active.id);
-      let finalPreview = dragPreview;
-      if (over) {
-        const overId = String(over.id);
-        const listIndex = finalPreview.findIndex((l) => l.cards.some((c) => `card-${c.id}` === activeId));
-        if (listIndex !== -1) {
-          const cards = finalPreview[listIndex].cards;
-          const activeIndex = cards.findIndex((c) => `card-${c.id}` === activeId);
-          const overIndex = cards.findIndex((c) => `card-${c.id}` === overId);
-          if (overIndex !== -1 && overIndex !== activeIndex) {
-            const reorderedCards = arrayMove(cards, activeIndex, overIndex);
-            finalPreview = finalPreview.map((l, i) => (i === listIndex ? { ...l, cards: reorderedCards } : l));
-          }
-        }
-      }
+      const finalPreview = dragPreview;
 
       const targetListIndex = finalPreview.findIndex((l) => l.cards.some((c) => `card-${c.id}` === activeId));
       if (targetListIndex !== -1) {

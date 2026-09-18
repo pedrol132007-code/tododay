@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createList, deleteList, listLists, moveList, renameList } from "../db/lists";
+import {
+  createList,
+  deleteList,
+  listLists,
+  renameList,
+  updateListPosition,
+  updateListPositions,
+} from "../db/lists";
 
 export function useLists(boardId: number) {
   return useQuery({
@@ -32,11 +39,22 @@ export function useDeleteList(boardId: number) {
   });
 }
 
-export function useMoveList(boardId: number) {
+export function useUpdateListPosition(boardId: number) {
   const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] });
   return useMutation({
-    mutationFn: ({ id, direction }: { id: number; direction: "left" | "right" }) =>
-      moveList(id, direction),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] }),
+    mutationFn: ({ id, position }: { id: number; position: number }) => updateListPosition(id, position),
+    onSuccess: invalidate,
+    onError: invalidate,
+  });
+}
+
+export function useUpdateListPositions(boardId: number) {
+  const queryClient = useQueryClient();
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] });
+  return useMutation({
+    mutationFn: (items: { id: number; position: number }[]) => updateListPositions(items),
+    onSuccess: invalidate,
+    onError: invalidate,
   });
 }

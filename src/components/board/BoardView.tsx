@@ -22,7 +22,7 @@ import {
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { CardDetailPanel } from "../card-detail/CardDetailPanel";
 import { useChecklistProgressForCards } from "../../hooks/useChecklistItems";
 import {
@@ -148,6 +148,26 @@ export function BoardView({
     const timer = setTimeout(() => setHighlightedListId(null), 1600);
     return () => clearTimeout(timer);
   }, [initialHighlightListId, computedBoard, onInitialListHandled]);
+
+  // Tracks the highlighted column's on-screen position every frame (not just once) so the glow
+  // — rendered `position: fixed` to escape the board row's scroll clipping — keeps following the
+  // column while `scrollIntoView`'s smooth-scroll animation is still moving it.
+  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (highlightedListId == null) {
+      setHighlightRect(null);
+      return;
+    }
+    let frame: number;
+    const update = () => {
+      const node = listRefs.current.get(highlightedListId);
+      setHighlightRect(node ? node.getBoundingClientRect() : null);
+      frame = requestAnimationFrame(update);
+    };
+    frame = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frame);
+  }, [highlightedListId]);
 
   const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
   const { data: labelsByCard } = useLabelsForCards(allCardIds);
@@ -363,7 +383,7 @@ export function BoardView({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="-m-4 flex flex-1 items-start gap-4 overflow-x-auto p-4">
+        <div className="flex flex-1 items-start gap-4 overflow-x-auto">
           <SortableContext
             items={renderedBoard.map((l) => `list-${l.id}`)}
             strategy={horizontalListSortingStrategy}
@@ -381,7 +401,6 @@ export function BoardView({
                   onOpenDetail={setSelectedCardId}
                   labelsByCard={labelsByCard ?? new Map()}
                   checklistProgressByCard={checklistProgressByCard ?? new Map()}
-                  isHighlighted={list.id === highlightedListId}
                   registerRef={registerListRef}
                 />
               ))
@@ -416,6 +435,28 @@ export function BoardView({
           ) : null}
         </DragOverlay>
       </DndContext>
+      <AnimatePresence>
+        {highlightRect && (
+          // `position: fixed` (not absolute) so this escapes the board row's overflow-x-auto
+          // clipping entirely — an ancestor scroll container can't clip a fixed-position
+          // descendant. Negative z-index keeps it painted behind the (non-positioned) list
+          // cards instead of on top of them.
+          <motion.div
+            key="list-highlight"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.6, 0.15, 0.6, 0.15] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.4, times: [0, 0.15, 0.5, 0.65, 1] }}
+            className="pointer-events-none fixed -z-10 rounded-2xl bg-accent-purple blur-xl"
+            style={{
+              left: highlightRect.left - 12,
+              top: highlightRect.top - 12,
+              width: highlightRect.width + 24,
+              height: highlightRect.height + 24,
+            }}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {selectedCard && (
           <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />

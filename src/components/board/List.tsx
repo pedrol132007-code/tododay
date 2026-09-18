@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import type { Card as CardType, Label, List as ListType } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
@@ -15,7 +15,6 @@ interface ListProps {
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
-  isHighlighted?: boolean;
   registerRef?: (id: number, node: HTMLDivElement | null) => void;
 }
 
@@ -25,7 +24,6 @@ export function List({
   onOpenDetail,
   labelsByCard,
   checklistProgressByCard,
-  isHighlighted,
   registerRef,
 }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
@@ -62,24 +60,13 @@ export function List({
         registerRef?.(list.id, node);
       }}
       style={style}
-      className="relative w-72 shrink-0"
+      className="w-72 shrink-0"
     >
-      <AnimatePresence>
-        {isHighlighted && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.6, 0.15, 0.6, 0.15] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.4, times: [0, 0.15, 0.5, 0.65, 1] }}
-            className="absolute -inset-3 -z-10 rounded-2xl bg-accent-purple blur-xl"
-          />
-        )}
-      </AnimatePresence>
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="relative flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
       >
         <div
           ref={sortable.setActivatorNodeRef}

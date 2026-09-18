@@ -3,9 +3,12 @@ import {
   archiveCard,
   countCards,
   createCard,
+  deleteCardPermanently,
+  listArchivedCards,
   listCards,
   moveCardToList,
   renameCard,
+  restoreCard,
   updateCardDescription,
   updateCardDueDate,
   updateCardPosition,
@@ -102,6 +105,29 @@ export function useUpdateCardPositions() {
     mutationFn: (items: { id: number; position: number }[]) => updateCardPositions(items),
     onSuccess: invalidate,
     onError: invalidate,
+  });
+}
+
+export function useArchivedCards(boardId: number) {
+  return useQuery({ queryKey: ["archivedCards", boardId], queryFn: () => listArchivedCards(boardId) });
+}
+
+export function useRestoreCard(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => restoreCard(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+    },
+  });
+}
+
+export function useDeleteCardPermanently(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => deleteCardPermanently(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] }),
   });
 }
 

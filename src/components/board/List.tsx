@@ -12,9 +12,10 @@ import { Card } from "./Card";
 interface ListProps {
   list: ListType;
   cards: CardType[];
+  onOpenDetail: (id: number) => void;
 }
 
-export function List({ list, cards }: ListProps) {
+export function List({ list, cards, onOpenDetail }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(list.board_id);
@@ -80,7 +81,7 @@ export function List({ list, cards }: ListProps) {
                 Nenhum card ainda.
               </div>
             ) : (
-              cards.map((card) => <Card key={card.id} card={card} />)
+              cards.map((card) => <Card key={card.id} card={card} onOpenDetail={onOpenDetail} />)
             )}
           </SortableContext>
         </div>

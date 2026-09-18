@@ -7,9 +7,10 @@ import { InlineEditableText } from "../ui/InlineEditableText";
 
 interface CardProps {
   card: CardType;
+  onOpenDetail: (id: number) => void;
 }
 
-export function Card({ card }: CardProps) {
+export function Card({ card, onOpenDetail }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
@@ -32,6 +33,7 @@ export function Card({ card }: CardProps) {
       style={style}
       {...attributes}
       {...listeners}
+      onClick={() => onOpenDetail(card.id)}
       className="cursor-grab touch-none active:cursor-grabbing"
     >
       <motion.div

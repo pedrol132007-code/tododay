@@ -3,7 +3,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import type { Card as CardType, List as ListType } from "../../types";
+import type { Card as CardType, Label, List as ListType } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { InlineEditableText } from "../ui/InlineEditableText";
@@ -13,9 +13,11 @@ interface ListProps {
   list: ListType;
   cards: CardType[];
   onOpenDetail: (id: number) => void;
+  labelsByCard: Map<number, Label[]>;
+  checklistProgressByCard: Map<number, { done: number; total: number }>;
 }
 
-export function List({ list, cards, onOpenDetail }: ListProps) {
+export function List({ list, cards, onOpenDetail, labelsByCard, checklistProgressByCard }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(list.board_id);
@@ -81,7 +83,15 @@ export function List({ list, cards, onOpenDetail }: ListProps) {
                 Nenhum card ainda.
               </div>
             ) : (
-              cards.map((card) => <Card key={card.id} card={card} onOpenDetail={onOpenDetail} />)
+              cards.map((card) => (
+                <Card
+                  key={card.id}
+                  card={card}
+                  onOpenDetail={onOpenDetail}
+                  labels={labelsByCard.get(card.id)}
+                  checklistProgress={checklistProgressByCard.get(card.id)}
+                />
+              ))
             )}
           </SortableContext>
         </div>

@@ -24,12 +24,14 @@ import {
 } from "@dnd-kit/sortable";
 import { AnimatePresence } from "framer-motion";
 import { CardDetailPanel } from "../card-detail/CardDetailPanel";
+import { useChecklistProgressForCards } from "../../hooks/useChecklistItems";
 import {
   useCardsByListIds,
   useMoveCardToList,
   useUpdateCardPosition,
   useUpdateCardPositions,
 } from "../../hooks/useCards";
+import { useLabelsForCards } from "../../hooks/useLabels";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
 import type { Card as CardType, List as ListType } from "../../types";
@@ -109,6 +111,10 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const selectedCard = computedBoard.flatMap((l) => l.cards).find((c) => c.id === selectedCardId) ?? null;
+
+  const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
+  const { data: labelsByCard } = useLabelsForCards(allCardIds);
+  const { data: checklistProgressByCard } = useChecklistProgressForCards(allCardIds);
 
   const [dragPreview, setDragPreview] = useState<BoardList[] | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
@@ -331,7 +337,14 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
               </div>
             ) : (
               renderedBoard.map((list) => (
-                <List key={list.id} list={list} cards={list.cards} onOpenDetail={setSelectedCardId} />
+                <List
+                  key={list.id}
+                  list={list}
+                  cards={list.cards}
+                  onOpenDetail={setSelectedCardId}
+                  labelsByCard={labelsByCard ?? new Map()}
+                  checklistProgressByCard={checklistProgressByCard ?? new Map()}
+                />
               ))
             )}
           </SortableContext>

@@ -1,6 +1,6 @@
 # Fase 4 — Painel de Detalhe do Card — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Clicking a card opens a side panel showing/editing its title, markdown description, and due date. Closes via Esc, backdrop click, the × button, or `Ctrl+Enter` (while focus is in the description textarea, which also saves).
 
@@ -26,8 +26,8 @@
 
 **Files:** Modify: `package.json` (via `npm install`)
 
-- [ ] **Step 1:** Run `npm install react-markdown remark-gfm`
-- [ ] **Step 2: Commit**
+- [x] **Step 1:** Run `npm install react-markdown remark-gfm`
+- [x] **Step 2: Commit**
   ```bash
   git add package.json package-lock.json
   git commit -m "Add react-markdown and remark-gfm for card description preview"
@@ -42,7 +42,7 @@
 **Interfaces:**
 - Produces: `updateCardDescription(id: number, description: string): Promise<void>`, `updateCardDueDate(id: number, dueDate: string | null): Promise<void>`. Consumed by Task 3's hooks.
 
-- [ ] **Step 1:** Add to `src/db/cards.ts` (alongside `renameCard`):
+- [x] **Step 1:** Add to `src/db/cards.ts` (alongside `renameCard`):
   ```ts
   export async function updateCardDescription(id: number, description: string): Promise<void> {
     const db = await getDb();
@@ -60,7 +60,7 @@
     );
   }
   ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/db/cards.ts
   git commit -m "Add description and due-date update queries"
@@ -76,7 +76,7 @@
 - Consumes: Task 2's db functions.
 - Produces: `useUpdateCardDescription(listId: number)`, `useUpdateCardDueDate(listId: number)` — same shape as `useRenameCard`. Consumed by Task 6/7 (`CardDetailPanel`).
 
-- [ ] **Step 1:** Add to `src/hooks/useCards.ts` (alongside `useRenameCard`), importing `updateCardDescription`/`updateCardDueDate` from `../db/cards`:
+- [x] **Step 1:** Add to `src/hooks/useCards.ts` (alongside `useRenameCard`), importing `updateCardDescription`/`updateCardDueDate` from `../db/cards`:
   ```ts
   export function useUpdateCardDescription(listId: number) {
     const queryClient = useQueryClient();
@@ -96,7 +96,7 @@
     });
   }
   ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/hooks/useCards.ts
   git commit -m "Add description and due-date mutation hooks"
@@ -108,15 +108,15 @@
 
 **Files:** Modify: `src/components/ui/InlineEditableText.tsx`, `src/components/board/Card.tsx`
 
-- [ ] **Step 1:** In `InlineEditableText.tsx`'s display-mode `<span>`, add `onClick={(e) => e.stopPropagation()}` alongside the existing `onDoubleClick`.
-- [ ] **Step 2:** In `Card.tsx`'s archive `<button>`, change `onClick={() => archiveCard.mutate(card.id)}` to stop propagation first:
+- [x] **Step 1:** In `InlineEditableText.tsx`'s display-mode `<span>`, add `onClick={(e) => e.stopPropagation()}` alongside the existing `onDoubleClick`.
+- [x] **Step 2:** In `Card.tsx`'s archive `<button>`, change `onClick={() => archiveCard.mutate(card.id)}` to stop propagation first:
   ```tsx
   onClick={(e) => {
     e.stopPropagation();
     archiveCard.mutate(card.id);
   }}
   ```
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
   ```bash
   git add src/components/ui/InlineEditableText.tsx src/components/board/Card.tsx
   git commit -m "Stop click propagation on title and archive button before wiring card-open"
@@ -131,7 +131,7 @@
 **Interfaces:**
 - Produces: `<MarkdownEditor value={string} onSave={(v: string) => void} onSaveAndClose={() => void} />`. Consumed by Task 7 (`CardDetailPanel`).
 
-- [ ] **Step 1:** Write `src/components/card-detail/MarkdownEditor.tsx`:
+- [x] **Step 1:** Write `src/components/card-detail/MarkdownEditor.tsx`:
   ```tsx
   import { useState } from "react";
   import ReactMarkdown from "react-markdown";
@@ -197,7 +197,7 @@
 
   Note: no `@tailwindcss/typography` plugin is installed, so the `prose-*` classes above are inert (harmless, but not styling markdown output). This is fine for now — un-styled markdown (headings/lists/bold/etc. rendered with browser defaults) is acceptable for Fase 4; revisit only if it actually looks bad in manual testing.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/card-detail/MarkdownEditor.tsx
   git commit -m "Add MarkdownEditor with edit/preview toggle"
@@ -213,7 +213,7 @@
 - Consumes: `Card` type, `useRenameCard`/`useUpdateCardDescription`/`useUpdateCardDueDate` (Task 3), `InlineEditableText`, `MarkdownEditor` (Task 5), `framer-motion`.
 - Produces: `<CardDetailPanel card={Card} onClose={() => void} />`. Consumed by Task 8 (`BoardView`).
 
-- [ ] **Step 1:** Write `src/components/card-detail/CardDetailPanel.tsx`:
+- [x] **Step 1:** Write `src/components/card-detail/CardDetailPanel.tsx`:
   ```tsx
   import { useEffect } from "react";
   import { motion } from "framer-motion";
@@ -296,7 +296,7 @@
     );
   }
   ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/card-detail/CardDetailPanel.tsx
   git commit -m "Add CardDetailPanel with title, due date, and description"
@@ -311,9 +311,9 @@
 **Interfaces:**
 - Produces: `<Card card={CardType} onOpenDetail={(id: number) => void} />`, `<List list={ListType} cards={CardType[]} onOpenDetail={(id: number) => void} />`. Consumed by Task 8 (`BoardView`).
 
-- [ ] **Step 1:** In `Card.tsx`, add `onOpenDetail: (id: number) => void` to `CardProps`, and add `onClick={() => onOpenDetail(card.id)}` to the outer draggable `<div>` (alongside `{...attributes} {...listeners}`).
-- [ ] **Step 2:** In `List.tsx`, add `onOpenDetail: (id: number) => void` to `ListProps` and pass it through: `<Card key={card.id} card={card} onOpenDetail={onOpenDetail} />`.
-- [ ] **Step 3: Commit**
+- [x] **Step 1:** In `Card.tsx`, add `onOpenDetail: (id: number) => void` to `CardProps`, and add `onClick={() => onOpenDetail(card.id)}` to the outer draggable `<div>` (alongside `{...attributes} {...listeners}`).
+- [x] **Step 2:** In `List.tsx`, add `onOpenDetail: (id: number) => void` to `ListProps` and pass it through: `<Card key={card.id} card={card} onOpenDetail={onOpenDetail} />`.
+- [x] **Step 3: Commit**
   ```bash
   git add src/components/board/Card.tsx src/components/board/List.tsx
   git commit -m "Thread onOpenDetail through List and Card"
@@ -329,7 +329,7 @@
 - Consumes: `CardDetailPanel` (Task 6), `AnimatePresence` from `framer-motion`.
 - Produces: the fully wired detail panel — leaf of the component tree.
 
-- [ ] **Step 1:** In `BoardView.tsx`:
+- [x] **Step 1:** In `BoardView.tsx`:
   - Import `AnimatePresence` from `framer-motion` and `CardDetailPanel` from `../card-detail/CardDetailPanel`.
   - Add `const [selectedCardId, setSelectedCardId] = useState<number | null>(null);`
   - Derive `const selectedCard = computedBoard.flatMap((l) => l.cards).find((c) => c.id === selectedCardId) ?? null;`
@@ -340,7 +340,7 @@
       {selectedCard && <CardDetailPanel card={selectedCard} onClose={() => setSelectedCardId(null)} />}
     </AnimatePresence>
     ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/board/BoardView.tsx
   git commit -m "Wire CardDetailPanel into BoardView"
@@ -352,12 +352,12 @@
 
 **Files:** none (checklist only).
 
-- [ ] **Step 1:** `npm install && npm run tauri dev`. Confirm the board loads with no regressions from Fase 3 (drag, rename, archive all still work).
-- [ ] **Step 2:** Click a card (not the title, not ×). Confirm the panel slides in from the right with a backdrop.
-- [ ] **Step 3:** Edit the title inline (double-click) inside the panel. Confirm it saves and the board's card title updates too (same card, same query key).
-- [ ] **Step 4:** Set a due date. Close and reopen the panel (and the app) — confirm it persisted.
-- [ ] **Step 5:** Click the description to edit, type some markdown (e.g. a list, bold text, a link), click away (blur) or press `Ctrl+Enter`. Confirm `Ctrl+Enter` both saves and closes the panel; confirm a plain blur saves without closing; confirm the preview renders the markdown (even unstyled).
-- [ ] **Step 6:** Close the panel three ways: `Esc`, clicking the backdrop, clicking ×. Confirm all three work and don't leave stale state (reopening the same or a different card shows fresh data).
-- [ ] **Step 7:** Click a card's title (single click, no double-click) and click the × archive button. Confirm neither accidentally opens or closes the panel unexpectedly, and archiving still removes the card from its list.
-- [ ] **Step 8:** Drag a card (a real drag, 8+px movement) and drop it. Confirm the panel does NOT open as a side effect of the drop.
-- [ ] **Step 9: Report back.** Tell me what you saw. If everything matches, Fase 4 is done.
+- [x] **Step 1:** `npm install && npm run tauri dev`. Confirm the board loads with no regressions from Fase 3 (drag, rename, archive all still work).
+- [x] **Step 2:** Click a card (not the title, not ×). Confirm the panel slides in from the right with a backdrop.
+- [x] **Step 3:** Edit the title inline (double-click) inside the panel. Confirm it saves and the board's card title updates too (same card, same query key).
+- [x] **Step 4:** Set a due date. Close and reopen the panel (and the app) — confirm it persisted.
+- [x] **Step 5:** Click the description to edit, type some markdown (e.g. a list, bold text, a link), click away (blur) or press `Ctrl+Enter`. Confirm `Ctrl+Enter` both saves and closes the panel; confirm a plain blur saves without closing; confirm the preview renders the markdown (even unstyled).
+- [x] **Step 6:** Close the panel three ways: `Esc`, clicking the backdrop, clicking ×. Confirm all three work and don't leave stale state (reopening the same or a different card shows fresh data).
+- [x] **Step 7:** Click a card's title (single click, no double-click) and click the × archive button. Confirm neither accidentally opens or closes the panel unexpectedly, and archiving still removes the card from its list.
+- [x] **Step 8:** Drag a card (a real drag, 8+px movement) and drop it. Confirm the panel does NOT open as a side effect of the drop.
+- [x] **Step 9: Report back.** Tell me what you saw. If everything matches, Fase 4 is done.

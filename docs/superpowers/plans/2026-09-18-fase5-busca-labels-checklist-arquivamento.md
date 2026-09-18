@@ -1,6 +1,6 @@
 # Fase 5 — Busca, Labels, Checklist, Arquivamento — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** The last item on the master spec's phase list. Four features, each independently useful, built in this order because each is self-contained and the later ones (search) benefit from the earlier ones (labels/checklist) already existing to search around:
 
@@ -38,7 +38,7 @@
 **Interfaces:**
 - Produces: `listLabels(boardId): Promise<Label[]>`, `createLabel(boardId, name, color): Promise<number>`, `deleteLabel(id): Promise<void>`, `listCardLabels(cardId): Promise<Label[]>`, `listLabelsForCards(cardIds: number[]): Promise<Map<number, Label[]>>`, `setCardLabel(cardId, labelId, on: boolean): Promise<void>`. Consumed by Task 4's hooks.
 
-- [ ] **Step 1:** Write `src/db/labels.ts`:
+- [x] **Step 1:** Write `src/db/labels.ts`:
   ```ts
   import { getDb } from "./client";
   import type { Label } from "../types";
@@ -98,7 +98,7 @@
     }
   }
   ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/db/labels.ts
   git commit -m "Add label CRUD and card-label association queries"
@@ -114,7 +114,7 @@
 - Produces: `listChecklistItems(cardId): Promise<ChecklistItem[]>`, `createChecklistItem(cardId, text): Promise<number>`, `toggleChecklistItem(id, done): Promise<void>`, `deleteChecklistItem(id): Promise<void>`, `listChecklistProgressForCards(cardIds: number[]): Promise<Map<number, { done: number; total: number }>>`. Consumed by Task 4's hooks.
 - `checklist_item.done` is `INTEGER` 0/1 in SQLite — this layer converts to/from `boolean` before it leaves `db/*.ts`, per `CLAUDE.md`.
 
-- [ ] **Step 1:** Write `src/db/checklistItems.ts`:
+- [x] **Step 1:** Write `src/db/checklistItems.ts`:
   ```ts
   import { getDb } from "./client";
   import type { ChecklistItem } from "../types";
@@ -174,7 +174,7 @@
     return map;
   }
   ```
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
   ```bash
   git add src/db/checklistItems.ts
   git commit -m "Add checklist item CRUD and batched progress query"
@@ -189,7 +189,7 @@
 **Interfaces:**
 - Produces: `listArchivedCards(boardId): Promise<Card[]>`, `restoreCard(id): Promise<void>`, `deleteCardPermanently(id): Promise<void>` (`cards.ts`); `searchCards(query): Promise<SearchResult[]>` (`search.ts`, new `SearchResult` type added to `src/types/index.ts`).
 
-- [ ] **Step 1:** Add to `src/db/cards.ts`:
+- [x] **Step 1:** Add to `src/db/cards.ts`:
   ```ts
   export async function listArchivedCards(boardId: number): Promise<Card[]> {
     const db = await getDb();
@@ -211,7 +211,7 @@
     await db.execute("DELETE FROM card WHERE id = $1", [id]);
   }
   ```
-- [ ] **Step 2:** Add `SearchResult` to `src/types/index.ts` (alongside the other interfaces):
+- [x] **Step 2:** Add `SearchResult` to `src/types/index.ts` (alongside the other interfaces):
   ```ts
   export interface SearchResult {
     id: number;
@@ -221,7 +221,7 @@
     board_name: string;
   }
   ```
-- [ ] **Step 3:** Write `src/db/search.ts`:
+- [x] **Step 3:** Write `src/db/search.ts`:
   ```ts
   import { getDb } from "./client";
   import type { SearchResult } from "../types";
@@ -241,7 +241,7 @@
     );
   }
   ```
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
   ```bash
   git add src/db/cards.ts src/db/search.ts src/types/index.ts
   git commit -m "Add archive queries and global card search"
@@ -256,7 +256,7 @@
 **Interfaces:**
 - Produces: `useLabels(boardId)`, `useCardLabels(cardId)`, `useLabelsForCards(cardIds)`, `useCreateLabel(boardId)`, `useDeleteLabel(boardId)`, `useSetCardLabel(cardId)` (`useLabels.ts`); `useChecklistItems(cardId)`, `useChecklistProgressForCards(cardIds)`, `useCreateChecklistItem(cardId)`, `useToggleChecklistItem(cardId)`, `useDeleteChecklistItem(cardId)` (`useChecklistItems.ts`); `useSearch(query)` (`useSearch.ts`); `useArchivedCards(boardId)`, `useRestoreCard(boardId)`, `useDeleteCardPermanently(boardId)` (`useCards.ts`). Consumed by Task 5–9's components.
 
-- [ ] **Step 1:** Write `src/hooks/useLabels.ts`:
+- [x] **Step 1:** Write `src/hooks/useLabels.ts`:
   ```ts
   import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
   import {
@@ -314,8 +314,8 @@
     });
   }
   ```
-- [ ] **Step 2:** Write `src/hooks/useChecklistItems.ts` (mirror shape, wrapping `src/db/checklistItems.ts`; `useChecklistProgressForCards(cardIds)` queryKey `["checklistProgress", cardIds]`; mutations invalidate `["checklistItems", cardId]` and `["checklistProgress"]`).
-- [ ] **Step 3:** Write `src/hooks/useSearch.ts`:
+- [x] **Step 2:** Write `src/hooks/useChecklistItems.ts` (mirror shape, wrapping `src/db/checklistItems.ts`; `useChecklistProgressForCards(cardIds)` queryKey `["checklistProgress", cardIds]`; mutations invalidate `["checklistItems", cardId]` and `["checklistProgress"]`).
+- [x] **Step 3:** Write `src/hooks/useSearch.ts`:
   ```ts
   import { useQuery } from "@tanstack/react-query";
   import { searchCards } from "../db/search";
@@ -328,7 +328,7 @@
     });
   }
   ```
-- [ ] **Step 4:** Add to `src/hooks/useCards.ts`:
+- [x] **Step 4:** Add to `src/hooks/useCards.ts`:
   ```ts
   export function useArchivedCards(boardId: number) {
     return useQuery({ queryKey: ["archivedCards", boardId], queryFn: () => listArchivedCards(boardId) });
@@ -354,7 +354,7 @@
   }
   ```
   (Import `listArchivedCards`, `restoreCard`, `deleteCardPermanently` from `../db/cards` alongside the existing imports.)
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
   ```bash
   git add src/hooks/useLabels.ts src/hooks/useChecklistItems.ts src/hooks/useSearch.ts src/hooks/useCards.ts
   git commit -m "Add label, checklist, search, and archive hooks"
@@ -368,8 +368,8 @@
 
 **Interfaces:** `<LabelPicker boardId={number} cardId={number} />`. Consumed by Task 8 (`CardDetailPanel`).
 
-- [ ] **Step 1:** Build a small popover (click a "+ Labels" button to open/close, no external popover library — a simple `useState` boolean and an absolutely-positioned `div`, dismissed by clicking its own backdrop or pressing `Escape`, matching the app's existing lightweight-modal patterns from `CardDetailPanel`). Contents: current card's labels as removable chips (`useCardLabels`, click × calls `useSetCardLabel(cardId).mutate({ labelId, on: false })`); the board's full label list (`useLabels(boardId)`) as toggleable chips (click toggles `useSetCardLabel`, comparing against the card's current label ids); a small inline form (text input + `<input type="color">` + "Adicionar" button) calling `useCreateLabel(boardId)`; a × per board-label row calling `useDeleteLabel(boardId)` to remove it everywhere.
-- [ ] **Step 2: Commit**
+- [x] **Step 1:** Build a small popover (click a "+ Labels" button to open/close, no external popover library — a simple `useState` boolean and an absolutely-positioned `div`, dismissed by clicking its own backdrop or pressing `Escape`, matching the app's existing lightweight-modal patterns from `CardDetailPanel`). Contents: current card's labels as removable chips (`useCardLabels`, click × calls `useSetCardLabel(cardId).mutate({ labelId, on: false })`); the board's full label list (`useLabels(boardId)`) as toggleable chips (click toggles `useSetCardLabel`, comparing against the card's current label ids); a small inline form (text input + `<input type="color">` + "Adicionar" button) calling `useCreateLabel(boardId)`; a × per board-label row calling `useDeleteLabel(boardId)` to remove it everywhere.
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/card-detail/LabelPicker.tsx
   git commit -m "Add LabelPicker for toggling and managing card labels"
@@ -383,8 +383,8 @@
 
 **Interfaces:** `<Checklist cardId={number} />`. Consumed by Task 8 (`CardDetailPanel`).
 
-- [ ] **Step 1:** List items (`useChecklistItems(cardId)`) each as a checkbox (`useToggleChecklistItem`) + text + a × (`useDeleteChecklistItem`); a "Progresso: done/total" line above the list; a text input + "Adicionar" button at the bottom (`useCreateChecklistItem`, `Enter` key also submits, same pattern as the board's "Novo card..." input).
-- [ ] **Step 2: Commit**
+- [x] **Step 1:** List items (`useChecklistItems(cardId)`) each as a checkbox (`useToggleChecklistItem`) + text + a × (`useDeleteChecklistItem`); a "Progresso: done/total" line above the list; a text input + "Adicionar" button at the bottom (`useCreateChecklistItem`, `Enter` key also submits, same pattern as the board's "Novo card..." input).
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/card-detail/Checklist.tsx
   git commit -m "Add Checklist for card checklist items"
@@ -398,9 +398,9 @@
 
 **Interfaces:** `Card` gains `labels?: Label[]` and `checklistProgress?: { done: number; total: number }` props (not the `Card` *type* — these stay separate component props). `List` and `BoardView` thread the batched maps down.
 
-- [ ] **Step 1:** In `BoardView.tsx`, batch-fetch `useLabelsForCards` and `useChecklistProgressForCards` once for all card ids currently on the board (`computedBoard.flatMap((l) => l.cards.map((c) => c.id))`), and pass the two resulting `Map`s down through `List` to `Card` (same prop-threading pattern already used for `onOpenDetail`).
-- [ ] **Step 2:** In `Card.tsx`, render label chips (small colored dots or pills, `title` attribute showing the name) above the title row if `labels.length > 0`, and a small "✓ done/total" badge next to the archive button if `checklistProgress.total > 0`.
-- [ ] **Step 3: Commit**
+- [x] **Step 1:** In `BoardView.tsx`, batch-fetch `useLabelsForCards` and `useChecklistProgressForCards` once for all card ids currently on the board (`computedBoard.flatMap((l) => l.cards.map((c) => c.id))`), and pass the two resulting `Map`s down through `List` to `Card` (same prop-threading pattern already used for `onOpenDetail`).
+- [x] **Step 2:** In `Card.tsx`, render label chips (small colored dots or pills, `title` attribute showing the name) above the title row if `labels.length > 0`, and a small "✓ done/total" badge next to the archive button if `checklistProgress.total > 0`.
+- [x] **Step 3: Commit**
   ```bash
   git add src/components/board/Card.tsx src/components/board/List.tsx src/components/board/BoardView.tsx
   git commit -m "Show label chips and checklist progress on the card face"
@@ -412,8 +412,8 @@
 
 **Files:** Modify `src/components/card-detail/CardDetailPanel.tsx`
 
-- [ ] **Step 1:** Add `<LabelPicker boardId={...} cardId={card.id} />` and `<Checklist cardId={card.id} />` sections to the panel, below the due-date field and above/below the description (`LabelPicker` near the top with the metadata, `Checklist` after the description). `CardDetailPanel` doesn't currently receive `boardId` — thread it down from `BoardView` as a new prop (`CardDetailPanel`'s `card.list_id` isn't enough to know the board id without another lookup, so pass `boardId` explicitly, same value `BoardView` already has).
-- [ ] **Step 2: Commit**
+- [x] **Step 1:** Add `<LabelPicker boardId={...} cardId={card.id} />` and `<Checklist cardId={card.id} />` sections to the panel, below the due-date field and above/below the description (`LabelPicker` near the top with the metadata, `Checklist` after the description). `CardDetailPanel` doesn't currently receive `boardId` — thread it down from `BoardView` as a new prop (`CardDetailPanel`'s `card.list_id` isn't enough to know the board id without another lookup, so pass `boardId` explicitly, same value `BoardView` already has).
+- [x] **Step 2: Commit**
   ```bash
   git add src/components/card-detail/CardDetailPanel.tsx src/components/board/BoardView.tsx
   git commit -m "Wire LabelPicker and Checklist into CardDetailPanel"
@@ -427,9 +427,9 @@
 
 **Interfaces:** `<ArchiveView boardId={number} boardName={string} onBack={() => void} />`.
 
-- [ ] **Step 1:** Build `ArchiveView`: header ("Arquivados — {boardName}" + a "Voltar" button calling `onBack`), list of `useArchivedCards(boardId)` each showing title + a "Restaurar" button (`useRestoreCard`) + a delete button implementing the two-click confirm pattern described in Global Constraints (local `useState` per-row: first click sets a `confirmingId` state and relabels that row's button "Confirmar exclusão?"; second click while `confirmingId === card.id` calls `useDeleteCardPermanently`; clicking elsewhere or a few seconds of inactivity resets `confirmingId` to `null`).
-- [ ] **Step 2:** In `App.tsx`, add `const [showArchive, setShowArchive] = useState(false)` and a "Arquivados" button next to `BoardSwitcher`; render `<ArchiveView .../>` instead of `<BoardView .../>` when `showArchive` is true, with `onBack={() => setShowArchive(false)}`.
-- [ ] **Step 3: Commit**
+- [x] **Step 1:** Build `ArchiveView`: header ("Arquivados — {boardName}" + a "Voltar" button calling `onBack`), list of `useArchivedCards(boardId)` each showing title + a "Restaurar" button (`useRestoreCard`) + a delete button implementing the two-click confirm pattern described in Global Constraints (local `useState` per-row: first click sets a `confirmingId` state and relabels that row's button "Confirmar exclusão?"; second click while `confirmingId === card.id` calls `useDeleteCardPermanently`; clicking elsewhere or a few seconds of inactivity resets `confirmingId` to `null`).
+- [x] **Step 2:** In `App.tsx`, add `const [showArchive, setShowArchive] = useState(false)` and a "Arquivados" button next to `BoardSwitcher`; render `<ArchiveView .../>` instead of `<BoardView .../>` when `showArchive` is true, with `onBack={() => setShowArchive(false)}`.
+- [x] **Step 3: Commit**
   ```bash
   git add src/components/archive/ArchiveView.tsx src/App.tsx
   git commit -m "Add ArchiveView with restore and confirmed permanent delete"
@@ -443,9 +443,9 @@
 
 **Interfaces:** `<CommandPalette onNavigate={(result: SearchResult) => void} onClose={() => void} />`.
 
-- [ ] **Step 1:** Build `CommandPalette`: full-screen backdrop (click closes) + a centered input (autofocus) + a live results list from `useSearch(query)` (debounce not required at this data scale — one query per keystroke against a local SQLite file is fine), each result showing the card title and "{list} · {board}" context; clicking a result or pressing `Enter` on the first result calls `onNavigate(result)`; `Escape` calls `onClose`. Same visual language as `CardDetailPanel` (backdrop + `framer-motion` fade, dark-purple surface).
-- [ ] **Step 2:** In `App.tsx`: add `const [paletteOpen, setPaletteOpen] = useState(false)`; a `useEffect` document `keydown` listener toggling it open on `Ctrl+K`/`Cmd+K` (`e.preventDefault()` so the browser's own address-bar-style shortcut, if any, doesn't fire); render `<CommandPalette>` (wrapped in `AnimatePresence`) when open, with `onNavigate` setting `activeBoardId` to `result.board_id`, closing the palette, exiting archive mode if active, and setting a new `pendingCardId` state that `BoardView` reads to auto-open that card's detail panel once its lists/cards have loaded (pass `initialSelectedCardId` as a new optional `BoardView` prop, consumed once in a `useEffect` that calls the existing `setSelectedCardId`).
-- [ ] **Step 3: Commit**
+- [x] **Step 1:** Build `CommandPalette`: full-screen backdrop (click closes) + a centered input (autofocus) + a live results list from `useSearch(query)` (debounce not required at this data scale — one query per keystroke against a local SQLite file is fine), each result showing the card title and "{list} · {board}" context; clicking a result or pressing `Enter` on the first result calls `onNavigate(result)`; `Escape` calls `onClose`. Same visual language as `CardDetailPanel` (backdrop + `framer-motion` fade, dark-purple surface).
+- [x] **Step 2:** In `App.tsx`: add `const [paletteOpen, setPaletteOpen] = useState(false)`; a `useEffect` document `keydown` listener toggling it open on `Ctrl+K`/`Cmd+K` (`e.preventDefault()` so the browser's own address-bar-style shortcut, if any, doesn't fire); render `<CommandPalette>` (wrapped in `AnimatePresence`) when open, with `onNavigate` setting `activeBoardId` to `result.board_id`, closing the palette, exiting archive mode if active, and setting a new `pendingCardId` state that `BoardView` reads to auto-open that card's detail panel once its lists/cards have loaded (pass `initialSelectedCardId` as a new optional `BoardView` prop, consumed once in a `useEffect` that calls the existing `setSelectedCardId`).
+- [x] **Step 3: Commit**
   ```bash
   git add src/components/search/CommandPalette.tsx src/App.tsx src/components/board/BoardView.tsx
   git commit -m "Add global Ctrl+K command palette with cross-board navigation"
@@ -457,9 +457,9 @@
 
 **Files:** none (checklist only).
 
-- [ ] **Step 1:** `npm install && npm run tauri dev`. Confirm no regressions in board/drag/detail-panel behavior from Fases 2–4.
-- [ ] **Step 2: Labels.** Open a card, create 2-3 labels with different colors, toggle a couple onto the card, close the panel — confirm the chips show on the card face. Delete one label from the picker — confirm it disappears from every card that had it (cascade) and from the picker's list.
-- [ ] **Step 3: Checklist.** Add several checklist items to a card, toggle a few done, delete one. Confirm the "done/total" badge on the card face matches and updates live.
-- [ ] **Step 4: Archive.** Archive a card from the board (existing × button). Open "Arquivados" — confirm it's listed. Click Restaurar — confirm it reappears on the board in roughly its old spot. Archive it again, then delete permanently: confirm the button requires two clicks (first shows "Confirmar exclusão?"), and after confirming, the card is gone for good (reopen the app to be sure it didn't come back).
-- [ ] **Step 5: Search.** Press `Ctrl+K` from anywhere. Search for a card title that exists on a *different* board than the currently active one. Confirm selecting it switches boards and opens that card's detail panel. Confirm `Esc` closes the palette without navigating.
-- [ ] **Step 6: Report back.** Tell me what you saw. If everything matches, Fase 5 — and the whole master spec — is done.
+- [x] **Step 1:** `npm install && npm run tauri dev`. Confirm no regressions in board/drag/detail-panel behavior from Fases 2–4.
+- [x] **Step 2: Labels.** Open a card, create 2-3 labels with different colors, toggle a couple onto the card, close the panel — confirm the chips show on the card face. Delete one label from the picker — confirm it disappears from every card that had it (cascade) and from the picker's list.
+- [x] **Step 3: Checklist.** Add several checklist items to a card, toggle a few done, delete one. Confirm the "done/total" badge on the card face matches and updates live.
+- [x] **Step 4: Archive.** Archive a card from the board (existing × button). Open "Arquivados" — confirm it's listed. Click Restaurar — confirm it reappears on the board in roughly its old spot. Archive it again, then delete permanently: confirm the button requires two clicks (first shows "Confirmar exclusão?"), and after confirming, the card is gone for good (reopen the app to be sure it didn't come back).
+- [x] **Step 5: Search.** Press `Ctrl+K` from anywhere. Search for a card title that exists on a *different* board than the currently active one. Confirm selecting it switches boards and opens that card's detail panel. Confirm `Esc` closes the palette without navigating.
+- [x] **Step 6: Report back.** Tell me what you saw. If everything matches, Fase 5 — and the whole master spec — is done.

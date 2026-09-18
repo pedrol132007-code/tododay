@@ -15,9 +15,19 @@ interface ListProps {
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
+  isHighlighted?: boolean;
+  registerRef?: (id: number, node: HTMLDivElement | null) => void;
 }
 
-export function List({ list, cards, onOpenDetail, labelsByCard, checklistProgressByCard }: ListProps) {
+export function List({
+  list,
+  cards,
+  onOpenDetail,
+  labelsByCard,
+  checklistProgressByCard,
+  isHighlighted,
+  registerRef,
+}: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(list.board_id);
@@ -46,12 +56,21 @@ export function List({ list, cards, onOpenDetail, labelsByCard, checklistProgres
   }
 
   return (
-    <div ref={sortable.setNodeRef} style={style} className="w-72 shrink-0">
+    <div
+      ref={(node) => {
+        sortable.setNodeRef(node);
+        registerRef?.(list.id, node);
+      }}
+      style={style}
+      className="w-72 shrink-0"
+    >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
+        className={`flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4 transition-shadow duration-300 ${
+          isHighlighted ? "ring-2 ring-accent-yellow" : ""
+        }`}
       >
         <div
           ref={sortable.setActivatorNodeRef}

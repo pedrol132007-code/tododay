@@ -13,6 +13,7 @@ export default function App() {
   const [showArchive, setShowArchive] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
+  const [pendingListId, setPendingListId] = useState<number | null>(null);
 
   useEffect(() => {
     if (activeBoardId === null && boards && boards.length > 0) {
@@ -35,6 +36,7 @@ export default function App() {
     setActiveBoardId(result.board_id);
     setShowArchive(false);
     setPendingCardId(result.type === "card" ? result.id : null);
+    setPendingListId(result.type === "list" ? result.id : null);
     setPaletteOpen(false);
   }
 
@@ -63,6 +65,8 @@ export default function App() {
             boardName={activeBoard.name}
             initialSelectedCardId={pendingCardId}
             onInitialCardHandled={() => setPendingCardId(null)}
+            initialHighlightListId={pendingListId}
+            onInitialListHandled={() => setPendingListId(null)}
           />
         )
       ) : (

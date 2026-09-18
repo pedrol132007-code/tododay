@@ -90,11 +90,20 @@ interface BoardViewProps {
   boardName: string;
   initialSelectedCardId?: number | null;
   onInitialCardHandled?: () => void;
+  initialHighlightListId?: number | null;
+  onInitialListHandled?: () => void;
 }
 
 type BoardList = ListType & { cards: CardType[] };
 
-export function BoardView({ boardId, boardName, initialSelectedCardId, onInitialCardHandled }: BoardViewProps) {
+export function BoardView({
+  boardId,
+  boardName,
+  initialSelectedCardId,
+  onInitialCardHandled,
+  initialHighlightListId,
+  onInitialListHandled,
+}: BoardViewProps) {
   const { data: lists, isLoading, error } = useLists(boardId);
   const listData = lists ?? [];
   const cardQueries = useCardsByListIds(listData.map((list) => list.id));
@@ -120,6 +129,25 @@ export function BoardView({ boardId, boardName, initialSelectedCardId, onInitial
     setSelectedCardId(initialSelectedCardId);
     onInitialCardHandled?.();
   }, [initialSelectedCardId, computedBoard, onInitialCardHandled]);
+
+  const listRefs = useRef(new Map<number, HTMLDivElement>());
+  const [highlightedListId, setHighlightedListId] = useState<number | null>(null);
+
+  function registerListRef(id: number, node: HTMLDivElement | null) {
+    if (node) listRefs.current.set(id, node);
+    else listRefs.current.delete(id);
+  }
+
+  useEffect(() => {
+    if (initialHighlightListId == null) return;
+    const node = listRefs.current.get(initialHighlightListId);
+    if (!node) return;
+    node.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    setHighlightedListId(initialHighlightListId);
+    onInitialListHandled?.();
+    const timer = setTimeout(() => setHighlightedListId(null), 1600);
+    return () => clearTimeout(timer);
+  }, [initialHighlightListId, computedBoard, onInitialListHandled]);
 
   const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
   const { data: labelsByCard } = useLabelsForCards(allCardIds);
@@ -353,6 +381,8 @@ export function BoardView({ boardId, boardName, initialSelectedCardId, onInitial
                   onOpenDetail={setSelectedCardId}
                   labelsByCard={labelsByCard ?? new Map()}
                   checklistProgressByCard={checklistProgressByCard ?? new Map()}
+                  isHighlighted={list.id === highlightedListId}
+                  registerRef={registerListRef}
                 />
               ))
             )}

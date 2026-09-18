@@ -12,7 +12,7 @@ interface CardProps {
 export function Card({ card }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
-  const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
+  const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: `card-${card.id}`,
     data: { type: "card", listId: card.list_id },
   });
@@ -25,7 +25,10 @@ export function Card({ card }: CardProps) {
 
   return (
     <div
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        setActivatorNodeRef(node);
+      }}
       style={style}
       {...attributes}
       {...listeners}

@@ -51,6 +51,7 @@ export function List({ list, cards }: ListProps) {
         className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
       >
         <div
+          ref={sortable.setActivatorNodeRef}
           {...sortable.attributes}
           {...sortable.listeners}
           className="flex cursor-grab items-center justify-between gap-2 touch-none active:cursor-grabbing"

@@ -158,14 +158,6 @@ export function BoardView({
     return () => clearTimeout(timer);
   }, [highlightedListId]);
 
-  // Switching boards reuses this same BoardView instance (App.tsx doesn't key it by boardId), so
-  // a highlight left over from a search navigation on the previous board must be cleared
-  // explicitly — otherwise the fixed-position glow can briefly reappear once a list with the same
-  // id (or the previous board itself) comes back into listRefs.
-  useEffect(() => {
-    setHighlightedListId(null);
-  }, [boardId]);
-
   // Tracks the highlighted column's on-screen position every frame (not just once) so the glow
   // — rendered `position: fixed` to escape the board row's scroll clipping — keeps following the
   // column while `scrollIntoView`'s smooth-scroll animation is still moving it.

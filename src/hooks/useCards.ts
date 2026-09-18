@@ -6,6 +6,8 @@ import {
   listCards,
   moveCardToList,
   renameCard,
+  updateCardDescription,
+  updateCardDueDate,
   updateCardPosition,
   updateCardPositions,
 } from "../db/cards";
@@ -48,6 +50,24 @@ export function useRenameCard(listId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, title }: { id: number; title: string }) => renameCard(id, title),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardDescription(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, description }: { id: number; description: string }) =>
+      updateCardDescription(id, description),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardDueDate(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, dueDate }: { id: number; dueDate: string | null }) =>
+      updateCardDueDate(id, dueDate),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
   });
 }

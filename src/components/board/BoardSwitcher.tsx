@@ -26,7 +26,7 @@ export function BoardSwitcher({ activeBoardId, onSelect }: BoardSwitcherProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-border bg-bg-surface px-4 py-2">
+    <div className="flex flex-1 items-center gap-2 px-4 py-2">
       {(boards ?? []).map((board) => (
         <button
           key={board.id}

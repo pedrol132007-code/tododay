@@ -79,6 +79,8 @@ const keyboardCoordinateGetter: KeyboardCoordinateGetter = (event, args) => {
   return newRect ? { x: newRect.left, y: newRect.top } : undefined;
 };
 
+type DragItemData = { type?: string; listId?: number };
+
 interface BoardViewProps {
   boardId: number;
   boardName: string;
@@ -128,7 +130,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
   function handleDragStart(event: DragStartEvent) {
     dragEpochRef.current += 1;
-    const data = event.active.data.current as { type?: string } | undefined;
+    const data = event.active.data.current as DragItemData | undefined;
     setDragPreview(computedBoard);
     if (data?.type === "card") {
       const activeId = String(event.active.id);
@@ -144,7 +146,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
   function handleDragOver(event: DragOverEvent) {
     const { active, over } = event;
     if (!over) return;
-    const activeData = active.data.current as { type?: string } | undefined;
+    const activeData = active.data.current as DragItemData | undefined;
     if (activeData?.type !== "card") return;
 
     const activeId = String(active.id);
@@ -156,7 +158,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
       const sourceIndex = prev.findIndex((l) => l.cards.some((c) => `card-${c.id}` === activeId));
       if (sourceIndex === -1) return prev;
 
-      const overData = over.data.current as { type?: string; listId?: number } | undefined;
+      const overData = over.data.current as DragItemData | undefined;
       const targetListId =
         overData?.type === "card"
           ? prev.flatMap((l) => l.cards).find((c) => `card-${c.id}` === overId)?.list_id
@@ -197,7 +199,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    const activeData = active.data.current as { type?: string } | undefined;
+    const activeData = active.data.current as DragItemData | undefined;
     // Each branch below is responsible for clearing dragPreview exactly once: either
     // synchronously (no real move happened, so there's nothing to wait for) or after its
     // mutation(s) settle (so renderedBoard never falls back to the stale computedBoard while
@@ -238,7 +240,7 @@ export function BoardView({ boardId, boardName }: BoardViewProps) {
       }
     }
 
-    if (activeData?.type === "card" && dragPreview && dragSourceListId !== null) {
+    if (activeData?.type === "card" && over && dragPreview && dragSourceListId !== null) {
       const activeId = String(active.id);
       const finalPreview = dragPreview;
 

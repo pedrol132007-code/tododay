@@ -43,7 +43,6 @@ export function InlineEditableText({ value, onSave, className }: InlineEditableT
   return (
     <span
       className={`rounded-lg px-2 py-1 hover:bg-bg-elevated ${className ?? ""}`}
-      onClick={(e) => e.stopPropagation()}
       onDoubleClick={() => {
         setDraft(value);
         setEditing(true);

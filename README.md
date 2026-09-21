@@ -85,6 +85,16 @@ Ver [`src-tauri/migrations/0001_init.sql`](src-tauri/migrations/0001_init.sql), 
 - `label` e `card_label` (N:N entre cards e labels de um board)
 - `checklist_item` (itens de checklist por card)
 
+## Onde ficam seus dados
+
+Tudo local, em um único arquivo SQLite (`kanban.db`) criado automaticamente na primeira execução, em `%APPDATA%\com.pedroromeiro.tododay\kanban.db`.
+
+- **Sem conta, sem nuvem, sem sincronização** — cada usuário do Windows na máquina tem seu próprio banco, e ele não se comunica com nenhum servidor.
+- **Sobrevive a updates:** instalar uma versão nova por cima não apaga nem recria o banco.
+- **Sobrevive a desinstalação:** o instalador não remove `%APPDATA%`, então reinstalar o app recupera os dados antigos.
+- **Sem sync entre máquinas:** usar em dois PCs significa dois bancos independentes.
+- **Backup/migração manual:** para levar seus dados para outro PC (ou fazer backup), basta copiar esse arquivo `kanban.db` — não há exportação nativa (CSV/JSON) ainda.
+
 ## Status
 
 Projeto pessoal, desenvolvido em fases — todas as 5 fases planejadas (setup, CRUD, drag and drop, painel de detalhe, busca/labels/checklist/arquivamento) estão concluídas. Detalhes de cada fase em [`docs/superpowers/plans/`](docs/superpowers/plans/) e o spec completo em [`docs/superpowers/specs/2026-09-17-kanban-desktop-design.md`](docs/superpowers/specs/2026-09-17-kanban-desktop-design.md).

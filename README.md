@@ -4,6 +4,14 @@ Kanban pessoal para desktop. Offline-first, sem nuvem, sem login — só você e
 
 Construído com [Tauri v2](https://v2.tauri.app/) (Rust) + React 18 + TypeScript, com um banco SQLite local que vive inteiramente na sua máquina.
 
+## Download (Windows)
+
+**Não precisa clonar o repositório nem instalar nada de desenvolvimento para usar o app.**
+
+👉 Baixe o instalador pronto na [página de Releases](https://github.com/pedrol132007-code/tododay/releases/latest) — `Tododay_x.x.x_x64-setup.exe` (ou o `.msi`, equivalente). Execute e pronto: o instalador cuida do WebView2 Runtime automaticamente.
+
+A seção **"Como rodar em dev"** abaixo é só para quem vai *desenvolver* o app (compilar do código-fonte) — não é necessária para simplesmente usá-lo.
+
 ## Funcionalidades
 
 - **Boards e colunas** com CRUD completo e reordenação
@@ -26,7 +34,7 @@ Construído com [Tauri v2](https://v2.tauri.app/) (Rust) + React 18 + TypeScript
 | Server state | TanStack Query                                                  |
 | Testes       | Vitest                                                           |
 
-## Como rodar em dev
+## Como rodar em dev (só para quem for desenvolver)
 
 Pré-requisitos (uma vez só):
 

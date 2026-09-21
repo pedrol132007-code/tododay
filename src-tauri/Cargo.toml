@@ -1,5 +1,5 @@
 [package]
-name = "kanban-pessoal"
+name = "tododay"
 version = "0.1.0"
 description = "Kanban pessoal offline-first"
 edition = "2021"

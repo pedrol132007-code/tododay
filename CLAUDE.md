@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Kanban pessoal desktop — single-user, offline-first, sem nuvem. Tauri v2 (Rust) + React 18 + TypeScript + Vite + Tailwind + SQLite (`@tauri-apps/plugin-sql`).
+Tododay — kanban pessoal desktop, single-user, offline-first, sem nuvem. Tauri v2 (Rust) + React 18 + TypeScript + Vite + Tailwind + SQLite (`@tauri-apps/plugin-sql`).
 
 ## Convenções
 

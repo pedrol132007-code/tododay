@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#251c3d"/>
+      <stop offset="100%" stop-color="#140f22"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#d8cbfd"/>
+      <stop offset="45%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="224" fill="url(#bg)"/>
+
+  <g transform="translate(512 512) rotate(-22)">
+    <!-- leaf blade: long and pointed at top and bottom -->
+    <path d="M 0 -300
+             C 62 -258 130 -160 130 -40
+             C 130 90 92 218 0 300
+             C -92 218 -130 90 -130 -40
+             C -130 -160 -62 -258 0 -300 Z"
+          fill="url(#leaf)"/>
+
+    <!-- central vein -->
+    <path d="M 0 -278 C 8 -120 8 100 0 286"
+          fill="none" stroke="#4c1d95" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- side veins, chevrons off the spine -->
+    <g stroke="#4c1d95" stroke-width="8" stroke-linecap="round" opacity="0.45" fill="none">
+      <path d="M 2 -188 C -30 -172 -60 -150 -82 -122"/>
+      <path d="M 3 -188 C 35 -172 65 -150 87 -122"/>
+      <path d="M 3 -84 C -32 -64 -64 -34 -88 4"/>
+      <path d="M 4 -84 C 39 -64 71 -34 95 4"/>
+      <path d="M 3 24 C -30 48 -58 80 -78 116"/>
+      <path d="M 4 24 C 37 48 65 80 85 116"/>
+    </g>
+
+    <!-- highlight -->
+    <path d="M -24 -250 C -100 -200 -132 -90 -122 20"
+          fill="none" stroke="#f5f1ff" stroke-width="15" stroke-linecap="round" opacity="0.3"/>
+  </g>
+</svg>

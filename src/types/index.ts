@@ -78,6 +78,21 @@ export interface TeamMember {
   joined_at: string;
 }
 
+export interface TeamInvite {
+  id: number;
+  team_id: number;
+  token: string;
+  label: string;
+  role: MemberRole;
+  job_title: string;
+  created_by: string | null;
+  created_at: string;
+  expires_at: string;
+  used_by: string | null;
+  used_at: string | null;
+  revoked_at: string | null;
+}
+
 // id é o uuid de auth.users.
 export interface Profile {
   id: string;

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBoards, useCreateBoard } from "../../hooks/useBoards";
+import { useCanEdit } from "../../hooks/useCanEdit";
 
 interface BoardSwitcherProps {
   teamId: number;
@@ -11,6 +12,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
   const { data: boards } = useBoards(teamId);
   const createBoard = useCreateBoard(teamId);
   const [creating, setCreating] = useState(false);
+  const canEdit = useCanEdit();
   const [newBoardName, setNewBoardName] = useState("");
 
   function handleCreate() {
@@ -42,7 +44,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
           {board.name}
         </button>
       ))}
-      {creating ? (
+      {!canEdit ? null : creating ? (
         <input
           autoFocus
           value={newBoardName}

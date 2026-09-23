@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import type { Card as CardType, Label } from "../../types";
 import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
+import { useCanEdit } from "../../hooks/useCanEdit";
 import { InlineEditableText } from "../ui/InlineEditableText";
 
 interface CardProps {
@@ -15,6 +16,7 @@ interface CardProps {
 export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
+  const canEdit = useCanEdit();
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: `card-${card.id}`,
     data: { type: "card", listId: card.list_id },
@@ -36,7 +38,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
       {...attributes}
       {...listeners}
       onClick={() => onOpenDetail(card.id)}
-      className="cursor-grab touch-none active:cursor-grabbing"
+      className={canEdit ? "cursor-grab touch-none active:cursor-grabbing" : "cursor-pointer"}
     >
       <motion.div
         initial={{ opacity: 0, y: 4 }}
@@ -61,6 +63,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
             value={card.title}
             onSave={(title) => renameCard.mutate({ id: card.id, title })}
             className="flex-1"
+            readOnly={!canEdit}
           />
           <div className="flex items-center gap-1">
             {checklistProgress && checklistProgress.total > 0 && (
@@ -68,17 +71,19 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
                 {checklistProgress.done}/{checklistProgress.total}
               </span>
             )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                archiveCard.mutate(card.id);
-              }}
-              className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base"
-              aria-label="Arquivar card"
-            >
-              ×
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  archiveCard.mutate(card.id);
+                }}
+                className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base"
+                aria-label="Arquivar card"
+              >
+                ×
+              </button>
+            )}
           </div>
         </div>
       </motion.div>

@@ -4,9 +4,10 @@ interface InlineEditableTextProps {
   value: string;
   onSave: (value: string) => void;
   className?: string;
+  readOnly?: boolean;
 }
 
-export function InlineEditableText({ value, onSave, className }: InlineEditableTextProps) {
+export function InlineEditableText({ value, onSave, className, readOnly }: InlineEditableTextProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -21,6 +22,10 @@ export function InlineEditableText({ value, onSave, className }: InlineEditableT
   function cancel() {
     setDraft(value);
     setEditing(false);
+  }
+
+  if (readOnly) {
+    return <span className={`px-2 py-1 ${className ?? ""}`}>{value}</span>;
   }
 
   if (editing) {

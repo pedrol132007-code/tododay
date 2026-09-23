@@ -6,15 +6,28 @@ interface MarkdownEditorProps {
   value: string;
   onSave: (value: string) => void;
   onSaveAndClose: () => void;
+  readOnly?: boolean;
 }
 
-export function MarkdownEditor({ value, onSave, onSaveAndClose }: MarkdownEditorProps) {
+export function MarkdownEditor({ value, onSave, onSaveAndClose, readOnly }: MarkdownEditorProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
   function commit() {
     if (draft !== value) onSave(draft);
     setEditing(false);
+  }
+
+  if (readOnly) {
+    return (
+      <div className="min-h-[80px] p-3 text-sm text-text-primary">
+        {value.trim() ? (
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
+        ) : (
+          <span className="text-text-muted">Sem descrição.</span>
+        )}
+      </div>
+    );
   }
 
   if (editing) {

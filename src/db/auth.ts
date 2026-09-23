@@ -1,5 +1,6 @@
 import type { AuthError, Session } from "@supabase/supabase-js";
 import { initialAuthHash, supabase } from "./supabase";
+import { redirectUrlWithInvite } from "../lib/pendingInvite";
 import type { Profile } from "../types";
 
 // Links de e-mail voltam para a origem atual (em dev, http://localhost:1420),
@@ -40,7 +41,7 @@ export async function signUp(email: string, password: string, displayName: strin
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { display_name: displayName }, emailRedirectTo: redirectTo },
+    options: { data: { display_name: displayName }, emailRedirectTo: redirectUrlWithInvite() },
   });
   if (error) fail(error);
   // Com confirmação de e-mail ligada, um e-mail já cadastrado não dá erro:

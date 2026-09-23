@@ -7,6 +7,7 @@ import {
   useLabels,
   useSetCardLabel,
 } from "../../hooks/useLabels";
+import { useCanEdit } from "../../hooks/useCanEdit";
 
 interface LabelPickerProps {
   boardId: number;
@@ -23,6 +24,7 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
   const createLabel = useCreateLabel(boardId);
   const deleteLabel = useDeleteLabel(boardId);
   const setCardLabel = useSetCardLabel(cardId);
+  const canEdit = useCanEdit();
 
   const cardLabelIds = new Set((cardLabels ?? []).map((l) => l.id));
 
@@ -44,27 +46,33 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
             className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-bg-base"
           >
             {label.name}
-            <button
-              type="button"
-              onClick={() => setCardLabel.mutate({ labelId: label.id, on: false })}
-              aria-label={`Remover label ${label.name}`}
-              className="hover:opacity-70"
-            >
-              ×
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setCardLabel.mutate({ labelId: label.id, on: false })}
+                aria-label={`Remover label ${label.name}`}
+                className="hover:opacity-70"
+              >
+                ×
+              </button>
+            )}
           </span>
         ))}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="rounded-full border border-border px-2 py-0.5 text-xs text-text-primary hover:bg-bg-elevated"
-        >
-          + Labels
-        </button>
+        {canEdit ? (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="rounded-full border border-border px-2 py-0.5 text-xs text-text-primary hover:bg-bg-elevated"
+          >
+            + Labels
+          </button>
+        ) : (
+          (cardLabels ?? []).length === 0 && <span className="text-xs">Nenhuma.</span>
+        )}
       </div>
 
       <AnimatePresence>
-        {open && (
+        {open && canEdit && (
           <motion.div
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}

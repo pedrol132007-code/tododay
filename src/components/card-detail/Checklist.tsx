@@ -5,6 +5,7 @@ import {
   useDeleteChecklistItem,
   useToggleChecklistItem,
 } from "../../hooks/useChecklistItems";
+import { useCanEdit } from "../../hooks/useCanEdit";
 
 interface ChecklistProps {
   cardId: number;
@@ -16,6 +17,7 @@ export function Checklist({ cardId }: ChecklistProps) {
   const toggleItem = useToggleChecklistItem(cardId);
   const deleteItem = useDeleteChecklistItem(cardId);
   const [newText, setNewText] = useState("");
+  const canEdit = useCanEdit();
 
   const done = (items ?? []).filter((i) => i.done).length;
   const total = items?.length ?? 0;
@@ -46,40 +48,45 @@ export function Checklist({ cardId }: ChecklistProps) {
             <input
               type="checkbox"
               checked={item.done}
+              disabled={!canEdit}
               onChange={(e) => toggleItem.mutate({ id: item.id, done: e.target.checked })}
               className="accent-accent-purple"
             />
             <span className={`flex-1 text-sm ${item.done ? "text-text-muted line-through" : "text-text-primary"}`}>
               {item.text}
             </span>
-            <button
-              type="button"
-              onClick={() => deleteItem.mutate(item.id)}
-              aria-label="Excluir item"
-              className="text-text-muted hover:text-accent-pink"
-            >
-              ×
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => deleteItem.mutate(item.id)}
+                aria-label="Excluir item"
+                className="text-text-muted hover:text-accent-pink"
+              >
+                ×
+              </button>
+            )}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <input
-          value={newText}
-          onChange={(e) => setNewText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-          placeholder="Novo item..."
-          className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-        />
-        <button
-          type="button"
-          onClick={handleAdd}
-          className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-        >
-          +
-        </button>
-      </div>
+      {canEdit && (
+        <div className="flex gap-2">
+          <input
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="Novo item..."
+            className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+          >
+            +
+          </button>
+        </div>
+      )}
     </div>
   );
 }

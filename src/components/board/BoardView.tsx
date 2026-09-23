@@ -34,6 +34,7 @@ import {
 import { useLabelsForCards } from "../../hooks/useLabels";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
+import { useCanEdit } from "../../hooks/useCanEdit";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
 
@@ -114,6 +115,7 @@ export function BoardView({
   const updateCardPositions = useUpdateCardPositions();
   const moveCardToList = useMoveCardToList();
   const [newListName, setNewListName] = useState("");
+  const canEdit = useCanEdit();
 
   const computedBoard: BoardList[] = listData.map((list, index) => ({
     ...list,
@@ -385,7 +387,8 @@ export function BoardView({
     <div className="flex h-full flex-col p-6">
       <h1 className="mb-6 text-2xl font-semibold text-text-primary">{boardName}</h1>
       <DndContext
-        sensors={sensors}
+        // Sem sensores não há arraste: leitores só abrem os cards.
+        sensors={canEdit ? sensors : []}
         collisionDetection={(args) => (args.pointerCoordinates ? pointerWithin(args) : closestCenter(args))}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
@@ -415,22 +418,24 @@ export function BoardView({
               ))
             )}
           </SortableContext>
-          <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
-            <input
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddList()}
-              placeholder="Nova coluna..."
-              className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-            />
-            <button
-              type="button"
-              onClick={handleAddList}
-              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-            >
-              + Adicionar coluna
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
+              <input
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddList()}
+                placeholder="Nova coluna..."
+                className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+              />
+              <button
+                type="button"
+                onClick={handleAddList}
+                className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+              >
+                + Adicionar coluna
+              </button>
+            </div>
+          )}
         </div>
         <DragOverlay>
           {activeCard ? (

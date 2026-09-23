@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
 import { useRenameCard, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
+import { useCanEdit } from "../../hooks/useCanEdit";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
@@ -17,6 +18,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const renameCard = useRenameCard(card.list_id);
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
+  const canEdit = useCanEdit();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -48,6 +50,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             value={card.title}
             onSave={(title) => renameCard.mutate({ id: card.id, title })}
             className="text-xl font-semibold"
+            readOnly={!canEdit}
           />
           <button
             type="button"
@@ -64,6 +67,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
           <input
             type="date"
             value={card.due_date ?? ""}
+            disabled={!canEdit}
             onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
             className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
           />
@@ -77,6 +81,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             value={card.description}
             onSave={(description) => updateDescription.mutate({ id: card.id, description })}
             onSaveAndClose={onClose}
+            readOnly={!canEdit}
           />
         </div>
 

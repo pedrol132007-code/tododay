@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import type { Card as CardType, Label, List as ListType } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
+import { useCanEdit } from "../../hooks/useCanEdit";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
 
@@ -31,6 +32,7 @@ export function List({
   const renameList = useRenameList(list.board_id);
   const deleteList = useDeleteList(list.board_id);
   const [newCardTitle, setNewCardTitle] = useState("");
+  const canEdit = useCanEdit();
 
   const canDelete = cardCount !== undefined && cardCount === 0;
 
@@ -72,23 +74,26 @@ export function List({
           ref={sortable.setActivatorNodeRef}
           {...sortable.attributes}
           {...sortable.listeners}
-          className="flex cursor-grab items-center justify-between gap-2 touch-none active:cursor-grabbing"
+          className={`flex items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
           <InlineEditableText
             value={list.name}
             onSave={(name) => renameList.mutate({ id: list.id, name })}
             className="text-lg font-semibold"
+            readOnly={!canEdit}
           />
-          <button
-            type="button"
-            disabled={!canDelete}
-            onClick={() => deleteList.mutate(list.id)}
-            title={canDelete ? "Excluir coluna" : "Mova ou arquive os cards antes de excluir"}
-            className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
-            aria-label="Excluir coluna"
-          >
-            ×
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              disabled={!canDelete}
+              onClick={() => deleteList.mutate(list.id)}
+              title={canDelete ? "Excluir coluna" : "Mova ou arquive os cards antes de excluir"}
+              className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+              aria-label="Excluir coluna"
+            >
+              ×
+            </button>
+          )}
         </div>
 
         <div ref={droppable.setNodeRef} className="flex flex-col gap-2">
@@ -111,22 +116,24 @@ export function List({
           </SortableContext>
         </div>
 
-        <div className="flex gap-2">
-          <input
-            value={newCardTitle}
-            onChange={(e) => setNewCardTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
-            placeholder="Novo card..."
-            className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-          />
-          <button
-            type="button"
-            onClick={handleAddCard}
-            className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-          >
-            +
-          </button>
-        </div>
+        {canEdit && (
+          <div className="flex gap-2">
+            <input
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
+              placeholder="Novo card..."
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+            />
+            <button
+              type="button"
+              onClick={handleAddCard}
+              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+            >
+              +
+            </button>
+          </div>
+        )}
       </motion.div>
     </div>
   );

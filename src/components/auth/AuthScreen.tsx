@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { AuthFailure, requestPasswordReset, signIn, signUp } from "../../db/auth";
 import { AuthLayout, Field, FormError, LinkButton, Notice, SubmitButton } from "./AuthLayout";
+import { getPendingInvite } from "../../lib/pendingInvite";
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -11,7 +12,9 @@ const titles: Record<Mode, string> = {
 };
 
 export function AuthScreen({ initialError }: { initialError: string | null }) {
-  const [mode, setMode] = useState<Mode>("login");
+  // Quem chega por link de convite quase sempre ainda não tem conta.
+  const hasInvite = getPendingInvite() !== null;
+  const [mode, setMode] = useState<Mode>(hasInvite ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -71,6 +74,12 @@ export function AuthScreen({ initialError }: { initialError: string | null }) {
 
   return (
     <AuthLayout title={titles[mode]}>
+      {hasInvite && mode !== "forgot" && (
+        <p className="mb-4 rounded-xl bg-accent-purple/10 px-3 py-2 text-sm text-text-primary">
+          Você recebeu um convite para uma equipe.{" "}
+          {mode === "signup" ? "Crie sua conta para aceitar." : "Entre para aceitar."}
+        </p>
+      )}
       <form onSubmit={handleSubmit}>
         <FormError message={error} />
         {mode === "signup" && (

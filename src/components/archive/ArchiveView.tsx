@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
+import { useCanEdit } from "../../hooks/useCanEdit";
 
 interface ArchiveViewProps {
   boardId: number;
@@ -13,6 +14,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
   const restoreCard = useRestoreCard(boardId);
   const deleteCardPermanently = useDeleteCardPermanently(boardId);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const canEdit = useCanEdit();
 
   return (
     <div className="flex h-full flex-col p-6">
@@ -42,6 +44,8 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
               className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-elevated px-3 py-2"
             >
               <span className="flex-1 text-text-primary">{card.title}</span>
+              {canEdit && (
+              <>
               <button
                 type="button"
                 onClick={() => restoreCard.mutate(card.id)}
@@ -66,6 +70,8 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
               >
                 {confirmingId === card.id ? "Confirmar exclusão?" : "Excluir"}
               </button>
+              </>
+              )}
             </motion.div>
           ))}
         </div>

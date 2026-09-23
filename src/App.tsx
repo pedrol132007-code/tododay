@@ -9,6 +9,10 @@ import { UserMenu } from "./components/auth/UserMenu";
 import { CommandPalette } from "./components/search/CommandPalette";
 import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
+import { TeamView } from "./components/team/TeamView";
+import { InviteScreen } from "./components/team/InviteScreen";
+import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
+import { CanEditContext } from "./hooks/useCanEdit";
 import type { MyTeam, SearchResult } from "./types";
 
 const ACTIVE_TEAM_KEY = "tododay.activeTeamId";
@@ -33,12 +37,25 @@ function storeTeamId(teamId: number) {
 export default function App({ userId }: { userId: string }) {
   const { data: teams, isError, refetch } = useMyTeams(userId);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(readStoredTeamId);
+  const [inviteToken, setInviteToken] = useState(getPendingInvite);
 
   function selectTeam(teamId: number) {
     setSelectedTeamId(teamId);
     storeTeamId(teamId);
   }
 
+  if (inviteToken) {
+    return (
+      <InviteScreen
+        token={inviteToken}
+        onDone={(teamId) => {
+          clearPendingInvite();
+          setInviteToken(null);
+          if (teamId !== null) selectTeam(teamId);
+        }}
+      />
+    );
+  }
   if (isError) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-3 bg-bg-base text-text-muted">
@@ -71,7 +88,7 @@ interface TeamWorkspaceProps {
 function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps) {
   const { data: boards } = useBoards(team.id);
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
-  const [showArchive, setShowArchive] = useState(false);
+  const [view, setView] = useState<"board" | "archive" | "team">("board");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
@@ -95,7 +112,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
 
   function handleNavigate(result: SearchResult) {
     setActiveBoardId(result.board_id);
-    setShowArchive(false);
+    setView("board");
     setPendingCardId(result.type === "card" ? result.id : null);
     setPendingListId(result.type === "list" ? result.id : null);
     setPaletteOpen(false);
@@ -114,25 +131,37 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
 
   return (
+    <CanEditContext.Provider value={team.role !== "viewer"}>
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
         <div className="h-5 w-px shrink-0 bg-border" />
         <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} />
-        {activeBoard && (
+        {activeBoard && view !== "team" && (
           <button
             type="button"
-            onClick={() => setShowArchive((v) => !v)}
-            className="mr-4 shrink-0 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+            onClick={() => setView((v) => (v === "archive" ? "board" : "archive"))}
+            className="shrink-0 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
           >
-            {showArchive ? "Board" : "Arquivados"}
+            {view === "archive" ? "Board" : "Arquivados"}
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === "team" ? "board" : "team"))}
+          className={`mx-2 shrink-0 rounded-lg px-3 py-1 text-sm hover:bg-bg-elevated hover:text-text-primary ${
+            view === "team" ? "text-text-primary" : "text-text-muted"
+          }`}
+        >
+          Equipe
+        </button>
         <UserMenu userId={userId} />
       </div>
-      {activeBoard ? (
-        showArchive ? (
-          <ArchiveView boardId={activeBoard.id} boardName={activeBoard.name} onBack={() => setShowArchive(false)} />
+      {view === "team" ? (
+        <TeamView userId={userId} team={team} onBack={() => setView("board")} />
+      ) : activeBoard ? (
+        view === "archive" ? (
+          <ArchiveView boardId={activeBoard.id} boardName={activeBoard.name} onBack={() => setView("board")} />
         ) : (
           <BoardView
             boardId={activeBoard.id}
@@ -152,5 +181,6 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         {paletteOpen && <CommandPalette teamId={team.id} onNavigate={handleNavigate} onClose={() => setPaletteOpen(false)} />}
       </AnimatePresence>
     </div>
+    </CanEditContext.Provider>
   );
 }

@@ -1,0 +1,7 @@
+# O deploy web só precisa do frontend. Nunca subir segredos locais.
+.env
+.env.*
+!.env.example
+node_modules
+dist
+src-tauri

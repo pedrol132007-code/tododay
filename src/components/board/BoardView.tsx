@@ -32,9 +32,10 @@ import {
   useUpdateCardPositions,
 } from "../../hooks/useCards";
 import { useLabelsForCards } from "../../hooks/useLabels";
+import { useMembers } from "../../hooks/useMembers";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
-import type { Card as CardType, List as ListType } from "../../types";
+import type { Card as CardType, List as ListType, Member } from "../../types";
 import { List } from "./List";
 
 // Lists only ever reorder sideways. The default sortableKeyboardCoordinates scans every
@@ -181,6 +182,9 @@ export function BoardView({
   const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
   const { data: labelsByCard } = useLabelsForCards(allCardIds);
   const { data: checklistProgressByCard } = useChecklistProgressForCards(allCardIds);
+  const { data: members } = useMembers();
+  const memberList = members ?? [];
+  const membersById = new Map<number, Member>(memberList.map((m) => [m.id, m]));
 
   const [dragPreview, setDragPreview] = useState<BoardList[] | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
@@ -410,6 +414,8 @@ export function BoardView({
                   onOpenDetail={setSelectedCardId}
                   labelsByCard={labelsByCard ?? new Map()}
                   checklistProgressByCard={checklistProgressByCard ?? new Map()}
+                  members={memberList}
+                  membersById={membersById}
                   registerRef={registerListRef}
                 />
               ))

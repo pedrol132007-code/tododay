@@ -1,18 +1,20 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import type { Card as CardType, Label } from "../../types";
+import type { Card as CardType, Label, Member } from "../../types";
 import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { StatusBadge } from "../ui/StatusBadge";
 
 interface CardProps {
   card: CardType;
   onOpenDetail: (id: number) => void;
   labels?: Label[];
   checklistProgress?: { done: number; total: number };
+  requestedBy?: Member;
 }
 
-export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProps) {
+export function Card({ card, onOpenDetail, labels, checklistProgress, requestedBy }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
@@ -80,6 +82,15 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
               ×
             </button>
           </div>
+        </div>
+        <div className="flex items-center justify-between gap-2 px-2">
+          <StatusBadge status={card.status} />
+          {requestedBy && (
+            <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted" title={`Pedido por ${requestedBy.name}`}>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: requestedBy.color }} />
+              <span className="truncate">por {requestedBy.name}</span>
+            </span>
+          )}
         </div>
       </motion.div>
     </div>

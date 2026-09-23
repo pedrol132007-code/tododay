@@ -3,10 +3,12 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import type { Card as CardType, Label, List as ListType } from "../../types";
+import type { Card as CardType, Label, List as ListType, CardStatus, Member } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { MemberSelect } from "../ui/MemberSelect";
+import { StatusPicker } from "../ui/StatusPicker";
 import { Card } from "./Card";
 
 interface ListProps {
@@ -15,6 +17,8 @@ interface ListProps {
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
+  members: Member[];
+  membersById: Map<number, Member>;
   registerRef?: (id: number, node: HTMLDivElement | null) => void;
 }
 
@@ -24,6 +28,8 @@ export function List({
   onOpenDetail,
   labelsByCard,
   checklistProgressByCard,
+  members,
+  membersById,
   registerRef,
 }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
@@ -31,6 +37,8 @@ export function List({
   const renameList = useRenameList(list.board_id);
   const deleteList = useDeleteList(list.board_id);
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardStatus, setNewCardStatus] = useState<CardStatus>("planned");
+  const [newCardRequestedBy, setNewCardRequestedBy] = useState<number | null>(null);
 
   const canDelete = cardCount !== undefined && cardCount === 0;
 
@@ -49,8 +57,10 @@ export function List({
   function handleAddCard() {
     const title = newCardTitle.trim();
     if (!title) return;
-    createCard.mutate({ title, status: "planned", requestedBy: null });
+    createCard.mutate({ title, status: newCardStatus, requestedBy: newCardRequestedBy });
     setNewCardTitle("");
+    setNewCardStatus("planned");
+    setNewCardRequestedBy(null);
   }
 
   return (
@@ -105,27 +115,34 @@ export function List({
                   onOpenDetail={onOpenDetail}
                   labels={labelsByCard.get(card.id)}
                   checklistProgress={checklistProgressByCard.get(card.id)}
+                  requestedBy={card.requested_by !== null ? membersById.get(card.requested_by) : undefined}
                 />
               ))
             )}
           </SortableContext>
         </div>
 
-        <div className="flex gap-2">
-          <input
-            value={newCardTitle}
-            onChange={(e) => setNewCardTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
-            placeholder="Novo card..."
-            className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-          />
-          <button
-            type="button"
-            onClick={handleAddCard}
-            className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-          >
-            +
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
+              placeholder="Novo card..."
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+            />
+            <button
+              type="button"
+              onClick={handleAddCard}
+              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+            >
+              +
+            </button>
+          </div>
+          <StatusPicker value={newCardStatus} onChange={setNewCardStatus} />
+          {members.length > 0 && (
+            <MemberSelect value={newCardRequestedBy} onChange={setNewCardRequestedBy} members={members} />
+          )}
         </div>
       </motion.div>
     </div>

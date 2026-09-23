@@ -75,6 +75,13 @@ export interface Member {
 //   requested_by: number | null;
 ```
 
+### Banco separado em dev
+
+Builds de debug (`npm run tauri dev`) usam `kanban-dev.db` no mesmo diretório;
+release continua em `kanban.db`. Sem isso, rodar esta branch aplicaria a migration 2
+no banco real, e o Tododay 1.0.0 instalado (que só conhece a migration 1) deixaria
+de abrir o banco até o merge.
+
 ### Achado: foreign keys desligadas
 
 `src/db/client.ts` nunca executa `PRAGMA foreign_keys = ON`, então nenhum

@@ -52,3 +52,11 @@ export interface SearchResult {
   board_id: number;
   board_name: string;
 }
+
+// Supabase (supabase/migrations/). id é o uuid de auth.users.
+export interface Profile {
+  id: string;
+  email: string;
+  display_name: string;
+  created_at: string;
+}

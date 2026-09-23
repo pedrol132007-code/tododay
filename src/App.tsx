@@ -4,10 +4,11 @@ import { useBoards } from "./hooks/useBoards";
 import { ArchiveView } from "./components/archive/ArchiveView";
 import { BoardSwitcher } from "./components/board/BoardSwitcher";
 import { BoardView } from "./components/board/BoardView";
+import { UserMenu } from "./components/auth/UserMenu";
 import { CommandPalette } from "./components/search/CommandPalette";
 import type { SearchResult } from "./types";
 
-export default function App() {
+export default function App({ userId }: { userId: string }) {
   const { data: boards } = useBoards();
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
   const [showArchive, setShowArchive] = useState(false);
@@ -65,6 +66,7 @@ export default function App() {
             {showArchive ? "Board" : "Arquivados"}
           </button>
         )}
+        <UserMenu userId={userId} />
       </div>
       {activeBoard ? (
         showArchive ? (

@@ -13,7 +13,10 @@ import {
   updateCardDueDate,
   updateCardPosition,
   updateCardPositions,
+  updateCardRequestedBy,
+  updateCardStatus,
 } from "../db/cards";
+import type { CardStatus } from "../types";
 
 export function useCards(listId: number) {
   return useQuery({
@@ -41,7 +44,15 @@ export function useCardCount(listId: number) {
 export function useCreateCard(listId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (title: string) => createCard(listId, title),
+    mutationFn: ({
+      title,
+      status,
+      requestedBy,
+    }: {
+      title: string;
+      status: CardStatus;
+      requestedBy: number | null;
+    }) => createCard(listId, title, status, requestedBy),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cards", listId] });
       queryClient.invalidateQueries({ queryKey: ["cardCount", listId] });
@@ -71,6 +82,23 @@ export function useUpdateCardDueDate(listId: number) {
   return useMutation({
     mutationFn: ({ id, dueDate }: { id: number; dueDate: string | null }) =>
       updateCardDueDate(id, dueDate),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardStatus(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: CardStatus }) => updateCardStatus(id, status),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardRequestedBy(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, memberId }: { id: number; memberId: number | null }) =>
+      updateCardRequestedBy(id, memberId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
   });
 }

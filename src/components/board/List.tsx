@@ -49,7 +49,7 @@ export function List({
   function handleAddCard() {
     const title = newCardTitle.trim();
     if (!title) return;
-    createCard.mutate(title);
+    createCard.mutate({ title, status: "planned", requestedBy: null });
     setNewCardTitle("");
   }
 

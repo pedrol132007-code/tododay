@@ -1,5 +1,5 @@
 import { getDb } from "./client";
-import type { Card } from "../types";
+import type { Card, CardStatus } from "../types";
 
 export async function listCards(listId: number): Promise<Card[]> {
   const db = await getDb();
@@ -9,7 +9,12 @@ export async function listCards(listId: number): Promise<Card[]> {
   );
 }
 
-export async function createCard(listId: number, title: string): Promise<number> {
+export async function createCard(
+  listId: number,
+  title: string,
+  status: CardStatus = "planned",
+  requestedBy: number | null = null,
+): Promise<number> {
   const db = await getDb();
   const maxPosition = await db.select<{ maxPosition: number | null }[]>(
     "SELECT MAX(position) as maxPosition FROM card WHERE list_id = $1",
@@ -17,8 +22,8 @@ export async function createCard(listId: number, title: string): Promise<number>
   );
   const position = (maxPosition[0]?.maxPosition ?? 0) + 1;
   const result = await db.execute(
-    "INSERT INTO card (list_id, title, position) VALUES ($1, $2, $3)",
-    [listId, title, position],
+    "INSERT INTO card (list_id, title, position, status, requested_by) VALUES ($1, $2, $3, $4, $5)",
+    [listId, title, position, status, requestedBy],
   );
   return result.lastInsertId ?? 0;
 }
@@ -44,6 +49,22 @@ export async function updateCardDueDate(id: number, dueDate: string | null): Pro
   await db.execute(
     "UPDATE card SET due_date = $1, updated_at = datetime('now') WHERE id = $2",
     [dueDate, id],
+  );
+}
+
+export async function updateCardStatus(id: number, status: CardStatus): Promise<void> {
+  const db = await getDb();
+  await db.execute("UPDATE card SET status = $1, updated_at = datetime('now') WHERE id = $2", [
+    status,
+    id,
+  ]);
+}
+
+export async function updateCardRequestedBy(id: number, memberId: number | null): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    "UPDATE card SET requested_by = $1, updated_at = datetime('now') WHERE id = $2",
+    [memberId, id],
   );
 }
 

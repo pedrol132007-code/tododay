@@ -9,6 +9,8 @@ import {
   useUpdateTeamMember,
 } from "../../hooks/useTeams";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { ActivityList } from "../ui/ActivityList";
+import { useTeamActivity } from "../../hooks/useActivity";
 import { inviteUrl } from "../../lib/pendingInvite";
 import type { MemberRole, MyTeam, TeamInvite } from "../../types";
 
@@ -42,6 +44,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
   const updateMember = useUpdateTeamMember(team.id);
   const removeMember = useRemoveTeamMember(team.id);
   const revokeInvite = useRevokeInvite(team.id);
+  const { data: activities } = useTeamActivity(team.id);
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
 
   const actionError = updateMember.error ?? removeMember.error ?? revokeInvite.error ?? renameTeam.error;
@@ -177,6 +180,11 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
             )}
           </>
         )}
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-semibold text-text-muted">Atividade recente</h2>
+          <ActivityList activities={activities} where="team" />
+        </section>
       </div>
     </div>
   );

@@ -102,3 +102,16 @@ export interface Profile {
   display_name: string;
   created_at: string;
 }
+
+/** Preenchida por triggers (supabase/migrations/0009_activity.sql); payload guarda os nomes da época. */
+export interface Activity {
+  id: number;
+  team_id: number;
+  board_id: number | null;
+  card_id: number | null;
+  actor_id: string | null;
+  actor_name: string;
+  action: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}

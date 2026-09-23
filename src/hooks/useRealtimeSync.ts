@@ -25,6 +25,8 @@ export function useRealtimeSync(teamId: number, boardId: number | null) {
           return [["cardLabels"], ["labelsForCards"]];
         case "checklist_item":
           return [["checklistItems"], ["checklistProgress"]];
+        case "activity":
+          return [["activity"]];
       }
     };
 

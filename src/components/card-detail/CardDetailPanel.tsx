@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
 import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
 import { useTeamMembers } from "../../hooks/useTeams";
+import { useCardActivity } from "../../hooks/useActivity";
+import { ActivityList } from "../ui/ActivityList";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Checklist } from "./Checklist";
@@ -23,6 +25,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const canEdit = useCanEdit();
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const assignee = members?.find((m) => m.user_id === card.assignee_id);
+  const { data: activities } = useCardActivity(card.id);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -111,6 +114,11 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
         </div>
 
         <Checklist cardId={card.id} />
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <span className="text-sm text-text-muted">Histórico</span>
+          <ActivityList activities={activities} where="card" />
+        </div>
       </motion.aside>
     </div>
   );

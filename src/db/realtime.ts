@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item";
+export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item" | "activity";
 
 /**
  * Avisa (só o nome da tabela) quando algo muda nos boards da equipe ou no board aberto.
@@ -17,6 +17,7 @@ export function subscribeToChanges(
     channel.on("postgres_changes", { event: "*", schema: "public", table, filter }, () => onChange(table));
 
   listen("board", `team_id=eq.${teamId}`);
+  listen("activity", `team_id=eq.${teamId}`);
   if (boardId !== null) {
     listen("list", `board_id=eq.${boardId}`);
     listen("card", `board_id=eq.${boardId}`);

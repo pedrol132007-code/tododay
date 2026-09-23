@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tododay</title>
+    <!-- Runs before any stylesheet paints: the module bundle is deferred, so without this a
+         light-theme user would see a dark frame at startup. Mirrors parseSettings/resolveTheme
+         (src/lib/settings.ts); main.tsx re-applies the authoritative value right after. -->
+    <script id="boot-theme">
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem("tododay.settings") || "null") || {};
+          var theme = ["light", "dark", "system"].indexOf(s.theme) >= 0 ? s.theme : "dark";
+          if (theme === "system") theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          var accent = ["purple", "blue", "green", "pink", "orange"].indexOf(s.accent) >= 0 ? s.accent : "purple";
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.dataset.accent = accent;
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-bg-base text-text-primary font-sans">
     <div id="root"></div>

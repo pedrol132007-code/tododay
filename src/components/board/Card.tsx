@@ -5,6 +5,7 @@ import type { Card as CardType, Label, Member } from "../../types";
 import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { StatusBadge } from "../ui/StatusBadge";
+import { useSettings } from "../settings/SettingsProvider";
 
 interface CardProps {
   card: CardType;
@@ -17,6 +18,7 @@ interface CardProps {
 export function Card({ card, onOpenDetail, labels, checklistProgress, requestedBy }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
+  const { compact } = useSettings().settings;
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: `card-${card.id}`,
     data: { type: "card", listId: card.list_id },
@@ -44,7 +46,9 @@ export function Card({ card, onOpenDetail, labels, checklistProgress, requestedB
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col gap-1 rounded-xl border border-border bg-bg-elevated px-3 py-2"
+        className={`flex flex-col rounded-xl border border-border bg-bg-elevated ${
+          compact ? "gap-0.5 px-2 py-1 text-sm" : "gap-1 px-3 py-2"
+        }`}
       >
         {labels && labels.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -84,7 +88,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress, requestedB
           </div>
         </div>
         <div className="flex items-center justify-between gap-2 px-2">
-          <StatusBadge status={card.status} />
+          <StatusBadge status={card.status} compact={compact} />
           {requestedBy && (
             <span className="flex min-w-0 items-center gap-1 text-xs text-text-muted" title={`Pedido por ${requestedBy.name}`}>
               <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: requestedBy.color }} />

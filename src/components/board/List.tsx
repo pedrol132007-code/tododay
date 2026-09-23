@@ -9,6 +9,7 @@ import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { MemberSelect } from "../ui/MemberSelect";
 import { StatusPicker } from "../ui/StatusPicker";
+import { useSettings } from "../settings/SettingsProvider";
 import { Card } from "./Card";
 
 interface ListProps {
@@ -36,6 +37,7 @@ export function List({
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(list.board_id);
   const deleteList = useDeleteList(list.board_id);
+  const { compact } = useSettings().settings;
   const [newCardTitle, setNewCardTitle] = useState("");
   const [newCardStatus, setNewCardStatus] = useState<CardStatus>("planned");
   const [newCardRequestedBy, setNewCardRequestedBy] = useState<number | null>(null);
@@ -76,7 +78,7 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
+        className={`flex flex-col rounded-2xl border border-border bg-bg-surface ${compact ? "gap-2 p-3" : "gap-3 p-4"}`}
       >
         <div
           ref={sortable.setActivatorNodeRef}
@@ -101,7 +103,7 @@ export function List({
           </button>
         </div>
 
-        <div ref={droppable.setNodeRef} className="flex flex-col gap-2">
+        <div ref={droppable.setNodeRef} className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">

@@ -32,6 +32,8 @@ fn main() {
                 .add_migrations(db_url, migrations)
                 .build(),
         )
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

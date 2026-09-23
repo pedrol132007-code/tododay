@@ -41,7 +41,7 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
           <span
             key={label.id}
             style={{ backgroundColor: label.color }}
-            className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-bg-base"
+            className="flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-on-label"
           >
             {label.name}
             <button
@@ -78,7 +78,7 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
                   type="button"
                   onClick={() => setCardLabel.mutate({ labelId: label.id, on: !cardLabelIds.has(label.id) })}
                   style={{ backgroundColor: label.color }}
-                  className={`flex-1 rounded-lg px-2 py-1 text-left text-xs text-bg-base ${
+                  className={`flex-1 rounded-lg px-2 py-1 text-left text-xs text-on-label ${
                     cardLabelIds.has(label.id) ? "ring-2 ring-accent-yellow" : ""
                   }`}
                 >
@@ -108,12 +108,12 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                 placeholder="Nova label..."
-                className="flex-1 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple"
+                className="flex-1 rounded-lg border border-border bg-bg-surface px-2 py-1 text-xs text-text-primary outline-none focus:border-accent"
               />
               <button
                 type="button"
                 onClick={handleCreate}
-                className="rounded-lg bg-accent-purple px-2 py-1 text-xs font-medium text-bg-base hover:opacity-90"
+                className="rounded-lg bg-accent px-2 py-1 text-xs font-medium text-on-accent hover:opacity-90"
               >
                 Adicionar
               </button>

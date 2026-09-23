@@ -27,7 +27,7 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.15 }}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-overlay"
         onClick={onClose}
       />
       <motion.div
@@ -47,7 +47,7 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
             }
           }}
           placeholder="Buscar cards e colunas em todos os boards..."
-          className="w-full rounded-lg border border-border bg-bg-elevated px-3 py-2 text-text-primary outline-none focus:border-accent-purple"
+          className="w-full rounded-lg border border-border bg-bg-elevated px-3 py-2 text-text-primary outline-none focus:border-accent"
         />
         {results && results.length > 0 && (
           <div className="flex flex-col gap-1">
@@ -60,7 +60,7 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
               >
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${
-                    result.type === "card" ? "bg-accent-purple" : "bg-accent-yellow"
+                    result.type === "card" ? "bg-accent" : "bg-accent-yellow"
                   }`}
                 />
                 <span className="flex flex-col items-start">

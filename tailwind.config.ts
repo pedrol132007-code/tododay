@@ -5,15 +5,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        "bg-base": "#16121f",
-        "bg-surface": "#1f1a2e",
-        "bg-elevated": "#2a2340",
-        "accent-purple": "#a78bfa",
-        "accent-pink": "#f0a6c4",
-        "accent-yellow": "#f5d68a",
-        "text-primary": "#f2eef9",
-        "text-muted": "#a99fc2",
-        border: "#35304a",
+        "bg-base": "var(--bg-base)",
+        "bg-surface": "var(--bg-surface)",
+        "bg-elevated": "var(--bg-elevated)",
+        accent: "var(--accent)",
+        "on-accent": "var(--on-accent)",
+        // Fixed on purpose: label chips use the color the user picked, whatever the theme.
+        "on-label": "#16121f",
+        "accent-pink": "var(--accent-pink)",
+        "accent-yellow": "var(--accent-yellow)",
+        "text-primary": "var(--text-primary)",
+        "text-muted": "var(--text-muted)",
+        border: "var(--border)",
+        overlay: "var(--overlay)",
       },
       fontFamily: {
         sans: ["Manrope", "ui-sans-serif", "system-ui", "sans-serif"],

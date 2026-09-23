@@ -53,7 +53,7 @@ npm run tauri dev
 
 > Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git pode sombrear o linker correto no PATH. Use PowerShell/cmd nesse caso.
 
-Isso abre a janela do app com hot-reload do frontend. O banco SQLite (`kanban.db`) é criado automaticamente no diretório de dados do app na primeira execução, com o schema aplicado pelas migrations em `src-tauri/migrations/`.
+Isso abre a janela do app com hot-reload do frontend. O banco SQLite (`kanban.db`) é criado automaticamente no diretório de dados do app na primeira execução, com o schema aplicado pelas migrations em `src-tauri/migrations/`. Em `npm run tauri dev` o app usa `kanban-dev.db` (mesmo diretório), separado do `kanban.db` do app instalado.
 
 ### Outros comandos
 

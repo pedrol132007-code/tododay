@@ -1,8 +1,17 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
-import { useRenameCard, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
+import {
+  useRenameCard,
+  useUpdateCardDescription,
+  useUpdateCardDueDate,
+  useUpdateCardRequestedBy,
+  useUpdateCardStatus,
+} from "../../hooks/useCards";
+import { useMembers } from "../../hooks/useMembers";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { MemberSelect } from "../ui/MemberSelect";
+import { StatusPicker } from "../ui/StatusPicker";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -17,6 +26,9 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const renameCard = useRenameCard(card.list_id);
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
+  const updateStatus = useUpdateCardStatus(card.list_id);
+  const updateRequestedBy = useUpdateCardRequestedBy(card.list_id);
+  const { data: members } = useMembers();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -33,7 +45,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-overlay"
         onClick={onClose}
       />
       <motion.aside
@@ -59,13 +71,31 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
           </button>
         </div>
 
+        <div className="flex flex-col gap-1 text-sm text-text-muted">
+          Status
+          <StatusPicker value={card.status} onChange={(status) => updateStatus.mutate({ id: card.id, status })} />
+        </div>
+
+        <div className="flex flex-col gap-1 text-sm text-text-muted">
+          Pedido por
+          {(members ?? []).length > 0 ? (
+            <MemberSelect
+              value={card.requested_by}
+              onChange={(memberId) => updateRequestedBy.mutate({ id: card.id, memberId })}
+              members={members ?? []}
+            />
+          ) : (
+            <span className="text-xs">Cadastre membros na aba Equipe.</span>
+          )}
+        </div>
+
         <label className="flex flex-col gap-1 text-sm text-text-muted">
           Vencimento
           <input
             type="date"
             value={card.due_date ?? ""}
             onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
-            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
+            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent"
           />
         </label>
 

@@ -13,6 +13,8 @@ export interface List {
   wip_limit: number | null;
 }
 
+export type CardStatus = "planned" | "in_progress" | "done";
+
 export interface Card {
   id: number;
   list_id: number;
@@ -23,6 +25,8 @@ export interface Card {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+  status: CardStatus;
+  requested_by: number | null;
 }
 
 export interface Label {
@@ -51,4 +55,36 @@ export interface SearchResult {
   title: string;
   board_id: number;
   board_name: string;
+}
+
+export interface Member {
+  id: number;
+  name: string;
+  role: string;
+  contact: string;
+  notes: string;
+  color: string;
+  position: number;
+  created_at: string;
+}
+
+export type StatusCounts = Record<CardStatus, number>;
+
+export interface BoardStatusSummary extends StatusCounts {
+  board_id: number;
+  board_name: string;
+}
+
+export interface MemberRequestStats extends StatusCounts {
+  member_id: number;
+}
+
+export type ThemePreference = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
+export type AccentColor = "purple" | "blue" | "green" | "pink" | "orange";
+
+export interface Settings {
+  theme: ThemePreference;
+  accent: AccentColor;
+  compact: boolean;
 }

@@ -3,10 +3,13 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
-import type { Card as CardType, Label, List as ListType } from "../../types";
+import type { Card as CardType, Label, List as ListType, CardStatus, Member } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { MemberSelect } from "../ui/MemberSelect";
+import { StatusPicker } from "../ui/StatusPicker";
+import { useSettings } from "../settings/SettingsProvider";
 import { Card } from "./Card";
 
 interface ListProps {
@@ -15,6 +18,8 @@ interface ListProps {
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
+  members: Member[];
+  membersById: Map<number, Member>;
   registerRef?: (id: number, node: HTMLDivElement | null) => void;
 }
 
@@ -24,13 +29,18 @@ export function List({
   onOpenDetail,
   labelsByCard,
   checklistProgressByCard,
+  members,
+  membersById,
   registerRef,
 }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
   const renameList = useRenameList(list.board_id);
   const deleteList = useDeleteList(list.board_id);
+  const { compact } = useSettings().settings;
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardStatus, setNewCardStatus] = useState<CardStatus>("planned");
+  const [newCardRequestedBy, setNewCardRequestedBy] = useState<number | null>(null);
 
   const canDelete = cardCount !== undefined && cardCount === 0;
 
@@ -49,8 +59,10 @@ export function List({
   function handleAddCard() {
     const title = newCardTitle.trim();
     if (!title) return;
-    createCard.mutate(title);
+    createCard.mutate({ title, status: newCardStatus, requestedBy: newCardRequestedBy });
     setNewCardTitle("");
+    setNewCardStatus("planned");
+    setNewCardRequestedBy(null);
   }
 
   return (
@@ -66,7 +78,7 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
+        className={`flex flex-col rounded-2xl border border-border bg-bg-surface ${compact ? "gap-2 p-3" : "gap-3 p-4"}`}
       >
         <div
           ref={sortable.setActivatorNodeRef}
@@ -91,7 +103,7 @@ export function List({
           </button>
         </div>
 
-        <div ref={droppable.setNodeRef} className="flex flex-col gap-2">
+        <div ref={droppable.setNodeRef} className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
@@ -105,27 +117,34 @@ export function List({
                   onOpenDetail={onOpenDetail}
                   labels={labelsByCard.get(card.id)}
                   checklistProgress={checklistProgressByCard.get(card.id)}
+                  requestedBy={card.requested_by !== null ? membersById.get(card.requested_by) : undefined}
                 />
               ))
             )}
           </SortableContext>
         </div>
 
-        <div className="flex gap-2">
-          <input
-            value={newCardTitle}
-            onChange={(e) => setNewCardTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
-            placeholder="Novo card..."
-            className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-          />
-          <button
-            type="button"
-            onClick={handleAddCard}
-            className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-          >
-            +
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
+              placeholder="Novo card..."
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent"
+            />
+            <button
+              type="button"
+              onClick={handleAddCard}
+              className="rounded-lg bg-accent px-3 py-1 text-sm font-medium text-on-accent hover:opacity-90"
+            >
+              +
+            </button>
+          </div>
+          <StatusPicker value={newCardStatus} onChange={setNewCardStatus} />
+          {members.length > 0 && (
+            <MemberSelect value={newCardRequestedBy} onChange={setNewCardRequestedBy} members={members} />
+          )}
         </div>
       </motion.div>
     </div>

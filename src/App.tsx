@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useBoards } from "./hooks/useBoards";
 import { useMyTeams } from "./hooks/useTeams";
+import { useRealtimeSync } from "./hooks/useRealtimeSync";
 import { ArchiveView } from "./components/archive/ArchiveView";
 import { BoardSwitcher } from "./components/board/BoardSwitcher";
 import { BoardView } from "./components/board/BoardView";
@@ -129,6 +130,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   }
 
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
+  useRealtimeSync(team.id, activeBoard?.id ?? null);
 
   return (
     <CanEditContext.Provider value={team.role !== "viewer"}>

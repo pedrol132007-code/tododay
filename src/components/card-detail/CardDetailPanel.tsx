@@ -1,8 +1,17 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
-import { useRenameCard, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
+import {
+  useRenameCard,
+  useUpdateCardDescription,
+  useUpdateCardDueDate,
+  useUpdateCardRequestedBy,
+  useUpdateCardStatus,
+} from "../../hooks/useCards";
+import { useMembers } from "../../hooks/useMembers";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { MemberSelect } from "../ui/MemberSelect";
+import { StatusPicker } from "../ui/StatusPicker";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -17,6 +26,9 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const renameCard = useRenameCard(card.list_id);
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
+  const updateStatus = useUpdateCardStatus(card.list_id);
+  const updateRequestedBy = useUpdateCardRequestedBy(card.list_id);
+  const { data: members } = useMembers();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -57,6 +69,24 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
           >
             ×
           </button>
+        </div>
+
+        <div className="flex flex-col gap-1 text-sm text-text-muted">
+          Status
+          <StatusPicker value={card.status} onChange={(status) => updateStatus.mutate({ id: card.id, status })} />
+        </div>
+
+        <div className="flex flex-col gap-1 text-sm text-text-muted">
+          Pedido por
+          {(members ?? []).length > 0 ? (
+            <MemberSelect
+              value={card.requested_by}
+              onChange={(memberId) => updateRequestedBy.mutate({ id: card.id, memberId })}
+              members={members ?? []}
+            />
+          ) : (
+            <span className="text-xs">Cadastre membros na aba Equipe.</span>
+          )}
         </div>
 
         <label className="flex flex-col gap-1 text-sm text-text-muted">

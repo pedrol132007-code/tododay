@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useBoards, useCreateBoard } from "../../hooks/useBoards";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 
 interface BoardSwitcherProps {
   teamId: number;

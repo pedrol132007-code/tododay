@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { Card as CardType } from "../../types";
-import { useRenameCard, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
+import { useTeamMembers } from "../../hooks/useTeams";
+import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
@@ -18,7 +19,10 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const renameCard = useRenameCard(card.list_id);
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
+  const updateAssignee = useUpdateCardAssignee(card.list_id);
   const canEdit = useCanEdit();
+  const { data: members } = useTeamMembers(useCurrentTeamId());
+  const assignee = members?.find((m) => m.user_id === card.assignee_id);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -61,6 +65,27 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             ×
           </button>
         </div>
+
+        <label className="flex flex-col gap-1 text-sm text-text-muted">
+          Responsável
+          {canEdit ? (
+            <select
+              value={card.assignee_id ?? ""}
+              onChange={(e) => updateAssignee.mutate({ id: card.id, assigneeId: e.target.value || null })}
+              className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
+            >
+              <option value="">Ninguém</option>
+              {(members ?? []).map((member) => (
+                <option key={member.user_id} value={member.user_id}>
+                  {member.profile.display_name}
+                  {member.job_title ? ` — ${member.job_title}` : ""}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-text-primary">{assignee?.profile.display_name ?? "Ninguém"}</span>
+          )}
+        </label>
 
         <label className="flex flex-col gap-1 text-sm text-text-muted">
           Vencimento

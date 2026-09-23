@@ -34,7 +34,7 @@ import {
 import { useLabelsForCards } from "../../hooks/useLabels";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
 

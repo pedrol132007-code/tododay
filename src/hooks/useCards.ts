@@ -9,6 +9,7 @@ import {
   moveCardToList,
   renameCard,
   restoreCard,
+  updateCardAssignee,
   updateCardDescription,
   updateCardDueDate,
   updateCardPosition,
@@ -71,6 +72,14 @@ export function useUpdateCardDueDate(listId: number) {
   return useMutation({
     mutationFn: ({ id, dueDate }: { id: number; dueDate: string | null }) =>
       updateCardDueDate(id, dueDate),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardAssignee(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, assigneeId }: { id: number; assigneeId: string | null }) => updateCardAssignee(id, assigneeId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
   });
 }

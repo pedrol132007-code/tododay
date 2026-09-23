@@ -26,6 +26,8 @@ export interface Card {
   created_at: string;
   updated_at: string;
   archived_at: string | null;
+  /** Membro da equipe (profile.id); o banco recusa quem não é. */
+  assignee_id: string | null;
 }
 
 export interface Label {

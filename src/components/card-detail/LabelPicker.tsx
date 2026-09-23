@@ -7,7 +7,7 @@ import {
   useLabels,
   useSetCardLabel,
 } from "../../hooks/useLabels";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 
 interface LabelPickerProps {
   boardId: number;

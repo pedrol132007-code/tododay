@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import type { Card as CardType, Label, List as ListType } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
 

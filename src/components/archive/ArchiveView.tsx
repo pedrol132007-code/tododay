@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 
 interface ArchiveViewProps {
   boardId: number;

@@ -31,6 +31,10 @@ export async function updateCardDueDate(id: number, dueDate: string | null): Pro
   must(await supabase.from("card").update({ due_date: dueDate }).eq("id", id));
 }
 
+export async function updateCardAssignee(id: number, assigneeId: string | null): Promise<void> {
+  must(await supabase.from("card").update({ assignee_id: assigneeId }).eq("id", id));
+}
+
 export async function archiveCard(id: number): Promise<void> {
   must(await supabase.from("card").update({ archived_at: new Date().toISOString() }).eq("id", id));
 }

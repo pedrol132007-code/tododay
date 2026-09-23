@@ -13,7 +13,7 @@ import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
-import { CanEditContext } from "./hooks/useCanEdit";
+import { CurrentTeamContext } from "./hooks/useCurrentTeam";
 import type { MyTeam, SearchResult } from "./types";
 
 const ACTIVE_TEAM_KEY = "tododay.activeTeamId";
@@ -133,7 +133,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   useRealtimeSync(team.id, activeBoard?.id ?? null);
 
   return (
-    <CanEditContext.Provider value={team.role !== "viewer"}>
+    <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer" }}>
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
@@ -183,6 +183,6 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         {paletteOpen && <CommandPalette teamId={team.id} onNavigate={handleNavigate} onClose={() => setPaletteOpen(false)} />}
       </AnimatePresence>
     </div>
-    </CanEditContext.Provider>
+    </CurrentTeamContext.Provider>
   );
 }

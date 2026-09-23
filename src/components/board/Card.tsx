@@ -3,7 +3,9 @@ import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import type { Card as CardType, Label } from "../../types";
 import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
-import { useCanEdit } from "../../hooks/useCanEdit";
+import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
+import { useTeamMembers } from "../../hooks/useTeams";
+import { Avatar } from "../ui/Avatar";
 import { InlineEditableText } from "../ui/InlineEditableText";
 
 interface CardProps {
@@ -17,6 +19,8 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   const canEdit = useCanEdit();
+  const { data: members } = useTeamMembers(useCurrentTeamId());
+  const assignee = card.assignee_id ? members?.find((m) => m.user_id === card.assignee_id) : undefined;
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: `card-${card.id}`,
     data: { type: "card", listId: card.list_id },
@@ -66,6 +70,9 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
             readOnly={!canEdit}
           />
           <div className="flex items-center gap-1">
+            {assignee && (
+              <Avatar name={assignee.profile.display_name} title={`Responsável: ${assignee.profile.display_name}`} />
+            )}
             {checklistProgress && checklistProgress.total > 0 && (
               <span className="whitespace-nowrap text-xs text-text-muted">
                 {checklistProgress.done}/{checklistProgress.total}

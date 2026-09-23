@@ -14,9 +14,11 @@ describe("card statuses", () => {
     });
   });
 
-  it("gives every status a hex color", () => {
-    for (const status of CARD_STATUSES) {
-      expect(STATUS_COLORS[status]).toMatch(/^#[0-9a-f]{6}$/i);
-    }
+  it("points every status at a theme variable", () => {
+    expect(STATUS_COLORS).toEqual({
+      planned: "var(--status-planned)",
+      in_progress: "var(--status-in-progress)",
+      done: "var(--status-done)",
+    });
   });
 });

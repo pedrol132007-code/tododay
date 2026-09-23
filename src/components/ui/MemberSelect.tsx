@@ -18,7 +18,7 @@ export function MemberSelect({ value, onChange, members }: MemberSelectProps) {
         aria-label="Pedido por"
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value === "" ? null : Number(e.target.value))}
-        className="min-w-0 flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-xs text-text-primary outline-none focus:border-accent-purple"
+        className="min-w-0 flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-xs text-text-primary outline-none focus:border-accent"
       >
         <option value="">Pedido por —</option>
         {members.map((m) => (

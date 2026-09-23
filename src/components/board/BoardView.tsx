@@ -427,12 +427,12 @@ export function BoardView({
               onChange={(e) => setNewListName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddList()}
               placeholder="Nova coluna..."
-              className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+              className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent"
             />
             <button
               type="button"
               onClick={handleAddList}
-              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+              className="rounded-lg bg-accent px-3 py-1 text-sm font-medium text-on-accent hover:opacity-90"
             >
               + Adicionar coluna
             </button>
@@ -462,7 +462,7 @@ export function BoardView({
             animate={{ opacity: [0, 0.6, 0.15, 0.6, 0.15] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, times: [0, 0.15, 0.5, 0.65, 1] }}
-            className="pointer-events-none fixed -z-10 rounded-2xl bg-accent-purple blur-xl"
+            className="pointer-events-none fixed -z-10 rounded-2xl bg-accent blur-xl"
             style={{
               left: highlightRect.left - 12,
               top: highlightRect.top - 12,

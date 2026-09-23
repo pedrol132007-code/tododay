@@ -64,7 +64,7 @@ export default function App() {
           aria-pressed={view === "team"}
           title="Equipe"
           className={`ml-4 shrink-0 rounded-lg p-1.5 transition-colors ${
-            view === "team" ? "bg-accent-purple text-bg-base" : "text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+            view === "team" ? "bg-accent text-on-accent" : "text-text-muted hover:bg-bg-elevated hover:text-text-primary"
           }`}
         >
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

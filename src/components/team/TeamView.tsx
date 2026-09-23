@@ -100,7 +100,7 @@ export function TeamView({ onBack }: TeamViewProps) {
           <button
             type="button"
             onClick={handleAddMember}
-            className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+            className="rounded-lg bg-accent px-3 py-1 text-sm font-medium text-on-accent hover:opacity-90"
           >
             + Membro
           </button>

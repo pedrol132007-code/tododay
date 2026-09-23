@@ -31,7 +31,7 @@ export function InlineEditableText({ value, onSave, className, placeholder, allo
     return (
       <input
         autoFocus
-        className={`rounded-lg border border-accent-purple bg-bg-elevated px-2 py-1 text-text-primary outline-none ${className ?? ""}`}
+        className={`rounded-lg border border-accent bg-bg-elevated px-2 py-1 text-text-primary outline-none ${className ?? ""}`}
         value={draft}
         placeholder={placeholder}
         onChange={(e) => setDraft(e.target.value)}

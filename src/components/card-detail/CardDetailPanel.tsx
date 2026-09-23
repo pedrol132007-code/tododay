@@ -45,7 +45,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-overlay"
         onClick={onClose}
       />
       <motion.aside
@@ -95,7 +95,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             type="date"
             value={card.due_date ?? ""}
             onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
-            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
+            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent"
           />
         </label>
 

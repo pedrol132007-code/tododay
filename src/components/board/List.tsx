@@ -129,12 +129,12 @@ export function List({
               onChange={(e) => setNewCardTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
               placeholder="Novo card..."
-              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent"
             />
             <button
               type="button"
               onClick={handleAddCard}
-              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+              className="rounded-lg bg-accent px-3 py-1 text-sm font-medium text-on-accent hover:opacity-90"
             >
               +
             </button>

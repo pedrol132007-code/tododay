@@ -45,7 +45,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
               <button
                 type="button"
                 onClick={() => restoreCard.mutate(card.id)}
-                className="rounded-lg px-3 py-1 text-sm text-accent-purple hover:bg-bg-surface"
+                className="rounded-lg px-3 py-1 text-sm text-accent hover:bg-bg-surface"
               >
                 Restaurar
               </button>

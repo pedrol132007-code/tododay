@@ -8,8 +8,9 @@ export const STATUS_LABELS: Record<CardStatus, string> = {
   done: "Finalizada",
 };
 
+// Theme-dependent (src/index.css): the dark-theme amber is unreadable on a light background.
 export const STATUS_COLORS: Record<CardStatus, string> = {
-  planned: "#a99fc2",
-  in_progress: "#f5d68a",
-  done: "#86efac",
+  planned: "var(--status-planned)",
+  in_progress: "var(--status-in-progress)",
+  done: "var(--status-done)",
 };

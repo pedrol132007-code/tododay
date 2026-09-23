@@ -1,7 +1,8 @@
 import Database from "@tauri-apps/plugin-sql";
 
-// Must match the URL main.rs registers migrations for (kanban-dev.db in debug builds).
-const DB_URL = import.meta.env.DEV ? "sqlite:kanban-dev.db" : "sqlite:kanban.db";
+// Injected by vite.config.ts (see src/lib/dbUrl.ts); matches the URL main.rs registers
+// migrations for in every build mode.
+const DB_URL = __DB_URL__;
 
 let dbPromise: Promise<Database> | null = null;
 

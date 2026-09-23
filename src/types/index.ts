@@ -78,3 +78,13 @@ export interface BoardStatusSummary extends StatusCounts {
 export interface MemberRequestStats extends StatusCounts {
   member_id: number;
 }
+
+export type ThemePreference = "light" | "dark" | "system";
+export type ResolvedTheme = "light" | "dark";
+export type AccentColor = "purple" | "blue" | "green" | "pink" | "orange";
+
+export interface Settings {
+  theme: ThemePreference;
+  accent: AccentColor;
+  compact: boolean;
+}

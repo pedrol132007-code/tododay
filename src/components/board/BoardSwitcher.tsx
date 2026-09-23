@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useBoards, useCreateBoard } from "../../hooks/useBoards";
 
 interface BoardSwitcherProps {
+  teamId: number;
   activeBoardId: number | null;
   onSelect: (boardId: number) => void;
 }
 
-export function BoardSwitcher({ activeBoardId, onSelect }: BoardSwitcherProps) {
-  const { data: boards } = useBoards();
-  const createBoard = useCreateBoard();
+export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcherProps) {
+  const { data: boards } = useBoards(teamId);
+  const createBoard = useCreateBoard(teamId);
   const [creating, setCreating] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
 

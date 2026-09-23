@@ -1,45 +1,37 @@
-import { getDb } from "./client";
+import { must, supabase } from "./supabase";
 import type { Label } from "../types";
 
 export async function listLabels(boardId: number): Promise<Label[]> {
-  const db = await getDb();
-  return db.select<Label[]>("SELECT * FROM label WHERE board_id = $1 ORDER BY id ASC", [boardId]);
+  return must(await supabase.from("label").select("*").eq("board_id", boardId).order("id"));
 }
 
 export async function createLabel(boardId: number, name: string, color: string): Promise<number> {
-  const db = await getDb();
-  const result = await db.execute(
-    "INSERT INTO label (board_id, name, color) VALUES ($1, $2, $3)",
-    [boardId, name, color],
-  );
-  return result.lastInsertId ?? 0;
+  const row = must(await supabase.from("label").insert({ board_id: boardId, name, color }).select("id").single());
+  return row.id;
 }
 
 export async function deleteLabel(id: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("DELETE FROM label WHERE id = $1", [id]);
+  must(await supabase.from("label").delete().eq("id", id));
 }
 
 export async function listCardLabels(cardId: number): Promise<Label[]> {
-  const db = await getDb();
-  return db.select<Label[]>(
-    "SELECT label.* FROM label JOIN card_label ON label.id = card_label.label_id WHERE card_label.card_id = $1",
-    [cardId],
+  const rows = must(
+    await supabase.from("card_label").select("label(*)").eq("card_id", cardId).returns<{ label: Label }[]>(),
   );
+  return rows.map((row) => row.label);
 }
 
 export async function listLabelsForCards(cardIds: number[]): Promise<Map<number, Label[]>> {
   const map = new Map<number, Label[]>();
   if (cardIds.length === 0) return map;
-  const db = await getDb();
-  const placeholders = cardIds.map((_, i) => `$${i + 1}`).join(", ");
-  const rows = await db.select<(Label & { card_id: number })[]>(
-    `SELECT label.*, card_label.card_id FROM label
-     JOIN card_label ON label.id = card_label.label_id
-     WHERE card_label.card_id IN (${placeholders})`,
-    cardIds,
+  const rows = must(
+    await supabase
+      .from("card_label")
+      .select("card_id, label(*)")
+      .in("card_id", cardIds)
+      .returns<{ card_id: number; label: Label }[]>(),
   );
-  for (const { card_id, ...label } of rows) {
+  for (const { card_id, label } of rows) {
     const existing = map.get(card_id) ?? [];
     existing.push(label);
     map.set(card_id, existing);
@@ -48,10 +40,13 @@ export async function listLabelsForCards(cardIds: number[]): Promise<Map<number,
 }
 
 export async function setCardLabel(cardId: number, labelId: number, on: boolean): Promise<void> {
-  const db = await getDb();
   if (on) {
-    await db.execute("INSERT OR IGNORE INTO card_label (card_id, label_id) VALUES ($1, $2)", [cardId, labelId]);
+    must(
+      await supabase
+        .from("card_label")
+        .upsert({ card_id: cardId, label_id: labelId }, { ignoreDuplicates: true }),
+    );
   } else {
-    await db.execute("DELETE FROM card_label WHERE card_id = $1 AND label_id = $2", [cardId, labelId]);
+    must(await supabase.from("card_label").delete().eq("card_id", cardId).eq("label_id", labelId));
   }
 }

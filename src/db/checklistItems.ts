@@ -1,43 +1,34 @@
-import { getDb } from "./client";
+import { must, supabase } from "./supabase";
 import type { ChecklistItem } from "../types";
 
-type ChecklistItemRow = Omit<ChecklistItem, "done"> & { done: number };
-
-function toChecklistItem(row: ChecklistItemRow): ChecklistItem {
-  return { ...row, done: row.done === 1 };
-}
+// checklist_item.done já é boolean no Postgres: não há conversão de 0/1 aqui.
 
 export async function listChecklistItems(cardId: number): Promise<ChecklistItem[]> {
-  const db = await getDb();
-  const rows = await db.select<ChecklistItemRow[]>(
-    "SELECT * FROM checklist_item WHERE card_id = $1 ORDER BY position ASC",
-    [cardId],
-  );
-  return rows.map(toChecklistItem);
+  return must(await supabase.from("checklist_item").select("*").eq("card_id", cardId).order("position"));
 }
 
 export async function createChecklistItem(cardId: number, text: string): Promise<number> {
-  const db = await getDb();
-  const maxPosition = await db.select<{ maxPosition: number | null }[]>(
-    "SELECT MAX(position) as maxPosition FROM checklist_item WHERE card_id = $1",
-    [cardId],
+  const last = must(
+    await supabase
+      .from("checklist_item")
+      .select("position")
+      .eq("card_id", cardId)
+      .order("position", { ascending: false })
+      .limit(1),
   );
-  const position = (maxPosition[0]?.maxPosition ?? 0) + 1;
-  const result = await db.execute(
-    "INSERT INTO checklist_item (card_id, text, position) VALUES ($1, $2, $3)",
-    [cardId, text, position],
+  const position = (last[0]?.position ?? 0) + 1;
+  const row = must(
+    await supabase.from("checklist_item").insert({ card_id: cardId, text, position }).select("id").single(),
   );
-  return result.lastInsertId ?? 0;
+  return row.id;
 }
 
 export async function toggleChecklistItem(id: number, done: boolean): Promise<void> {
-  const db = await getDb();
-  await db.execute("UPDATE checklist_item SET done = $1 WHERE id = $2", [done ? 1 : 0, id]);
+  must(await supabase.from("checklist_item").update({ done }).eq("id", id));
 }
 
 export async function deleteChecklistItem(id: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("DELETE FROM checklist_item WHERE id = $1", [id]);
+  must(await supabase.from("checklist_item").delete().eq("id", id));
 }
 
 export async function listChecklistProgressForCards(
@@ -45,13 +36,18 @@ export async function listChecklistProgressForCards(
 ): Promise<Map<number, { done: number; total: number }>> {
   const map = new Map<number, { done: number; total: number }>();
   if (cardIds.length === 0) return map;
-  const db = await getDb();
-  const placeholders = cardIds.map((_, i) => `$${i + 1}`).join(", ");
-  const rows = await db.select<{ card_id: number; done: number; total: number }[]>(
-    `SELECT card_id, SUM(done) as done, COUNT(*) as total FROM checklist_item
-     WHERE card_id IN (${placeholders}) GROUP BY card_id`,
-    cardIds,
+  const rows = must(
+    await supabase
+      .from("checklist_item")
+      .select("card_id, done")
+      .in("card_id", cardIds)
+      .returns<Pick<ChecklistItem, "card_id" | "done">[]>(),
   );
-  for (const row of rows) map.set(row.card_id, { done: row.done, total: row.total });
+  for (const row of rows) {
+    const progress = map.get(row.card_id) ?? { done: 0, total: 0 };
+    progress.total += 1;
+    if (row.done) progress.done += 1;
+    map.set(row.card_id, progress);
+  }
   return map;
 }

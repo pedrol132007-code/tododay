@@ -1,5 +1,7 @@
+// Espelha supabase/migrations/ (o SQLite de src-tauri/migrations/ sai na E10).
 export interface Board {
   id: number;
+  team_id: number;
   name: string;
   position: number;
   created_at: string;
@@ -16,6 +18,7 @@ export interface List {
 export interface Card {
   id: number;
   list_id: number;
+  board_id: number;
   title: string;
   description: string;
   position: number;
@@ -53,7 +56,29 @@ export interface SearchResult {
   board_name: string;
 }
 
-// Supabase (supabase/migrations/). id é o uuid de auth.users.
+export type MemberRole = "admin" | "member" | "viewer";
+
+export interface Team {
+  id: number;
+  name: string;
+  created_by: string | null;
+  created_at: string;
+}
+
+/** Equipe do ponto de vista do usuário logado. */
+export interface MyTeam extends Team {
+  role: MemberRole;
+}
+
+export interface TeamMember {
+  team_id: number;
+  user_id: string;
+  role: MemberRole;
+  job_title: string;
+  joined_at: string;
+}
+
+// id é o uuid de auth.users.
 export interface Profile {
   id: string;
   email: string;

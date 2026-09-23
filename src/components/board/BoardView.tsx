@@ -280,7 +280,7 @@ export function BoardView({
     // Each branch below is responsible for clearing dragPreview exactly once: either
     // synchronously (no real move happened, so there's nothing to wait for) or after its
     // mutation(s) settle (so renderedBoard never falls back to the stale computedBoard while
-    // the SQLite write + query invalidation are still in flight). clearingAsync tracks which
+    // the database write + query invalidation are still in flight). clearingAsync tracks which
     // case we're in so the fallback at the bottom only fires for the synchronous case.
     let clearingAsync = false;
 

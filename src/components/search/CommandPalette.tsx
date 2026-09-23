@@ -4,13 +4,14 @@ import { useSearch } from "../../hooks/useSearch";
 import type { SearchResult } from "../../types";
 
 interface CommandPaletteProps {
+  teamId: number;
   onNavigate: (result: SearchResult) => void;
   onClose: () => void;
 }
 
-export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
+export function CommandPalette({ teamId, onNavigate, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
-  const { data: results } = useSearch(query);
+  const { data: results } = useSearch(teamId, query);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

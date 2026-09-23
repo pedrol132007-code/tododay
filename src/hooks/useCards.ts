@@ -92,7 +92,7 @@ export function useUpdateCardPosition() {
   return useMutation({
     mutationFn: ({ id, position }: { id: number; position: number }) => updateCardPosition(id, position),
     onSuccess: invalidate,
-    // If the write fails, invalidating anyway forces a refetch from SQLite (the source of
+    // If the write fails, invalidating anyway forces a refetch from the database (the source of
     // truth), which snaps the UI back to the last persisted state — no manual rollback needed.
     onError: invalidate,
   });

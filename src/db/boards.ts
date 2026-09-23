@@ -1,20 +1,15 @@
-import { getDb } from "./client";
+import { must, supabase } from "./supabase";
 import type { Board } from "../types";
 
-export async function listBoards(): Promise<Board[]> {
-  const db = await getDb();
-  return db.select<Board[]>("SELECT * FROM board ORDER BY position ASC");
+export async function listBoards(teamId: number): Promise<Board[]> {
+  return must(await supabase.from("board").select("*").eq("team_id", teamId).order("position"));
 }
 
-export async function createBoard(name: string): Promise<number> {
-  const db = await getDb();
-  const maxPosition = await db.select<{ maxPosition: number | null }[]>(
-    "SELECT MAX(position) as maxPosition FROM board",
+export async function createBoard(teamId: number, name: string): Promise<number> {
+  const last = must(
+    await supabase.from("board").select("position").eq("team_id", teamId).order("position", { ascending: false }).limit(1),
   );
-  const position = (maxPosition[0]?.maxPosition ?? 0) + 1;
-  const result = await db.execute("INSERT INTO board (name, position) VALUES ($1, $2)", [
-    name,
-    position,
-  ]);
-  return result.lastInsertId ?? 0;
+  const position = (last[0]?.position ?? 0) + 1;
+  const row = must(await supabase.from("board").insert({ team_id: teamId, name, position }).select("id").single());
+  return row.id;
 }

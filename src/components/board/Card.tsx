@@ -48,7 +48,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col gap-1 rounded-xl border border-border bg-bg-elevated px-3 py-2"
+        className="flex flex-col gap-1 rounded-xl border border-border bg-bg-card px-3 py-2 shadow-card"
       >
         {labels && labels.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -85,7 +85,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
                   e.stopPropagation();
                   archiveCard.mutate(card.id);
                 }}
-                className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base"
+                className="rounded-lg px-1 text-text-muted hover:bg-danger hover:text-on-accent"
                 aria-label="Arquivar card"
               >
                 ×

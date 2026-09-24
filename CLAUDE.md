@@ -17,6 +17,9 @@ Plano da migração para Supabase, com as decisões de produto: `docs/superpower
 - Posições (`position`) são `double precision`. Inserir no fim: `MAX(position) + 1`. Reordenar entre dois itens: média dos vizinhos (`src/lib/position.ts`).
 - Mudanças de outros usuários chegam via Realtime por board (`src/db/realtime.ts` → `useRealtimeSync`), que só invalida queries do React Query.
 - Só a chave anon/publishable vai para o frontend (`VITE_SUPABASE_*`). A `service_role` nunca entra no app.
+- Visual segue a identidade da Benner (`docs/identidade-benner/`). Cores só pelos tokens semânticos do Tailwind (`primary`, `danger`, `highlight`, `on-accent`, `bg-base/surface/elevated/column/card`, `text-primary/muted`, `border`), que são variáveis CSS em `src/index.css` com versão clara (`:root`) e escura (`.dark`). Nunca use hex ou cores do Tailwind (`bg-blue-500`) direto em componentes. Azul = ação principal, vermelho = perigo/erro, laranja = hover/seleção.
+- Botão de ação principal usa a classe `.btn-primary` (caixa alta, hover laranja); o componente só define padding/largura.
+- Tema: `useTheme` (sistema/claro/escuro, salvo em `tododay.theme`) + script inline no `index.html` que aplica a classe `dark` antes do React. Fonte: Montserrat (a da Benner, mundial, é licenciada pelo Adobe Fonts).
 - Sem abstrações antecipadas — resolva o problema atual, não o hipotético.
 
 ## Modelo de dados

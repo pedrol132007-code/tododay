@@ -48,7 +48,7 @@ export function MarkdownEditor({ value, onSave, onSaveAndClose, readOnly }: Mark
           }
         }}
         placeholder="Descrição em markdown..."
-        className="min-h-[160px] w-full rounded-lg border border-accent-purple bg-bg-elevated p-3 text-sm text-text-primary outline-none"
+        className="min-h-[160px] w-full rounded-lg border border-primary bg-bg-elevated p-3 text-sm text-text-primary outline-none"
       />
     );
   }

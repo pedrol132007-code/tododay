@@ -1,9 +1,52 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
+/* Identidade Benner (docs/identidade-benner/). Valores em canais RGB, ver tailwind.config.ts. */
+@layer base {
+  :root {
+    color-scheme: light;
+    --bg-base: 248 245 241; /* creme #F8F5F1 */
+    --bg-surface: 255 255 255;
+    --bg-elevated: 241 237 231;
+    --bg-column: 239 235 229;
+    --bg-card: 255 255 255;
+    --primary: 37 56 255; /* azul Benner #2538FF */
+    --danger: 229 30 71; /* vermelho Benner #E51E47 */
+    --highlight: 251 167 71; /* laranja #FBA747 */
+    --on-accent: 255 255 255;
+    --text-primary: 51 51 51; /* #333 */
+    --text-muted: 107 107 107;
+    --border: 219 219 219; /* #DBDBDB */
+  }
+
+  .dark {
+    color-scheme: dark;
+    --bg-base: 26 30 33; /* grafite #1A1E21 */
+    --bg-surface: 34 39 43;
+    --bg-elevated: 45 51 56;
+    --bg-column: 34 39 43;
+    --bg-card: 45 51 56;
+    --primary: 91 108 255; /* azul mais claro, para contraste no escuro */
+    --danger: 255 77 109;
+    --highlight: 251 167 71;
+    --on-accent: 255 255 255;
+    --text-primary: 242 242 242;
+    --text-muted: 163 169 174;
+    --border: 58 65 71;
+  }
+
+  body {
+    margin: 0;
+  }
+}
+
+@layer components {
+  /* Botão de ação principal: caixa alta e hover laranja com texto preto, como no site da Benner.
+     Padding e largura ficam em quem usa. */
+  .btn-primary {
+    @apply rounded-lg bg-primary text-xs font-semibold uppercase tracking-wide text-on-accent transition-colors hover:bg-highlight hover:text-black disabled:opacity-50 disabled:hover:bg-primary disabled:hover:text-on-accent;
+  }
 }

@@ -11,3 +11,6 @@ src-tauri/gen/
 .vercel
 .env*
 !.env.example
+
+# Capturas do guia de marca (~50 MB), só locais
+docs/identidade-benner/screenshots/

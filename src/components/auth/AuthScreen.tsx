@@ -75,7 +75,7 @@ export function AuthScreen({ initialError }: { initialError: string | null }) {
   return (
     <AuthLayout title={titles[mode]}>
       {hasInvite && mode !== "forgot" && (
-        <p className="mb-4 rounded-xl bg-accent-purple/10 px-3 py-2 text-sm text-text-primary">
+        <p className="mb-4 rounded-xl bg-primary/10 px-3 py-2 text-sm text-text-primary">
           Você recebeu um convite para uma equipe.{" "}
           {mode === "signup" ? "Crie sua conta para aceitar." : "Entre para aceitar."}
         </p>

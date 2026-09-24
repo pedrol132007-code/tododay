@@ -12,6 +12,7 @@ import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
 import { InviteScreen } from "./components/team/InviteScreen";
+import { BrandMark } from "./components/ui/BrandMark";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
 import type { MyTeam, SearchResult } from "./types";
@@ -61,7 +62,7 @@ export default function App({ userId }: { userId: string }) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-3 bg-bg-base text-text-muted">
         Não foi possível carregar suas equipes.
-        <button type="button" onClick={() => refetch()} className="text-accent-purple hover:underline">
+        <button type="button" onClick={() => refetch()} className="text-primary hover:underline">
           Tentar de novo
         </button>
       </div>
@@ -135,7 +136,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   return (
     <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer" }}>
     <div className="flex h-screen w-screen flex-col overflow-hidden">
+      <div className="h-1 shrink-0 bg-brand-gradient" />
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">
+        <div className="ml-4">
+          <BrandMark />
+        </div>
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
         <div className="h-5 w-px shrink-0 bg-border" />
         <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} />

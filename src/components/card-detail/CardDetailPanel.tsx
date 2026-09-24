@@ -75,7 +75,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             <select
               value={card.assignee_id ?? ""}
               onChange={(e) => updateAssignee.mutate({ id: card.id, assigneeId: e.target.value || null })}
-              className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
+              className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-primary"
             >
               <option value="">Ninguém</option>
               {(members ?? []).map((member) => (
@@ -97,7 +97,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             value={card.due_date ?? ""}
             disabled={!canEdit}
             onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
-            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-accent-purple"
+            className="w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-text-primary outline-none focus:border-primary"
           />
         </label>
 

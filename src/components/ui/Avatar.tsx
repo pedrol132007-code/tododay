@@ -10,7 +10,7 @@ export function Avatar({ name, title }: { name: string; title?: string }) {
   return (
     <span
       title={title ?? name}
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-purple text-[10px] font-semibold text-bg-base"
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-on-accent"
     >
       {initials(name)}
     </span>

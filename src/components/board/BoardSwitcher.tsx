@@ -37,7 +37,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
           onClick={() => onSelect(board.id)}
           className={`rounded-xl px-3 py-1 text-sm font-medium transition-colors ${
             board.id === activeBoardId
-              ? "bg-accent-purple text-bg-base"
+              ? "bg-primary text-on-accent"
               : "text-text-muted hover:bg-bg-elevated"
           }`}
         >
@@ -55,7 +55,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
             if (e.key === "Escape") setCreating(false);
           }}
           placeholder="Nome do board..."
-          className="rounded-xl border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+          className="rounded-xl border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
         />
       ) : (
         <button

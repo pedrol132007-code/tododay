@@ -29,7 +29,7 @@ Não precisa clonar o repositório para usar o app. A seção **"Como rodar em d
 | Camada        | Tecnologia                                                     |
 | ------------- | -------------------------------------------------------------- |
 | Frontend      | React 18 + TypeScript + Vite                                   |
-| Estilo        | Tailwind CSS                                                   |
+| Estilo        | Tailwind CSS, identidade visual Benner, tema claro e escuro     |
 | Backend       | [Supabase](https://supabase.com/) — Postgres, Auth, Realtime, RLS |
 | Web           | [Vercel](https://vercel.com/)                                  |
 | Desktop shell | [Tauri v2](https://v2.tauri.app/) (Rust)                       |

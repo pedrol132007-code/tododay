@@ -63,7 +63,7 @@ export function InviteScreen({ token, onDone }: InviteScreenProps) {
         Você foi convidado para a equipe <strong>{preview.team_name}</strong> como {roleLabels[preview.role]}.
       </Notice>
       {accept.isError && (
-        <p className="mt-4 text-sm text-accent-pink">
+        <p className="mt-4 text-sm text-danger">
           {/* Erros de accept_invite() já vêm em português ("Esse convite expirou...") */}
           {(accept.error as { message?: string }).message ?? "Não foi possível aceitar o convite."}
         </p>
@@ -74,7 +74,7 @@ export function InviteScreen({ token, onDone }: InviteScreenProps) {
       <button
         type="button"
         onClick={() => onDone(null)}
-        className="mt-3 w-full text-sm text-text-muted hover:text-accent-purple"
+        className="mt-3 w-full text-sm text-text-muted hover:text-primary"
       >
         Agora não
       </button>
@@ -88,7 +88,7 @@ function ContinueButton({ onClick, busy, children }: { onClick: () => void; busy
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="mt-6 w-full rounded-xl bg-accent-purple px-3 py-2 text-sm font-semibold text-bg-base transition-opacity hover:opacity-90 disabled:opacity-50"
+      className="mt-6 w-full btn-primary px-3 py-2.5"
     >
       {busy ? "Aguarde..." : children}
     </button>

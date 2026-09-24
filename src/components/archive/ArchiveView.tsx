@@ -49,7 +49,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
               <button
                 type="button"
                 onClick={() => restoreCard.mutate(card.id)}
-                className="rounded-lg px-3 py-1 text-sm text-accent-purple hover:bg-bg-surface"
+                className="rounded-lg px-3 py-1 text-sm text-primary hover:bg-bg-surface"
               >
                 Restaurar
               </button>
@@ -64,8 +64,8 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
                     setConfirmingId(card.id);
                   }
                 }}
-                className={`rounded-lg px-3 py-1 text-sm hover:bg-accent-pink hover:text-bg-base ${
-                  confirmingId === card.id ? "bg-accent-pink text-bg-base" : "text-text-muted"
+                className={`rounded-lg px-3 py-1 text-sm hover:bg-danger hover:text-on-accent ${
+                  confirmingId === card.id ? "bg-danger text-on-accent" : "text-text-muted"
                 }`}
               >
                 {confirmingId === card.id ? "Confirmar exclusão?" : "Excluir"}

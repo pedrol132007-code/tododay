@@ -68,7 +68,7 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4"
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-column p-4"
       >
         <div
           ref={sortable.setActivatorNodeRef}
@@ -88,7 +88,7 @@ export function List({
               disabled={!canDelete}
               onClick={() => deleteList.mutate(list.id)}
               title={canDelete ? "Excluir coluna" : "Mova ou arquive os cards antes de excluir"}
-              className="rounded-lg px-1 text-text-muted hover:bg-accent-pink hover:text-bg-base disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+              className="rounded-lg px-1 text-text-muted hover:bg-danger hover:text-on-accent disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
               aria-label="Excluir coluna"
             >
               ×
@@ -123,12 +123,12 @@ export function List({
               onChange={(e) => setNewCardTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCard()}
               placeholder="Novo card..."
-              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+              className="flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
             />
             <button
               type="button"
               onClick={handleAddCard}
-              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+              className="btn-primary px-3 py-1.5"
             >
               +
             </button>

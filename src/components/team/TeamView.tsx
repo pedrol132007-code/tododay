@@ -78,7 +78,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
 
       <div className="flex max-w-3xl flex-col gap-8">
         {actionError && (
-          <p className="rounded-xl bg-accent-pink/10 px-3 py-2 text-sm text-accent-pink">{errorMessage(actionError)}</p>
+          <p className="rounded-xl bg-danger/10 px-3 py-2 text-sm text-danger">{errorMessage(actionError)}</p>
         )}
 
         <section className="flex flex-col gap-2">
@@ -109,7 +109,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                       }
                     }}
                     onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-                    className="w-40 rounded-lg border border-border bg-bg-surface px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+                    className="w-40 rounded-lg border border-border bg-bg-surface px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
                   />
                 ) : (
                   member.job_title && <span className="text-sm text-text-muted">{member.job_title}</span>
@@ -120,7 +120,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                     onChange={(e) =>
                       updateMember.mutate({ userId: member.user_id, changes: { role: e.target.value as MemberRole } })
                     }
-                    className="rounded-lg border border-border bg-bg-surface px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+                    className="rounded-lg border border-border bg-bg-surface px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
                   >
                     {roleOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -136,8 +136,8 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                     type="button"
                     onBlur={() => setConfirmingRemoval(null)}
                     onClick={() => handleRemove(member.user_id)}
-                    className={`rounded-lg px-3 py-1 text-sm hover:bg-accent-pink hover:text-bg-base ${
-                      confirmingRemoval === member.user_id ? "bg-accent-pink text-bg-base" : "text-text-muted"
+                    className={`rounded-lg px-3 py-1 text-sm hover:bg-danger hover:text-on-accent ${
+                      confirmingRemoval === member.user_id ? "bg-danger text-on-accent" : "text-text-muted"
                     }`}
                   >
                     {confirmingRemoval === member.user_id ? "Confirmar?" : isSelf ? "Sair da equipe" : "Remover"}
@@ -170,7 +170,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                     <button
                       type="button"
                       onClick={() => revokeInvite.mutate(invite.id)}
-                      className="rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-accent-pink hover:text-bg-base"
+                      className="rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-danger hover:text-on-accent"
                     >
                       Cancelar
                     </button>
@@ -203,7 +203,7 @@ function CopyLinkButton({ invite }: { invite: TeamInvite }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="rounded-lg px-3 py-1 text-sm text-accent-purple hover:bg-bg-elevated"
+      className="rounded-lg px-3 py-1 text-sm text-primary hover:bg-bg-elevated"
     >
       {copied ? "Copiado!" : "Copiar link"}
     </button>
@@ -243,18 +243,18 @@ function InviteForm({ teamId }: { teamId: number }) {
           value={label}
           onChange={(e) => setLabel(e.target.value)}
           placeholder="Para quem? (ex.: Carla)"
-          className="min-w-[12rem] flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+          className="min-w-[12rem] flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
         />
         <input
           value={jobTitle}
           onChange={(e) => setJobTitle(e.target.value)}
           placeholder="Cargo (opcional)"
-          className="w-40 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+          className="w-40 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as MemberRole)}
-          className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+          className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
         >
           {roleOptions.map((option) => (
             <option key={option.value} value={option.value}>
@@ -265,14 +265,14 @@ function InviteForm({ teamId }: { teamId: number }) {
         <button
           type="submit"
           disabled={createInvite.isPending}
-          className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90 disabled:opacity-50"
+          className="btn-primary px-3 py-1.5 disabled:opacity-50"
         >
           {createInvite.isPending ? "Gerando..." : "Gerar link"}
         </button>
       </form>
-      {createInvite.isError && <p className="text-sm text-accent-pink">Não foi possível gerar o link. Tente de novo.</p>}
+      {createInvite.isError && <p className="text-sm text-danger">Não foi possível gerar o link. Tente de novo.</p>}
       {created && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-accent-purple bg-bg-elevated px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary bg-bg-elevated px-3 py-2">
           <code className="min-w-0 flex-1 truncate text-sm text-text-primary">{inviteUrl(created.token)}</code>
           <CopyLinkButton invite={created} />
         </div>

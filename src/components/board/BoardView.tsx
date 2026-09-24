@@ -377,7 +377,7 @@ export function BoardView({
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center text-accent-pink">
+      <div className="flex h-full items-center justify-center text-danger">
         Erro ao carregar colunas: {(error as Error).message}
       </div>
     );
@@ -425,12 +425,12 @@ export function BoardView({
                 onChange={(e) => setNewListName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddList()}
                 placeholder="Nova coluna..."
-                className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
+                className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
               />
               <button
                 type="button"
                 onClick={handleAddList}
-                className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
+                className="btn-primary px-3 py-1.5"
               >
                 + Adicionar coluna
               </button>
@@ -439,11 +439,11 @@ export function BoardView({
         </div>
         <DragOverlay>
           {activeCard ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-elevated px-3 py-2 shadow-lg">
+            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-card px-3 py-2 shadow-lg">
               <span className="flex-1 px-2 py-1">{activeCard.title}</span>
             </div>
           ) : activeList ? (
-            <div className="flex w-72 flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4 shadow-lg">
+            <div className="flex w-72 flex-col gap-3 rounded-2xl border border-border bg-bg-column p-4 shadow-lg">
               <span className="text-lg font-semibold">{activeList.name}</span>
             </div>
           ) : null}
@@ -461,7 +461,7 @@ export function BoardView({
             animate={{ opacity: [0, 0.6, 0.15, 0.6, 0.15] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, times: [0, 0.15, 0.5, 0.65, 1] }}
-            className="pointer-events-none fixed -z-10 rounded-2xl bg-accent-purple blur-xl"
+            className="pointer-events-none fixed -z-10 rounded-2xl bg-primary blur-xl"
             style={{
               left: highlightRect.left - 12,
               top: highlightRect.top - 12,

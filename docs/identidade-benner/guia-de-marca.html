@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guia de marca Benner</title>
+<link rel="icon" href="assets/favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* A fonte da marca (mundial) é do Adobe Fonts e só carrega nos domínios do kit.
+     Montserrat entra como substituta visual neste guia. */
+  :root {
+    --azul: #2538ff; --vermelho: #e51e47; --laranja: #fba747;
+    --creme: #f8f5f1; --texto: #333333; --grafite: #1a1e21; --borda: #dbdbdb;
+    --radius: 4px; --fonte: mundial, Montserrat, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--creme); color: var(--texto); font-family: var(--fonte); font-size: 16px; line-height: 1.55; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  header.hero {
+    color: #fff; padding: 56px 0 72px;
+    background: radial-gradient(120% 140% at 85% 20%, #e51e47 0%, #b8206a 35%, #5a2fd6 65%, #2538ff 100%);
+  }
+  header.hero img { height: 40px; display: block; margin-bottom: 40px; }
+  header.hero h1 { font-weight: 400; font-size: clamp(34px, 5vw, 56px); line-height: .95; letter-spacing: -1.5px; margin: 0 0 16px; max-width: 14ch; }
+  header.hero p { margin: 0; max-width: 56ch; font-weight: 600; }
+  .tag { display: inline-block; background: var(--vermelho); color: #fff; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: var(--radius); margin-bottom: 16px; }
+  section { padding: 56px 0 8px; }
+  .filete { width: 70px; height: 2px; background: var(--vermelho); margin-bottom: 16px; }
+  .filete.azul { background: var(--azul); }
+  h2 { font-weight: 400; font-size: 32px; letter-spacing: -1px; line-height: 1.2; margin: 0 0 8px; }
+  h3 { font-weight: 600; font-size: 18px; margin: 32px 0 12px; }
+  .lead { margin: 0 0 24px; max-width: 70ch; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .card { background: #fff; border-radius: var(--radius); box-shadow: 0 15px 15px rgba(0,0,0,.08); overflow: hidden; }
+  .swatch .cor { height: 96px; }
+  .swatch .info { padding: 12px 14px 14px; font-size: 13px; }
+  .swatch strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .swatch code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; display: block; }
+  .swatch small { display: block; color: #666; margin-top: 6px; line-height: 1.4; }
+  .grad { height: 96px; border-radius: var(--radius); }
+  .tipo .linha { display: grid; grid-template-columns: 170px 1fr; gap: 16px; align-items: baseline; padding: 16px 20px; border-bottom: 1px solid #eee; }
+  .tipo .linha:last-child { border-bottom: 0; }
+  .tipo .meta { font-size: 12px; color: #666; font-family: ui-monospace, Consolas, monospace; }
+  .t-h1 { font-size: 50px; line-height: .9; letter-spacing: -1.25px; }
+  .t-h2g { font-size: 31px; line-height: 1.2; letter-spacing: -1.25px; }
+  .t-h2 { font-size: 25px; line-height: 1.2; letter-spacing: -1.25px; }
+  .t-h3 { font-size: 21px; font-weight: 600; letter-spacing: -1.25px; color: var(--vermelho); }
+  .t-p { font-size: 15px; line-height: 1.6; }
+  .t-menu { font-size: 12.5px; text-transform: uppercase; }
+  .btns { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 24px 20px; }
+  .btn { font-family: var(--fonte); font-size: 14px; text-transform: uppercase; border: 0; border-radius: var(--radius); padding: 12.5px 25px; cursor: pointer; transition: all .4s; }
+  .btn.vermelho { background: var(--vermelho); color: #fff; }
+  .btn.azul { background: var(--azul); color: #fff; padding: 12.5px 19px; }
+  .btn.branco { background: #fff; color: var(--azul); }
+  .btn.outline { background: transparent; color: var(--azul); box-shadow: inset 0 0 0 1px var(--azul); }
+  .btn.vermelho:hover, .btn.branco:hover { background: var(--laranja); color: #000; }
+  .btn.azul:hover { background: var(--laranja); color: var(--texto); }
+  .btn.outline:hover { background: var(--azul); color: #fff; }
+  .fundo-azul { background: var(--azul); }
+  .btn-desc { font-size: 12px; color: #666; padding: 0 20px 20px; margin: 0; }
+  .logos { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .logo { border-radius: var(--radius); padding: 32px; display: flex; flex-direction: column; gap: 16px; align-items: center; justify-content: center; min-height: 180px; color: #fff; font-size: 12px; }
+  .logo img { max-height: 70px; max-width: 100%; }
+  .logo.mark img { max-height: 110px; }
+  .tokens { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .tok { padding: 20px; }
+  .tok .demo { height: 64px; background: #fff; margin-bottom: 12px; }
+  .radius-demo { display: flex; gap: 12px; }
+  .radius-demo span { width: 48px; height: 48px; background: var(--azul); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td, th { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; }
+  th { font-weight: 600; }
+  footer { background: var(--grafite); color: #c5c5c5; margin-top: 64px; padding: 32px 0; font-size: 13px; }
+  footer a { color: var(--laranja); }
+  @media (max-width: 600px) {
+    .tipo .linha { grid-template-columns: 1fr; gap: 4px; }
+    .t-h1 { font-size: 38px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <img src="assets/logo-benner-white.svg" alt="Benner" />
+    <span class="tag">Mini guia de marca</span>
+    <h1>Identidade visual da Benner</h1>
+    <p>Extraída do site público benner.com.br em 24/09/2026: páginas Home, Sobre, ERP Jurídico e Blog. Valores em pixel medidos numa tela de 1440px.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section>
+    <div class="filete"></div>
+    <h2>Cores</h2>
+    <p class="lead">Duas cores de marca (azul elétrico e vermelho) sobre um fundo creme, com um laranja reservado para o hover dos botões.</p>
+
+    <h3>Primária e secundária</h3>
+    <div class="grid">
+      <div class="card swatch"><div class="cor" style="background:#2538ff"></div><div class="info"><strong>Azul Benner</strong><code>#2538FF</code><code>rgb(37, 56, 255)</code><small>Primária. Variável CSS <code style="display:inline">--benner-blue</code>. Menu, outline, bordas, seções azuis.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#e51e47"></div><div class="info"><strong>Vermelho Benner</strong><code>#E51E47</code><code>rgb(229, 30, 71)</code><small>Secundária. Botão principal, títulos de destaque, ícones, filetes.</small></div></div>
+    </div>
+
+    <h3>Apoio</h3>
+    <div class="grid">
+      <div class="card swatch"><div class="cor" style="background:#fba747"></div><div class="info"><strong>Laranja hover</strong><code>#FBA747</code><code>rgb(251, 167, 71)</code><small>Hover de todos os botões, ícones sociais, links no escuro.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#162299"></div><div class="info"><strong>Azul escuro</strong><code>#162299</code><code>rgb(22, 34, 153)</code><small>Início do degradê sobre imagens.</small></div></div>
+    </div>
+
+    <h3>Neutras</h3>
+    <div class="grid">
+      <div class="card swatch"><div class="cor" style="background:#f8f5f1; box-shadow: inset 0 -1px 0 #eee"></div><div class="info"><strong>Creme</strong><code>#F8F5F1</code><code>rgb(248, 245, 241)</code><small>Fundo dominante das páginas.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#ffffff; box-shadow: inset 0 -1px 0 #eee"></div><div class="info"><strong>Branco</strong><code>#FFFFFF</code><code>rgb(255, 255, 255)</code><small>Cards e texto sobre cor.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#333333"></div><div class="info"><strong>Cinza texto</strong><code>#333333</code><code>rgb(51, 51, 51)</code><small>Texto e títulos no claro.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#1a1e21"></div><div class="info"><strong>Grafite</strong><code>#1A1E21</code><code>rgb(26, 30, 33)</code><small>Rodapé e banners escuros.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#dbdbdb"></div><div class="info"><strong>Cinza borda</strong><code>#DBDBDB</code><code>rgb(219, 219, 219)</code><small>Divisores e bordas.</small></div></div>
+      <div class="card swatch"><div class="cor" style="background:#c5c5c5"></div><div class="info"><strong>Cinza suave</strong><code>#C5C5C5</code><code>rgb(197, 197, 197)</code><small>Texto secundário no escuro.</small></div></div>
+    </div>
+
+    <h3>Degradês</h3>
+    <div class="grid">
+      <div><div class="grad" style="background:radial-gradient(120% 140% at 85% 20%, #e51e47 0%, #b8206a 35%, #5a2fd6 65%, #2538ff 100%)"></div><small>Hero: azul → magenta → vermelho (no site é imagem; aqui, aproximação em CSS)</small></div>
+      <div><div class="grad" style="background:linear-gradient(rgba(22,34,153,.8), rgba(37,56,255,.8)), #888"></div><small>Overlay azul sobre fotos</small></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="filete azul"></div>
+    <h2>Tipografia</h2>
+    <p class="lead">Fonte <strong>mundial</strong> (Adobe Fonts), pesos 400, 600 e 700. Os títulos usam peso regular, espaçamento negativo e linhas apertadas. Aqui a mundial é substituída pela Montserrat, que o próprio site carrega do Google Fonts sem usar.</p>
+    <div class="card tipo">
+      <div class="linha"><div class="meta">H1 · 4rem · 400<br>lh .9 · ls −0.1rem</div><div class="t-h1">O software de gestão que move grandes empresas</div></div>
+      <div class="linha"><div class="meta">H2 grande · 2.5rem · 400</div><div class="t-h2g">Há 30 anos transformando a gestão</div></div>
+      <div class="linha"><div class="meta">H2 · 2rem · 400/700</div><div class="t-h2">Tecnologia inteligente para cada desafio.</div></div>
+      <div class="linha"><div class="meta">H3/H4 · 1.7rem · 600</div><div class="t-h3">Cadastro de processos com IA</div></div>
+      <div class="linha"><div class="meta">Texto · 1.2rem · 400<br>lh ~1.6</div><div class="t-p">Reunimos especialistas que desenvolvem soluções completas para gestão empresarial, jurídico, logística, RH, saúde e turismo corporativo.</div></div>
+      <div class="linha"><div class="meta">Menu · 1rem · 400<br>caixa alta</div><div class="t-menu">Produtos · Segmentos · Blog · Cases · A Benner</div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="filete"></div>
+    <h2>Botões</h2>
+    <p class="lead">Todos seguem o mesmo padrão: caixa alta, peso 400, cantos quase retos (0.3rem), padding 1rem × 2rem, sem sombra, transição de 0.4s. No hover, os botões sólidos ficam <strong>laranja com texto preto</strong>. Passe o mouse para ver.</p>
+    <div class="card">
+      <div class="btns">
+        <button class="btn vermelho">Fale com um especialista</button>
+        <button class="btn azul">Solicite uma demonstração</button>
+        <button class="btn outline">Cases de sucesso</button>
+      </div>
+      <div class="btns fundo-azul">
+        <button class="btn branco">Agende uma demonstração</button>
+      </div>
+      <p class="btn-desc" style="padding-top:12px">Vermelho = ação principal · Azul = destaque no menu · Outline azul = ação secundária · Branco = sobre fundo azul</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="filete azul"></div>
+    <h2>Logos</h2>
+    <p class="lead">O site só publica versões brancas do logo, para usar sobre cor ou sobre fundo escuro. O ponto do "b" é vermelho (<code>#E51F48</code>).</p>
+    <div class="logos">
+      <div class="logo" style="background:#2538ff"><img src="assets/logo-benner-white.svg" alt="Logo Benner branco" /><span>logo-benner-white.svg</span></div>
+      <div class="logo" style="background:#1a1e21"><img src="assets/logo-benner-full-white.svg" alt="Logo Benner completo branco" /><span>logo-benner-full-white.svg</span></div>
+      <div class="logo mark" style="background:#f8f5f1; color:#333"><img src="assets/b-mark.svg" alt="Símbolo b da Benner" /><span>b-mark.svg</span></div>
+      <div class="logo" style="background:#fff; color:#333"><img src="assets/favicon-high.png" alt="Favicon Benner" style="max-height:64px" /><span>favicon-high.png</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="filete"></div>
+    <h2>Forma, sombra e espaço</h2>
+    <div class="tokens">
+      <div class="card tok"><h3 style="margin-top:0">Border-radius</h3><div class="radius-demo"><span style="border-radius:4px" title="0.3rem"></span><span style="border-radius:12px" title="12px"></span><span style="border-radius:24px" title="42px"></span><span style="border-radius:50%" title="50%"></span></div><p style="font-size:13px">0.3rem (111×) · 12px · 42px · 50%<br>Padrão quase reto.</p></div>
+      <div class="card tok" style="box-shadow:0 15px 15px rgba(0,0,0,.15)"><h3 style="margin-top:0">Sombra de card</h3><p style="font-size:13px"><code>0 15px 15px rgba(0,0,0,.15)</code><br>Também <code>0 0 2rem rgba(0,0,0,.04)</code> (suave) e <code>0 8px 28px rgba(0,0,0,.28)</code> (elevada).</p></div>
+      <div class="card tok"><h3 style="margin-top:0">Espaçamentos</h3><table><tr><th>rem</th><th>uso</th></tr><tr><td>1rem</td><td>365×</td></tr><tr><td>2rem</td><td>219×</td></tr><tr><td>0.5rem</td><td>150×</td></tr><tr><td>0.3rem</td><td>104×</td></tr><tr><td>0.75rem</td><td>100×</td></tr><tr><td>2.5rem</td><td>94×</td></tr></table></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">Tokens completos em <code>design-tokens.json</code> · Resumo e pontos ambíguos em <code>resumo.md</code> · Capturas em <code>screenshots/</code>. Logos e marca pertencem à Benner.</div>
+</footer>
+</body>
+</html>

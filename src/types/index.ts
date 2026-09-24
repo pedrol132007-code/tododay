@@ -1,4 +1,4 @@
-// Espelha supabase/migrations/ (o SQLite de src-tauri/migrations/ sai na E10).
+// Espelha supabase/migrations/.
 export interface Board {
   id: number;
   team_id: number;

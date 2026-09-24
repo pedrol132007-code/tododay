@@ -7,6 +7,7 @@ import type { Card as CardType, Label, List as ListType } from "../../types";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { useCompact } from "../../hooks/usePreferences";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
 
@@ -33,6 +34,7 @@ export function List({
   const deleteList = useDeleteList(list.board_id);
   const [newCardTitle, setNewCardTitle] = useState("");
   const canEdit = useCanEdit();
+  const compact = useCompact();
 
   const canDelete = cardCount !== undefined && cardCount === 0;
 
@@ -68,7 +70,7 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-column p-4"
+        className={`flex flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"}`}
       >
         <div
           ref={sortable.setActivatorNodeRef}
@@ -96,7 +98,7 @@ export function List({
           )}
         </div>
 
-        <div ref={droppable.setNodeRef} className="flex flex-col gap-2">
+        <div ref={droppable.setNodeRef} className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">

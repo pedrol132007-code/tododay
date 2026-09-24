@@ -13,6 +13,7 @@ import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { BrandMark } from "./components/ui/BrandMark";
+import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
 import type { MyTeam, SearchResult } from "./types";
@@ -90,7 +91,7 @@ interface TeamWorkspaceProps {
 function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps) {
   const { data: boards } = useBoards(team.id);
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
-  const [view, setView] = useState<"board" | "archive" | "team">("board");
+  const [view, setView] = useState<"board" | "archive" | "team" | "settings">("board");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
@@ -144,7 +145,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
         <div className="h-5 w-px shrink-0 bg-border" />
         <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} />
-        {activeBoard && view !== "team" && (
+        {activeBoard && (view === "board" || view === "archive") && (
           <button
             type="button"
             onClick={() => setView((v) => (v === "archive" ? "board" : "archive"))}
@@ -162,9 +163,25 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         >
           Equipe
         </button>
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === "settings" ? "board" : "settings"))}
+          aria-label="Configurações"
+          title="Configurações"
+          className={`mr-2 shrink-0 rounded-lg p-1.5 hover:bg-bg-elevated hover:text-text-primary ${
+            view === "settings" ? "text-text-primary" : "text-text-muted"
+          }`}
+        >
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
         <UserMenu userId={userId} />
       </div>
-      {view === "team" ? (
+      {view === "settings" ? (
+        <SettingsView onBack={() => setView("board")} />
+      ) : view === "team" ? (
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />
       ) : activeBoard ? (
         view === "archive" ? (

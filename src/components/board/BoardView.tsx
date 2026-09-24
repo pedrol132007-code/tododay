@@ -35,6 +35,7 @@ import { useLabelsForCards } from "../../hooks/useLabels";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
 
@@ -116,6 +117,7 @@ export function BoardView({
   const moveCardToList = useMoveCardToList();
   const [newListName, setNewListName] = useState("");
   const canEdit = useCanEdit();
+  const compact = useCompact();
 
   const computedBoard: BoardList[] = listData.map((list, index) => ({
     ...list,
@@ -439,7 +441,7 @@ export function BoardView({
         </div>
         <DragOverlay>
           {activeCard ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-card px-3 py-2 shadow-lg">
+            <div className={`flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-card shadow-lg ${compact ? "px-2 py-1 text-sm" : "px-3 py-2"}`}>
               <span className="flex-1 px-2 py-1">{activeCard.title}</span>
             </div>
           ) : activeList ? (

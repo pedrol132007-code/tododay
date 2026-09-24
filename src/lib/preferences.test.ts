@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextThemePref, parseThemePref, resolveTheme } from "./theme";
+import { parseDensity, parseThemePref, resolveTheme } from "./preferences";
 
 describe("parseThemePref", () => {
   it("keeps valid stored values", () => {
@@ -26,10 +26,14 @@ describe("resolveTheme", () => {
   });
 });
 
-describe("nextThemePref", () => {
-  it("cycles system → light → dark → system", () => {
-    expect(nextThemePref("system")).toBe("light");
-    expect(nextThemePref("light")).toBe("dark");
-    expect(nextThemePref("dark")).toBe("system");
+describe("parseDensity", () => {
+  it("keeps compact", () => {
+    expect(parseDensity("compact")).toBe("compact");
+  });
+
+  it("defaults to normal for missing or unknown values", () => {
+    expect(parseDensity("normal")).toBe("normal");
+    expect(parseDensity(null)).toBe("normal");
+    expect(parseDensity("apertado")).toBe("normal");
   });
 });

@@ -19,7 +19,7 @@ Plano da migração para Supabase, com as decisões de produto: `docs/superpower
 - Só a chave anon/publishable vai para o frontend (`VITE_SUPABASE_*`). A `service_role` nunca entra no app.
 - Visual segue a identidade da Benner (`docs/identidade-benner/`). Cores só pelos tokens semânticos do Tailwind (`primary`, `danger`, `highlight`, `on-accent`, `bg-base/surface/elevated/column/card`, `text-primary/muted`, `border`), que são variáveis CSS em `src/index.css` com versão clara (`:root`) e escura (`.dark`). Nunca use hex ou cores do Tailwind (`bg-blue-500`) direto em componentes. Azul = ação principal, vermelho = perigo/erro, laranja = hover/seleção.
 - Botão de ação principal usa a classe `.btn-primary` (caixa alta, hover laranja); o componente só define padding/largura.
-- Tema: `useTheme` (sistema/claro/escuro, salvo em `tododay.theme`) + script inline no `index.html` que aplica a classe `dark` antes do React. Fonte: Montserrat (a da Benner, mundial, é licenciada pelo Adobe Fonts).
+- Preferências da instalação (tema sistema/claro/escuro e densidade normal/compacta) vivem em `PreferencesProvider` (`src/hooks/usePreferences.tsx`), salvas no localStorage (`tododay.theme`, `tododay.density`) e editadas na tela Configurações. Não vão para o banco. Um script inline no `index.html` aplica a classe `dark` antes do React. Fonte: Montserrat (a da Benner, mundial, é licenciada pelo Adobe Fonts).
 - Sem abstrações antecipadas — resolva o problema atual, não o hipotético.
 
 ## Modelo de dados

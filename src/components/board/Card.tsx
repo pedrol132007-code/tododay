@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import type { Card as CardType, Label } from "../../types";
 import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
+import { useCompact } from "../../hooks/usePreferences";
 import { useTeamMembers } from "../../hooks/useTeams";
 import { Avatar } from "../ui/Avatar";
 import { InlineEditableText } from "../ui/InlineEditableText";
@@ -19,6 +20,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   const canEdit = useCanEdit();
+  const compact = useCompact();
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const assignee = card.assignee_id ? members?.find((m) => m.user_id === card.assignee_id) : undefined;
   const { setNodeRef, setActivatorNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
@@ -48,7 +50,7 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="flex flex-col gap-1 rounded-xl border border-border bg-bg-card px-3 py-2 shadow-card"
+        className={`flex flex-col rounded-xl border border-border bg-bg-card shadow-card ${compact ? "gap-0.5 px-2 py-1 text-sm" : "gap-1 px-3 py-2"}`}
       >
         {labels && labels.length > 0 && (
           <div className="flex flex-wrap gap-1">

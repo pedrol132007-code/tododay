@@ -9,6 +9,7 @@ import {
   moveCardToList,
   renameCard,
   restoreCard,
+  updateCardAssignee,
   updateCardDescription,
   updateCardDueDate,
   updateCardPosition,
@@ -75,6 +76,14 @@ export function useUpdateCardDueDate(listId: number) {
   });
 }
 
+export function useUpdateCardAssignee(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, assigneeId }: { id: number; assigneeId: string | null }) => updateCardAssignee(id, assigneeId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
 export function useArchiveCard(listId: number) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -92,7 +101,7 @@ export function useUpdateCardPosition() {
   return useMutation({
     mutationFn: ({ id, position }: { id: number; position: number }) => updateCardPosition(id, position),
     onSuccess: invalidate,
-    // If the write fails, invalidating anyway forces a refetch from SQLite (the source of
+    // If the write fails, invalidating anyway forces a refetch from the database (the source of
     // truth), which snaps the UI back to the last persisted state — no manual rollback needed.
     onError: invalidate,
   });
@@ -119,6 +128,7 @@ export function useRestoreCard(boardId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["cardCount"] });
     },
   });
 }

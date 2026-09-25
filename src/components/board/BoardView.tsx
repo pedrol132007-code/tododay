@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -23,7 +23,6 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
-import { CardDetailPanel } from "../card-detail/CardDetailPanel";
 import { useChecklistProgressForCards } from "../../hooks/useChecklistItems";
 import {
   useCardsByListIds,
@@ -34,8 +33,19 @@ import {
 import { useLabelsForCards } from "../../hooks/useLabels";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
+import { BoardSkeleton } from "./BoardSkeleton";
 import { List } from "./List";
+import { IconColumns, IconPlus } from "../ui/icons";
+import { EmptyState } from "../ui/EmptyState";
+import { PageHeader } from "../ui/PageHeader";
+
+// The detail panel pulls in the markdown renderer, so it only loads once a card is opened.
+const CardDetailPanel = lazy(() =>
+  import("../card-detail/CardDetailPanel").then((m) => ({ default: m.CardDetailPanel })),
+);
 
 // Lists only ever reorder sideways. The default sortableKeyboardCoordinates scans every
 // droppable in the board — including cards inside other lists — so Left/Right ends up jumping
@@ -114,6 +124,8 @@ export function BoardView({
   const updateCardPositions = useUpdateCardPositions();
   const moveCardToList = useMoveCardToList();
   const [newListName, setNewListName] = useState("");
+  const canEdit = useCanEdit();
+  const compact = useCompact();
 
   const computedBoard: BoardList[] = listData.map((list, index) => ({
     ...list,
@@ -280,7 +292,7 @@ export function BoardView({
     // Each branch below is responsible for clearing dragPreview exactly once: either
     // synchronously (no real move happened, so there's nothing to wait for) or after its
     // mutation(s) settle (so renderedBoard never falls back to the stale computedBoard while
-    // the SQLite write + query invalidation are still in flight). clearingAsync tracks which
+    // the database write + query invalidation are still in flight). clearingAsync tracks which
     // case we're in so the fallback at the bottom only fires for the synchronous case.
     let clearingAsync = false;
 
@@ -365,17 +377,19 @@ export function BoardView({
     setDragSourceListId(null);
   }
 
-  if (isLoading) {
+  // Cards too: otherwise every column flashes "Nenhum card ainda." before its cards arrive.
+  if (isLoading || cardQueries.some((q) => q.isLoading)) {
     return (
-      <div className="flex h-full items-center justify-center text-text-muted">
-        Carregando...
+      <div className="flex h-full flex-col p-6">
+        <PageHeader title={boardName} />
+        <BoardSkeleton />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center text-accent-pink">
+      <div className="flex h-full items-center justify-center text-danger">
         Erro ao carregar colunas: {(error as Error).message}
       </div>
     );
@@ -383,9 +397,10 @@ export function BoardView({
 
   return (
     <div className="flex h-full flex-col p-6">
-      <h1 className="mb-6 text-2xl font-semibold text-text-primary">{boardName}</h1>
+      <PageHeader title={boardName} />
       <DndContext
-        sensors={sensors}
+        // Sem sensores não há arraste: leitores só abrem os cards.
+        sensors={canEdit ? sensors : []}
         collisionDetection={(args) => (args.pointerCoordinates ? pointerWithin(args) : closestCenter(args))}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
@@ -398,9 +413,15 @@ export function BoardView({
             strategy={horizontalListSortingStrategy}
           >
             {renderedBoard.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-bg-surface p-6 text-text-muted">
-                Nenhuma lista ainda.
-              </div>
+              <EmptyState
+                icon={<IconColumns size={22} />}
+                title="Nenhuma coluna ainda"
+                description={
+                  canEdit
+                    ? "Crie a primeira coluna ao lado, por exemplo “A fazer”, “Fazendo” e “Feito”."
+                    : "Quando alguém da equipe criar colunas, elas aparecem aqui."
+                }
+              />
             ) : (
               renderedBoard.map((list) => (
                 <List
@@ -415,30 +436,37 @@ export function BoardView({
               ))
             )}
           </SortableContext>
-          <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
-            <input
-              value={newListName}
-              onChange={(e) => setNewListName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddList()}
-              placeholder="Nova coluna..."
-              className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-accent-purple"
-            />
-            <button
-              type="button"
-              onClick={handleAddList}
-              className="rounded-lg bg-accent-purple px-3 py-1 text-sm font-medium text-bg-base hover:opacity-90"
-            >
-              + Adicionar coluna
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
+              <input
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddList()}
+                placeholder="Nova coluna..."
+                className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
+              />
+              <button
+                type="button"
+                onClick={handleAddList}
+                className="btn-primary inline-flex items-center justify-center gap-1 px-3 py-1.5"
+              >
+                <IconPlus size={14} /> Adicionar coluna
+              </button>
+            </div>
+          )}
         </div>
         <DragOverlay>
           {activeCard ? (
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-elevated px-3 py-2 shadow-lg">
+            // "Lifted" look while it follows the pointer: bigger shadow and a slight tilt.
+            <div
+              className={`flex cursor-grabbing items-center justify-between gap-2 rounded-xl border border-primary/40 bg-bg-card shadow-2xl motion-safe:rotate-2 motion-safe:scale-[1.03] ${
+                compact ? "px-2 py-1 text-sm" : "px-3 py-2"
+              }`}
+            >
               <span className="flex-1 px-2 py-1">{activeCard.title}</span>
             </div>
           ) : activeList ? (
-            <div className="flex w-72 flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-4 shadow-lg">
+            <div className="flex w-72 cursor-grabbing flex-col gap-3 rounded-2xl border border-primary/40 bg-bg-column p-4 shadow-2xl motion-safe:rotate-1">
               <span className="text-lg font-semibold">{activeList.name}</span>
             </div>
           ) : null}
@@ -456,7 +484,7 @@ export function BoardView({
             animate={{ opacity: [0, 0.6, 0.15, 0.6, 0.15] }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.4, times: [0, 0.15, 0.5, 0.65, 1] }}
-            className="pointer-events-none fixed -z-10 rounded-2xl bg-accent-purple blur-xl"
+            className="pointer-events-none fixed -z-10 rounded-2xl bg-primary blur-xl"
             style={{
               left: highlightRect.left - 12,
               top: highlightRect.top - 12,
@@ -468,7 +496,9 @@ export function BoardView({
       </AnimatePresence>
       <AnimatePresence>
         {selectedCard && (
-          <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />
+          <Suspense key="detail" fallback={null}>
+            <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

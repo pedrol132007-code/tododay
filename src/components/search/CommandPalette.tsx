@@ -4,13 +4,14 @@ import { useSearch } from "../../hooks/useSearch";
 import type { SearchResult } from "../../types";
 
 interface CommandPaletteProps {
+  teamId: number;
   onNavigate: (result: SearchResult) => void;
   onClose: () => void;
 }
 
-export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
+export function CommandPalette({ teamId, onNavigate, onClose }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
-  const { data: results } = useSearch(query);
+  const { data: results } = useSearch(teamId, query);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -47,7 +48,7 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
             }
           }}
           placeholder="Buscar cards e colunas em todos os boards..."
-          className="w-full rounded-lg border border-border bg-bg-elevated px-3 py-2 text-text-primary outline-none focus:border-accent-purple"
+          className="w-full rounded-lg border border-border bg-bg-elevated px-3 py-2 text-text-primary outline-none focus:border-primary"
         />
         {results && results.length > 0 && (
           <div className="flex flex-col gap-1">
@@ -60,7 +61,7 @@ export function CommandPalette({ onNavigate, onClose }: CommandPaletteProps) {
               >
                 <span
                   className={`h-2 w-2 shrink-0 rounded-full ${
-                    result.type === "card" ? "bg-accent-purple" : "bg-accent-yellow"
+                    result.type === "card" ? "bg-primary" : "bg-highlight"
                   }`}
                 />
                 <span className="flex flex-col items-start">

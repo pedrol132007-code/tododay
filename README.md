@@ -1,100 +1,106 @@
 # Tododay 🍃
 
-Kanban pessoal para desktop. Offline-first, sem nuvem, sem login — só você e seus cards.
+Kanban para equipes. Boards compartilhados, atualização em tempo real e convite por link — no navegador ou como app desktop.
 
-Construído com [Tauri v2](https://v2.tauri.app/) (Rust) + React 18 + TypeScript, com um banco SQLite local que vive inteiramente na sua máquina.
+Construído com React 18 + TypeScript e [Supabase](https://supabase.com/) (Postgres + Auth + Realtime). A versão desktop usa [Tauri v2](https://v2.tauri.app/) em volta do mesmo frontend.
 
-## Download (Windows)
+## Como usar
 
-**Não precisa clonar o repositório nem instalar nada de desenvolvimento para usar o app.**
+- **Navegador:** abra o link da versão web, crie sua conta (confirmando o e-mail) e crie uma equipe — ou abra um link de convite que alguém da equipe te mandou.
+- **Desktop (Windows):** baixe o instalador na [página de Releases](https://github.com/pedrol132007-code/tododay/releases/latest) — `Tododay_x.x.x_x64-setup.exe` (ou o `.msi`). A conta e os boards são os mesmos da versão web.
 
-👉 Baixe o instalador pronto na [página de Releases](https://github.com/pedrol132007-code/tododay/releases/latest) — `Tododay_x.x.x_x64-setup.exe` (ou o `.msi`, equivalente). Execute e pronto: o instalador cuida do WebView2 Runtime automaticamente.
-
-A seção **"Como rodar em dev"** abaixo é só para quem vai *desenvolver* o app (compilar do código-fonte) — não é necessária para simplesmente usá-lo.
+Não precisa clonar o repositório para usar o app. A seção **"Como rodar em dev"** abaixo é só para quem vai desenvolver.
 
 ## Funcionalidades
 
+- **Equipes** com papéis (`admin` / `member` / `viewer`) e cargo por membro
+- **Convite por link** — uso único, válido por 7 dias, cancelável
 - **Boards e colunas** com CRUD completo e reordenação
 - **Drag and drop** de cards entre colunas e de colunas entre si
-- **Painel de detalhe do card** — descrição em Markdown, data de vencimento
-- **Labels** coloridas por board, atribuídas por card
-- **Checklists** por card, com progresso visível no card fechado
-- **Busca global** (`Ctrl+K`) entre boards, colunas e cards
-- **Arquivamento** de cards, com tela de restauração/exclusão definitiva
+- **Tempo real** — mudanças dos colegas aparecem sem recarregar
+- **Painel de detalhe do card** — descrição em Markdown, data de vencimento, responsável
+- **Labels** coloridas por board e **checklists** por card
+- **Busca global** (`Ctrl+K`) nos boards da equipe
+- **Arquivamento** de cards, com restauração/exclusão definitiva
+- **Histórico de atividade** por card e por equipe
 
 ## Stack
 
-| Camada       | Tecnologia                                                      |
-| ------------ | ----------------------------------------------------------------|
-| Desktop shell| [Tauri v2](https://v2.tauri.app/) (Rust)                        |
-| Frontend     | React 18 + TypeScript + Vite                                    |
-| Estilo       | Tailwind CSS                                                    |
-| Dados        | SQLite via [`@tauri-apps/plugin-sql`](https://v2.tauri.app/plugin/sql/) |
-| Drag & drop  | [`@dnd-kit`](https://dndkit.com/)                                |
-| Server state | TanStack Query                                                  |
-| Testes       | Vitest                                                           |
+| Camada        | Tecnologia                                                     |
+| ------------- | -------------------------------------------------------------- |
+| Frontend      | React 18 + TypeScript + Vite                                   |
+| Estilo        | Tailwind CSS, identidade visual Benner, tema claro e escuro     |
+| Backend       | [Supabase](https://supabase.com/) — Postgres, Auth, Realtime, RLS |
+| Web           | [Vercel](https://vercel.com/)                                  |
+| Desktop shell | [Tauri v2](https://v2.tauri.app/) (Rust)                       |
+| Drag & drop   | [`@dnd-kit`](https://dndkit.com/)                               |
+| Server state  | TanStack Query                                                 |
+| Testes        | Vitest (frontend) + scripts SQL em `supabase/tests/` (RLS)     |
 
 ## Como rodar em dev (só para quem for desenvolver)
 
-Pré-requisitos (uma vez só):
-
-1. [Node.js LTS](https://nodejs.org)
-2. Rust via [rustup](https://rustup.rs)
-3. Windows: WebView2 Runtime (já vem no Windows 11) + um linker C. Duas opções:
-   - Microsoft C++ Build Tools (workload "Desktop development with C++", via Visual Studio Installer).
-   - **Sem admin/Visual Studio:** `scoop install mingw` e depois `rustup toolchain install stable-x86_64-pc-windows-gnu` + `rustup override set stable-x86_64-pc-windows-gnu` dentro de `src-tauri/`.
-
-Depois:
+1. Crie um projeto no Supabase e rode as migrations de `supabase/migrations/` em ordem no SQL Editor (ou `supabase/setup_producao.sql`, que junta todas).
+2. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (Project Settings → API; use a chave anon/publishable, nunca a `service_role`).
+3. Rode:
 
 ```bash
 npm install
-npm run tauri dev
+npm run dev            # versão web em http://localhost:1420
+```
+
+### Desktop
+
+Pré-requisitos (uma vez só):
+
+1. Rust via [rustup](https://rustup.rs)
+2. Windows: WebView2 Runtime (já vem no Windows 11) + um linker C. Duas opções:
+   - Microsoft C++ Build Tools (workload "Desktop development with C++", via Visual Studio Installer).
+   - **Sem admin/Visual Studio:** `scoop install mingw` e depois `rustup toolchain install stable-x86_64-pc-windows-gnu` + `rustup override set stable-x86_64-pc-windows-gnu` dentro de `src-tauri/`.
+
+```bash
+npm run tauri dev      # janela desktop com hot-reload
+npm run tauri build    # instalador de teste (chaves do .env)
+npm run desktop:build  # instalador para distribuir (chaves do .env.desktop)
 ```
 
 > Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git pode sombrear o linker correto no PATH. Use PowerShell/cmd nesse caso.
 
-Isso abre a janela do app com hot-reload do frontend. O banco SQLite (`kanban.db`) é criado automaticamente no diretório de dados do app na primeira execução, com o schema aplicado pelas migrations em `src-tauri/migrations/`.
+As chaves são embutidas no instalador na hora do build. Para distribuir, copie `.env.desktop.example` para `.env.desktop`, preencha com o projeto de produção e o endereço da versão web (`VITE_PUBLIC_URL`, usado nos links de convite) e rode `npm run desktop:build`. Sem esse arquivo o build falha, para nunca sair um instalador apontando para o banco de dev.
 
 ### Outros comandos
 
 ```bash
-npm run test           # roda os testes (Vitest)
-npm run build           # build de produção do frontend
-npm run tauri build     # gera o instalador desktop
+npm test               # testes (Vitest)
+npm run build          # build de produção do frontend (dist/)
 ```
 
 ## Estrutura do projeto
 
 ```
 src/
-  components/   # UI React, organizada por área (board, card-detail, search, archive)
-  db/           # toda query SQL vive aqui — nunca em componentes
+  components/   # UI React, por área (auth, team, board, card-detail, search, archive)
+  db/           # todo acesso ao Supabase vive aqui — nunca em componentes
   hooks/        # hooks de dados (React Query) por entidade
-  lib/          # utilitários puros (ex: cálculo de posição para reordenação)
+  lib/          # utilitários puros (posição, atividade, convite pendente)
   types/        # fonte única de verdade dos tipos, espelha as migrations
-src-tauri/
-  migrations/   # schema SQLite, numerado sequencialmente
-  src/          # entrypoint Rust/Tauri
+supabase/
+  migrations/   # schema Postgres + RLS, numerado sequencialmente
+  tests/        # testes de RLS/regras, rodados no SQL Editor
+  templates/    # e-mails de confirmação e recuperação de senha, em PT
+src-tauri/      # casca desktop (Tauri), sem lógica própria
 ```
 
 ## Modelo de dados
 
-Ver [`src-tauri/migrations/0001_init.sql`](src-tauri/migrations/0001_init.sql), a fonte autoritativa. Resumo:
+Fonte autoritativa: [`supabase/migrations/`](supabase/migrations/). Resumo:
 
-- `board` → `list` → `card` (hierarquia principal)
-- `label` e `card_label` (N:N entre cards e labels de um board)
-- `checklist_item` (itens de checklist por card)
+- `team` → `board` → `list` → `card` (hierarquia principal)
+- `profile`, `team_member` (papel + cargo) e `team_invite` (links de convite)
+- `label` e `card_label`, `checklist_item`
+- `activity` — histórico, preenchido por triggers
 
-## Onde ficam seus dados
-
-Tudo local, em um único arquivo SQLite (`kanban.db`) criado automaticamente na primeira execução, em `%APPDATA%\com.pedroromeiro.tododay\kanban.db`.
-
-- **Sem conta, sem nuvem, sem sincronização** — cada usuário do Windows na máquina tem seu próprio banco, e ele não se comunica com nenhum servidor.
-- **Sobrevive a updates:** instalar uma versão nova por cima não apaga nem recria o banco.
-- **Sobrevive a desinstalação:** o instalador não remove `%APPDATA%`, então reinstalar o app recupera os dados antigos.
-- **Sem sync entre máquinas:** usar em dois PCs significa dois bancos independentes.
-- **Backup/migração manual:** para levar seus dados para outro PC (ou fazer backup), basta copiar esse arquivo `kanban.db` — não há exportação nativa (CSV/JSON) ainda.
+Todo acesso é controlado por Row Level Security: cada usuário só enxerga as equipes de que é membro.
 
 ## Status
 
-Projeto pessoal, desenvolvido em fases — todas as 5 fases planejadas (setup, CRUD, drag and drop, painel de detalhe, busca/labels/checklist/arquivamento) estão concluídas. Detalhes de cada fase em [`docs/superpowers/plans/`](docs/superpowers/plans/) e o spec completo em [`docs/superpowers/specs/2026-09-17-kanban-desktop-design.md`](docs/superpowers/specs/2026-09-17-kanban-desktop-design.md).
+As 5 fases do app original (local, SQLite) e a migração para Supabase estão concluídas. Detalhes em [`docs/superpowers/plans/`](docs/superpowers/plans/) — a migração em [`2026-09-23-migracao-supabase.md`](docs/superpowers/plans/2026-09-23-migracao-supabase.md).

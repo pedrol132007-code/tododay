@@ -5,3 +5,17 @@ src-tauri/gen/
 *.db
 *.db-journal
 .DS_Store
+.env
+.env.local
+
+.vercel
+.env*
+!.env.example
+!.env.desktop.example
+
+# Capturas do guia de marca (~50 MB), só locais
+docs/identidade-benner/screenshots/
+
+# Playwright
+test-results/
+playwright-report/

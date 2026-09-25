@@ -1,45 +1,31 @@
-import { getDb } from "./client";
+import { must, supabase } from "./supabase";
 import type { List } from "../types";
 
 export async function listLists(boardId: number): Promise<List[]> {
-  const db = await getDb();
-  return db.select<List[]>("SELECT * FROM list WHERE board_id = $1 ORDER BY position ASC", [
-    boardId,
-  ]);
+  return must(await supabase.from("list").select("*").eq("board_id", boardId).order("position"));
 }
 
 export async function createList(boardId: number, name: string): Promise<number> {
-  const db = await getDb();
-  const maxPosition = await db.select<{ maxPosition: number | null }[]>(
-    "SELECT MAX(position) as maxPosition FROM list WHERE board_id = $1",
-    [boardId],
+  const last = must(
+    await supabase.from("list").select("position").eq("board_id", boardId).order("position", { ascending: false }).limit(1),
   );
-  const position = (maxPosition[0]?.maxPosition ?? 0) + 1;
-  const result = await db.execute(
-    "INSERT INTO list (board_id, name, position) VALUES ($1, $2, $3)",
-    [boardId, name, position],
-  );
-  return result.lastInsertId ?? 0;
+  const position = (last[0]?.position ?? 0) + 1;
+  const row = must(await supabase.from("list").insert({ board_id: boardId, name, position }).select("id").single());
+  return row.id;
 }
 
 export async function renameList(id: number, name: string): Promise<void> {
-  const db = await getDb();
-  await db.execute("UPDATE list SET name = $1 WHERE id = $2", [name, id]);
+  must(await supabase.from("list").update({ name }).eq("id", id));
 }
 
 export async function deleteList(id: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("DELETE FROM list WHERE id = $1", [id]);
+  must(await supabase.from("list").delete().eq("id", id));
 }
 
 export async function updateListPosition(id: number, position: number): Promise<void> {
-  const db = await getDb();
-  await db.execute("UPDATE list SET position = $1 WHERE id = $2", [position, id]);
+  must(await supabase.from("list").update({ position }).eq("id", id));
 }
 
 export async function updateListPositions(items: { id: number; position: number }[]): Promise<void> {
-  const db = await getDb();
-  for (const item of items) {
-    await db.execute("UPDATE list SET position = $1 WHERE id = $2", [item.position, item.id]);
-  }
+  must(await supabase.rpc("set_list_positions", { p_items: items }));
 }

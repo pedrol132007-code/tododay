@@ -1,0 +1,103 @@
+{
+  "$meta": {
+    "fonte": "Estilos computados (Playwright, 1440x900) de benner.com.br/, /sobre, /erp-para-gestao-juridica e /blog + CSS do Webflow (bennersite.webflow.*.opt.min.css)",
+    "extraidoEm": "2026-09-24",
+    "unidades": "O site usa rem com base fluida: em 1440px, 1rem = 12.4862px. Os valores 'rem' abaixo são os do CSS; 'px@1440' é o valor computado nessa largura.",
+    "frequencia": "Contagem de elementos visíveis nas 4 páginas (fundos ponderados pela área)."
+  },
+  "cores": {
+    "primaria": {
+      "azul-benner": { "hex": "#2538FF", "rgb": "37, 56, 255", "uso": "Única variável CSS do site (--benner-blue). Botão do menu, botão outline, bordas, seções de fundo azul, degradê do hero.", "frequencia": { "fundo": 428, "borda": 72, "texto": 11 } }
+    },
+    "secundaria": {
+      "vermelho-benner": { "hex": "#E51E47", "rgb": "229, 30, 71", "uso": "Botão principal (CTA), títulos de destaque, ícones, tag do hero, filetes decorativos.", "frequencia": { "fundo": 379, "texto": 39 }, "variantes": ["#E51F4B (títulos na página jurídica)", "#E51F48 (ponto do logo)", "#ED1846 (2 regras no CSS)"] }
+    },
+    "apoio": {
+      "laranja-hover": { "hex": "#FBA747", "rgb": "251, 167, 71", "uso": "Fundo de TODOS os botões no hover, ícones sociais, link da política de privacidade. Variante #FAA747 aparece 1x." },
+      "azul-escuro": { "hex": "#162299", "rgb": "22, 34, 153", "uso": "Início do degradê azul sobre imagens (linear-gradient #162299cc → #2538ffcc)." },
+      "azul-landing": { "hex": "#005DFF", "rgb": "0, 93, 255", "uso": "Só em landing pages específicas (17 regras .lp-*). Não faz parte do núcleo da marca." },
+      "whatsapp": { "hex": "#25D366", "rgb": "37, 211, 102", "uso": "Botão flutuante de WhatsApp (cor da marca WhatsApp, não da Benner)." }
+    },
+    "neutras": {
+      "creme": { "hex": "#F8F5F1", "rgb": "248, 245, 241", "uso": "Fundo predominante das seções (maior área de todas).", "frequencia": { "fundo": 2806 } },
+      "branco": { "hex": "#FFFFFF", "rgb": "255, 255, 255", "uso": "Cards, texto sobre azul/degradê, logos.", "frequencia": { "fundo": 2126, "texto": 187 } },
+      "cinza-texto": { "hex": "#333333", "rgb": "51, 51, 51", "uso": "Texto corrido e títulos sobre fundo claro.", "frequencia": { "texto": 161 } },
+      "grafite": { "hex": "#1A1E21", "rgb": "26, 30, 33", "uso": "Rodapé e banner de cookies." },
+      "cinza-claro": { "hex": "#F5F5F5", "rgb": "245, 245, 245", "uso": "Fundos secundários." },
+      "cinza-borda": { "hex": "#DBDBDB", "rgb": "219, 219, 219", "uso": "Bordas e divisores (também #DEDEDE e #CCCCCC)." },
+      "cinza-suave": { "hex": "#C5C5C5", "rgb": "197, 197, 197", "uso": "Texto secundário/rodapé." }
+    },
+    "degrades": {
+      "hero": "Imagem de fundo com degradê azul (#2538FF) → magenta → vermelho (#E51E47), com uma 'onda' de luz rosa. É imagem, não CSS.",
+      "sobre-imagem": "linear-gradient(rgba(0,0,0,.8), rgba(37,56,255,0) 28%, rgba(37,56,255,.8))",
+      "overlay-azul": "linear-gradient(rgba(22,34,153,.8), rgba(37,56,255,.8))"
+    }
+  },
+  "tipografia": {
+    "familias": {
+      "principal": { "nome": "mundial", "stack": "mundial, sans-serif", "origem": "Adobe Fonts (Typekit), kit hpw1rny — fonte licenciada, só funciona nos domínios autorizados no kit.", "pesosEmUso": [400, 600, 700], "pesosNoKit": [100, 200, 300, 400, 600, 700, 900] },
+      "apoio": { "nome": "Lato", "stack": "Lato, sans-serif", "origem": "Google Fonts", "uso": "Só no banner de cookies." },
+      "carregadaSemUso": { "nome": "Montserrat", "origem": "Google Fonts via WebFont.load", "uso": "Carregada em todas as páginas, mas nenhum elemento visível a usa." }
+    },
+    "escala": {
+      "h1": { "rem": "4rem", "px@1440": 49.94, "peso": 400, "alturaDeLinha": 0.9, "letterSpacing": "-0.1rem", "cor": "#FFFFFF (sobre o hero)" },
+      "h2-grande": { "rem": "2.5rem", "px@1440": 31.22, "peso": 400, "alturaDeLinha": 1.2, "letterSpacing": "-0.1rem", "cor": "#333333" },
+      "h2": { "rem": "2rem", "px@1440": 24.97, "peso": "400 (700 em títulos de destaque)", "alturaDeLinha": 1.2, "letterSpacing": "-0.1rem", "cor": "#333333" },
+      "h3": { "rem": "1.7rem–2rem", "px@1440": "21.23–24.97", "peso": "400 / 600", "alturaDeLinha": "1.0–1.3", "letterSpacing": "-0.1rem", "cor": "#333333, #FFFFFF ou #E51E47" },
+      "h4": { "rem": "1.7rem", "px@1440": 21.23, "peso": 600, "alturaDeLinha": 1.3, "letterSpacing": "-0.1rem", "cor": "#333333" },
+      "h5-h6": "Não aparecem nas páginas analisadas (Webflow usa classes como 'heading-6' em h4).",
+      "texto": { "rem": "1rem–1.5rem", "px@1440": "12.49–18.73", "peso": 400, "alturaDeLinha": "~1.5", "cor": "#333333", "obs": "Varia por seção; ver resumo.md." },
+      "botao": { "rem": "1.1rem", "px@1440": 13.73, "peso": 400, "textTransform": "uppercase", "alturaDeLinha": "1.2rem" },
+      "menu": { "rem": "1rem", "px@1440": 12.49, "peso": 400, "textTransform": "uppercase", "cor": "#FFFFFF" }
+    },
+    "tamanhosMaisUsados_px@1440": { "12.49": 125, "18.73": 71, "24.97": 43, "13.73": 32, "15.61": 31, "14.98": 20 }
+  },
+  "botoes": {
+    "base": { "fundo": "#E51E47", "texto": "#FFFFFF", "borderRadius": "0.3rem (3.75px@1440)", "padding": "1rem 2rem", "fonte": "mundial 400, 1.1rem", "textTransform": "uppercase", "borda": "nenhuma", "sombra": "nenhuma", "transicao": "all .4s" },
+    "hoverPadrao": { "fundo": "#FBA747", "texto": "#000000", "obs": "Todos os botões sólidos (vermelho, azul, branco) viram laranja com texto preto no hover." },
+    "variantes": {
+      "primario-vermelho": { "fundo": "#E51E47", "texto": "#FFFFFF", "exemplos": ["FALE COM UM ESPECIALISTA", "SAIBA MAIS"] },
+      "azul-menu": { "fundo": "#2538FF", "texto": "#FFFFFF", "padding": "1rem 1.5rem", "hover": { "fundo": "#FBA747", "texto": "#333333" }, "exemplos": ["SOLICITE UMA DEMONSTRAÇÃO"] },
+      "outline": { "fundo": "transparente", "texto": "#2538FF", "borda": "1px solid #2538FF", "hover": { "fundo": "#2538FF", "texto": "#FFFFFF" }, "exemplos": ["CASES DE SUCESSO"] },
+      "branco": { "fundo": "#FFFFFF", "texto": "#2538FF", "hover": { "fundo": "#FBA747", "texto": "#000000" }, "exemplos": ["AGENDE UMA DEMONSTRAÇÃO"] }
+    }
+  },
+  "borderRadius": {
+    "padrao": { "valor": "0.3rem", "px@1440": 3.75, "frequencia": 111, "uso": "Botões, tags, cards, imagens" },
+    "medio": { "valor": "12px", "frequencia": 9 },
+    "grande": { "valor": "15px–22px", "frequencia": 5 },
+    "pilula": { "valor": "42px", "frequencia": 4 },
+    "circulo": { "valor": "50%", "frequencia": 4, "uso": "Botão do WhatsApp, avatares" }
+  },
+  "sombras": {
+    "card": { "valor": "0 15px 15px rgba(0,0,0,.15)", "frequencia": 11 },
+    "suave": { "valor": "0 0 2rem rgba(0,0,0,.04)", "frequencia": 10 },
+    "elevada": { "valor": "0 8px 28px rgba(0,0,0,.28)", "frequencia": 4 },
+    "flutuante": { "valor": "0 4px 10px rgba(0,0,0,.3)", "frequencia": 4 },
+    "profunda": { "valor": "0 20px 20px rgba(0,0,0,.16)", "frequencia": 3 }
+  },
+  "espacamentos": {
+    "base": "1rem (12.49px@1440)",
+    "escala_rem": {
+      "0.3rem": 104,
+      "0.5rem": 150,
+      "0.75rem": 100,
+      "1rem": 365,
+      "1.5rem": 18,
+      "2rem": 219,
+      "2.375rem": 96,
+      "2.5rem": 94,
+      "3rem": 43,
+      "3.125rem": 48,
+      "4rem": 30,
+      "4.6rem": 40
+    },
+    "obs": "Valores ordenados por rem; o número é a frequência. Também aparecem valores fixos em px: 40px (58), 16px (30), 20px (17), 28px (16)."
+  },
+  "elementosGraficos": {
+    "filetes": "Linhas horizontais curtas (≈70px, 2px) em vermelho ou azul, usadas como separadores e acima de títulos.",
+    "cards": "Brancos sobre fundo creme, radius 0.3rem, sombra 'card'.",
+    "iconografia": "Ícones de linha, em vermelho (#E51E47), ~40px. Seta diagonal ↗ como affordance de link.",
+    "fotografia": "Pessoas reais em ambiente de trabalho + camada de degradê azul/vermelho e 'onda' de luz."
+  }
+}

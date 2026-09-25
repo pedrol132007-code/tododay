@@ -128,6 +128,7 @@ export function useRestoreCard(boardId: number) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["cardCount"] });
     },
   });
 }

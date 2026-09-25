@@ -2,7 +2,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import type { Card as CardType, Label } from "../../types";
-import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
+import { useArchiveCard, useRenameCard, useRestoreCard } from "../../hooks/useCards";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { useTeamMembers } from "../../hooks/useTeams";
@@ -10,6 +10,7 @@ import { Avatar } from "../ui/Avatar";
 import { DueBadge } from "../ui/DueBadge";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { IconArchive } from "../ui/icons";
+import { useToast } from "../ui/Toast";
 
 interface CardProps {
   card: CardType;
@@ -21,6 +22,10 @@ interface CardProps {
 export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
+  // Precisa existir antes do arquivamento: o card some da tela, mas o "Desfazer" do aviso ainda
+  // chama esta mutation (as invalidações dela rodam mesmo com o componente desmontado).
+  const restoreCard = useRestoreCard(card.board_id);
+  const toast = useToast();
   const canEdit = useCanEdit();
   const compact = useCompact();
   const { data: members } = useTeamMembers(useCurrentTeamId());
@@ -85,7 +90,13 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                archiveCard.mutate(card.id);
+                archiveCard.mutate(card.id, {
+                  onSuccess: () =>
+                    toast({
+                      message: `“${card.title}” arquivado`,
+                      action: { label: "Desfazer", onClick: () => restoreCard.mutate(card.id) },
+                    }),
+                });
               }}
               className="mt-0.5 rounded-lg p-1 text-text-muted opacity-0 transition-opacity hover:bg-danger hover:text-on-accent focus-visible:opacity-100 group-hover:opacity-100"
               aria-label="Arquivar card"

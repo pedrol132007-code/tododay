@@ -36,6 +36,7 @@ import { resolveInsertPosition } from "../../lib/position";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
+import { BoardSkeleton } from "./BoardSkeleton";
 import { List } from "./List";
 import { IconColumns, IconPlus } from "../ui/icons";
 import { EmptyState } from "../ui/EmptyState";
@@ -376,10 +377,12 @@ export function BoardView({
     setDragSourceListId(null);
   }
 
-  if (isLoading) {
+  // Cards too: otherwise every column flashes "Nenhum card ainda." before its cards arrive.
+  if (isLoading || cardQueries.some((q) => q.isLoading)) {
     return (
-      <div className="flex h-full items-center justify-center text-text-muted">
-        Carregando...
+      <div className="flex h-full flex-col p-6">
+        <PageHeader title={boardName} />
+        <BoardSkeleton />
       </div>
     );
   }

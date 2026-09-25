@@ -4,8 +4,13 @@
 // e-mail (talvez em outro aparelho) e só então aceita. Por isso ele fica no localStorage
 // e também vai no link de confirmação do e-mail (ver signUp em src/db/auth.ts).
 
+import { publicOrigin } from "./publicUrl";
+
 const PARAM = "convite";
 const STORAGE_KEY = "tododay.pendingInvite";
+
+/** Para onde apontam os links que saem do app (ver publicUrl.ts). */
+export const appOrigin = publicOrigin(import.meta.env.VITE_PUBLIC_URL, window.location.origin);
 
 function readStored(): string | null {
   try {
@@ -45,10 +50,10 @@ export function clearPendingInvite() {
 }
 
 export function inviteUrl(token: string): string {
-  return `${window.location.origin}/?${PARAM}=${token}`;
+  return `${appOrigin}/?${PARAM}=${token}`;
 }
 
 /** URL de volta dos e-mails de confirmação: carrega o convite junto, se houver. */
 export function redirectUrlWithInvite(): string {
-  return pending ? inviteUrl(pending) : window.location.origin;
+  return pending ? inviteUrl(pending) : appOrigin;
 }

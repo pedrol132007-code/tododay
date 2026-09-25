@@ -1,11 +1,11 @@
 import type { AuthError, Session } from "@supabase/supabase-js";
 import { initialAuthHash, supabase } from "./supabase";
-import { redirectUrlWithInvite } from "../lib/pendingInvite";
+import { appOrigin, redirectUrlWithInvite } from "../lib/pendingInvite";
 import type { Profile } from "../types";
 
-// Links de e-mail voltam para a origem atual (em dev, http://localhost:1420),
-// que precisa estar em Authentication → URL Configuration → Redirect URLs.
-const redirectTo = window.location.origin;
+// Links de e-mail voltam para a origem pública (em dev, http://localhost:1420; no desktop,
+// VITE_PUBLIC_URL), que precisa estar em Authentication → URL Configuration → Redirect URLs.
+const redirectTo = appOrigin;
 
 const messages: Record<string, string> = {
   invalid_credentials: "E-mail ou senha incorretos.",

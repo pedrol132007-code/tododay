@@ -63,9 +63,10 @@ Desktop — pré-requisitos (uma vez só):
 
 ```bash
 npm run tauri dev      # janela desktop com hot-reload
-npm run tauri build    # instalador em src-tauri/target/release/bundle/
+npm run tauri build    # instalador de teste (usa o .env de dev)
+npm run desktop:build  # instalador para distribuir (usa o .env.desktop)
 ```
 
 Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git (`usr/bin/link.exe`, uma ferramenta de hard link) pode sombrear o linker correto no PATH. Rode pelo PowerShell/cmd nesse caso, ou garanta que o PATH do MinGW/MSVC vem antes do Git no PATH.
 
-O build desktop embute as variáveis do `.env` no momento do build — para um instalador que aponte para produção, gere com as chaves do `tododay-prod`.
+O build desktop embute as variáveis no momento do build. `npm run desktop:build` roda o Vite em `--mode desktop`, que exige um `.env.desktop` (modelo em `.env.desktop.example`) com as chaves do `tododay-prod` e `VITE_PUBLIC_URL` — senão o build falha. `VITE_PUBLIC_URL` é o endereço da Vercel: no desktop a origem é `http://tauri.localhost`, então links de convite e de e-mail usam esse valor (`src/lib/publicUrl.ts`). Na web ele pode ficar vazio.

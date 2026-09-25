@@ -59,12 +59,13 @@ Pré-requisitos (uma vez só):
 
 ```bash
 npm run tauri dev      # janela desktop com hot-reload
-npm run tauri build    # gera o instalador
+npm run tauri build    # instalador de teste (chaves do .env)
+npm run desktop:build  # instalador para distribuir (chaves do .env.desktop)
 ```
 
 > Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git pode sombrear o linker correto no PATH. Use PowerShell/cmd nesse caso.
 
-As chaves do `.env` são embutidas no instalador na hora do build — gere com as chaves do projeto de produção.
+As chaves são embutidas no instalador na hora do build. Para distribuir, copie `.env.desktop.example` para `.env.desktop`, preencha com o projeto de produção e o endereço da versão web (`VITE_PUBLIC_URL`, usado nos links de convite) e rode `npm run desktop:build`. Sem esse arquivo o build falha, para nunca sair um instalador apontando para o banco de dev.
 
 ### Outros comandos
 

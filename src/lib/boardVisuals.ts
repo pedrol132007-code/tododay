@@ -1,4 +1,4 @@
-// Regras visuais do board: selo de vencimento, contador da coluna e cor de cada pessoa.
+// Regras visuais do board: selo de vencimento e cor de cada pessoa.
 
 export type DueState = "overdue" | "today" | "upcoming";
 
@@ -25,11 +25,6 @@ export function formatDue(due: string, today: Date): string {
   const { y, m, d } = parseDate(due);
   const base = `${d} ${MONTHS[m - 1]}`;
   return y === today.getFullYear() ? base : `${base} ${y}`;
-}
-
-export function wipState(count: number, limit: number | null): { label: string; over: boolean } {
-  if (!limit || limit <= 0) return { label: String(count), over: false };
-  return { label: `${count}/${limit}`, over: count > limit };
 }
 
 // Tons médios que aguentam texto branco e se destacam tanto no creme quanto no grafite.

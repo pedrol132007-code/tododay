@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dueState, formatDue, memberColor, MEMBER_COLORS, wipState } from "./boardVisuals";
+import { dueState, formatDue, memberColor, MEMBER_COLORS } from "./boardVisuals";
 
 const today = new Date(2026, 8, 25, 15, 30); // 25/09/2026, meio da tarde
 
@@ -32,22 +32,6 @@ describe("formatDue", () => {
 
   it("adds the year when it isn't the current one", () => {
     expect(formatDue("2027-01-02", today)).toBe("2 jan 2027");
-  });
-});
-
-describe("wipState", () => {
-  it("shows only the count when there is no limit", () => {
-    expect(wipState(3, null)).toEqual({ label: "3", over: false });
-  });
-
-  it("shows count over limit, flagging when it is exceeded", () => {
-    expect(wipState(4, 5)).toEqual({ label: "4/5", over: false });
-    expect(wipState(5, 5)).toEqual({ label: "5/5", over: false });
-    expect(wipState(6, 5)).toEqual({ label: "6/5", over: true });
-  });
-
-  it("treats a zero or negative limit as no limit", () => {
-    expect(wipState(2, 0)).toEqual({ label: "2", over: false });
   });
 });
 

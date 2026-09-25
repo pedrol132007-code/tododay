@@ -8,7 +8,6 @@ import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
-import { wipState } from "../../lib/boardVisuals";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
 import { IconPlus, IconTrash } from "../ui/icons";
@@ -39,7 +38,6 @@ export function List({
   const compact = useCompact();
 
   const canDelete = cardCount !== undefined && cardCount === 0;
-  const wip = wipState(cards.length, list.wip_limit);
 
   const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" } });
   const droppable = useDroppable({
@@ -73,11 +71,7 @@ export function List({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         className={`flex flex-col rounded-2xl border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"} ${
-          sortable.isDragging
-            ? "border-dashed border-primary bg-primary/5 [&>*]:invisible"
-            : wip.over
-              ? "border-danger/60"
-              : "border-border"
+          sortable.isDragging ? "border-dashed border-primary bg-primary/5 [&>*]:invisible" : "border-border"
         }`}
       >
         <div
@@ -86,26 +80,12 @@ export function List({
           {...sortable.listeners}
           className={`flex items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            <InlineEditableText
-              value={list.name}
-              onSave={(name) => renameList.mutate({ id: list.id, name })}
-              className="min-w-0 text-lg font-semibold"
-              readOnly={!canEdit}
-            />
-            <span
-              title={
-                list.wip_limit
-                  ? `${cards.length} de no máximo ${list.wip_limit} cards${wip.over ? " — limite estourado" : ""}`
-                  : `${cards.length} cards`
-              }
-              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
-                wip.over ? "bg-danger text-on-accent" : "bg-bg-elevated text-text-muted"
-              }`}
-            >
-              {wip.label}
-            </span>
-          </div>
+          <InlineEditableText
+            value={list.name}
+            onSave={(name) => renameList.mutate({ id: list.id, name })}
+            className="text-lg font-semibold"
+            readOnly={!canEdit}
+          />
           {canEdit && (
             <button
               type="button"

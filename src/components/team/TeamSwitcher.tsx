@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CreateTeamForm } from "./CreateTeamForm";
 import type { MyTeam } from "../../types";
+import { IconPlus } from "../ui/icons";
 
 interface TeamSwitcherProps {
   userId: string;
@@ -73,9 +74,9 @@ export function TeamSwitcher({ userId, teams, activeTeamId, onSelect }: TeamSwit
               <button
                 type="button"
                 onClick={() => setCreating(true)}
-                className="mt-1 w-full rounded-lg px-3 py-2 text-left text-sm text-text-muted hover:bg-bg-elevated"
+                className="mt-1 flex w-full items-center gap-1 rounded-lg px-3 py-2 text-left text-sm text-text-muted hover:bg-bg-elevated"
               >
-                + Nova equipe
+                <IconPlus size={14} /> Nova equipe
               </button>
             </>
           )}

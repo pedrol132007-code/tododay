@@ -8,8 +8,10 @@ import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
+import { wipState } from "../../lib/boardVisuals";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
+import { IconPlus, IconTrash } from "../ui/icons";
 
 interface ListProps {
   list: ListType;
@@ -37,6 +39,7 @@ export function List({
   const compact = useCompact();
 
   const canDelete = cardCount !== undefined && cardCount === 0;
+  const wip = wipState(cards.length, list.wip_limit);
 
   const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" } });
   const droppable = useDroppable({
@@ -47,7 +50,6 @@ export function List({
   const style = {
     transform: CSS.Transform.toString(sortable.transform),
     transition: sortable.transition,
-    opacity: sortable.isDragging ? 0.5 : 1,
   };
 
   function handleAddCard() {
@@ -70,7 +72,13 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className={`flex flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"}`}
+        className={`flex flex-col rounded-2xl border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"} ${
+          sortable.isDragging
+            ? "border-dashed border-primary bg-primary/5 [&>*]:invisible"
+            : wip.over
+              ? "border-danger/60"
+              : "border-border"
+        }`}
       >
         <div
           ref={sortable.setActivatorNodeRef}
@@ -78,22 +86,36 @@ export function List({
           {...sortable.listeners}
           className={`flex items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
-          <InlineEditableText
-            value={list.name}
-            onSave={(name) => renameList.mutate({ id: list.id, name })}
-            className="text-lg font-semibold"
-            readOnly={!canEdit}
-          />
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <InlineEditableText
+              value={list.name}
+              onSave={(name) => renameList.mutate({ id: list.id, name })}
+              className="min-w-0 text-lg font-semibold"
+              readOnly={!canEdit}
+            />
+            <span
+              title={
+                list.wip_limit
+                  ? `${cards.length} de no máximo ${list.wip_limit} cards${wip.over ? " — limite estourado" : ""}`
+                  : `${cards.length} cards`
+              }
+              className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${
+                wip.over ? "bg-danger text-on-accent" : "bg-bg-elevated text-text-muted"
+              }`}
+            >
+              {wip.label}
+            </span>
+          </div>
           {canEdit && (
             <button
               type="button"
               disabled={!canDelete}
               onClick={() => deleteList.mutate(list.id)}
               title={canDelete ? "Excluir coluna" : "Mova ou arquive os cards antes de excluir"}
-              className="rounded-lg px-1 text-text-muted hover:bg-danger hover:text-on-accent disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
+              className="rounded-lg p-1 text-text-muted hover:bg-danger hover:text-on-accent disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
               aria-label="Excluir coluna"
             >
-              ×
+              <IconTrash size={14} />
             </button>
           )}
         </div>
@@ -130,9 +152,10 @@ export function List({
             <button
               type="button"
               onClick={handleAddCard}
-              className="btn-primary px-3 py-1.5"
+              className="btn-primary px-2.5 py-1.5"
+              aria-label="Adicionar card"
             >
-              +
+              <IconPlus size={16} />
             </button>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useBoards, useCreateBoard } from "../../hooks/useBoards";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { IconPlus } from "../ui/icons";
 
 interface BoardSwitcherProps {
   teamId: number;
@@ -61,10 +62,10 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
         <button
           type="button"
           onClick={() => setCreating(true)}
-          className="rounded-xl px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated"
+          className="inline-flex items-center gap-1 rounded-xl px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated"
           aria-label="Novo board"
         >
-          + Novo board
+          <IconPlus size={14} /> Novo board
         </button>
       )}
     </div>

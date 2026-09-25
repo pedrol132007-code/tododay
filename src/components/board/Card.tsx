@@ -6,14 +6,42 @@ import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { useTeamMembers } from "../../hooks/useTeams";
+import { dueState, formatDue, type DueState } from "../../lib/boardVisuals";
 import { Avatar } from "../ui/Avatar";
 import { InlineEditableText } from "../ui/InlineEditableText";
+import { IconArchive, IconCalendar } from "../ui/icons";
 
 interface CardProps {
   card: CardType;
   onOpenDetail: (id: number) => void;
   labels?: Label[];
   checklistProgress?: { done: number; total: number };
+}
+
+const DUE_STYLE: Record<DueState, string> = {
+  overdue: "bg-danger text-on-accent",
+  today: "bg-highlight text-black",
+  upcoming: "border border-border text-text-muted",
+};
+
+const DUE_TITLE: Record<DueState, string> = {
+  overdue: "Atrasado",
+  today: "Vence hoje",
+  upcoming: "Vence em",
+};
+
+function DueBadge({ due }: { due: string }) {
+  const today = new Date();
+  const state = dueState(due, today)!;
+  return (
+    <span
+      title={`${DUE_TITLE[state]} ${formatDue(due, today)}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-0.5 text-[11px] font-medium ${DUE_STYLE[state]}`}
+    >
+      <IconCalendar size={12} />
+      {formatDue(due, today)}
+    </span>
+  );
 }
 
 export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProps) {
@@ -31,7 +59,6 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   return (
@@ -50,7 +77,15 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className={`flex flex-col rounded-xl border border-border bg-bg-card shadow-card ${compact ? "gap-0.5 px-2 py-1 text-sm" : "gap-1 px-3 py-2"}`}
+        className={`group flex flex-col rounded-xl border bg-bg-card transition-[border-color,box-shadow] duration-150 ${
+          compact ? "gap-0.5 px-2 py-1 text-sm" : "gap-1 px-3 py-2"
+        } ${
+          // Enquanto arrasta, o card vira só o contorno do lugar onde vai cair (o card "de verdade"
+          // segue o mouse no DragOverlay do BoardView).
+          isDragging
+            ? "border-dashed border-primary bg-primary/5 shadow-none [&>*]:invisible"
+            : "border-border shadow-card hover:border-primary/40 hover:shadow-md"
+        }`}
       >
         {labels && labels.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -64,37 +99,52 @@ export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProp
             ))}
           </div>
         )}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-start justify-between gap-1">
           <InlineEditableText
             value={card.title}
             onSave={(title) => renameCard.mutate({ id: card.id, title })}
             className="flex-1"
             readOnly={!canEdit}
           />
-          <div className="flex items-center gap-1">
-            {assignee && (
-              <Avatar name={assignee.profile.display_name} title={`Responsável: ${assignee.profile.display_name}`} />
-            )}
+          {canEdit && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                archiveCard.mutate(card.id);
+              }}
+              className="mt-0.5 rounded-lg p-1 text-text-muted opacity-0 transition-opacity hover:bg-danger hover:text-on-accent focus-visible:opacity-100 group-hover:opacity-100"
+              aria-label="Arquivar card"
+            >
+              <IconArchive size={14} />
+            </button>
+          )}
+        </div>
+        {(card.due_date || assignee || (checklistProgress && checklistProgress.total > 0)) && (
+          // Metadados numa linha própria, para o título usar a largura toda do card.
+          <div className="flex items-center gap-2 px-2">
+            {card.due_date && <DueBadge due={card.due_date} />}
             {checklistProgress && checklistProgress.total > 0 && (
-              <span className="whitespace-nowrap text-xs text-text-muted">
-                {checklistProgress.done}/{checklistProgress.total}
+              <span
+                className={`whitespace-nowrap text-xs tabular-nums ${
+                  checklistProgress.done === checklistProgress.total ? "text-primary" : "text-text-muted"
+                }`}
+                title="Itens do checklist concluídos"
+              >
+                ✓ {checklistProgress.done}/{checklistProgress.total}
               </span>
             )}
-            {canEdit && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  archiveCard.mutate(card.id);
-                }}
-                className="rounded-lg px-1 text-text-muted hover:bg-danger hover:text-on-accent"
-                aria-label="Arquivar card"
-              >
-                ×
-              </button>
+            {assignee && (
+              <span className="ml-auto">
+                <Avatar
+                  userId={assignee.user_id}
+                  name={assignee.profile.display_name}
+                  title={`Responsável: ${assignee.profile.display_name}`}
+                />
+              </span>
             )}
           </div>
-        </div>
+        )}
       </motion.div>
     </div>
   );

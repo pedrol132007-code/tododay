@@ -12,7 +12,8 @@ import { InlineEditableText } from "../ui/InlineEditableText";
 import { ActivityList } from "../ui/ActivityList";
 import { useTeamActivity } from "../../hooks/useActivity";
 import { inviteUrl } from "../../lib/pendingInvite";
-import type { MemberRole, MyTeam, TeamInvite } from "../../types";
+import type { MemberRole, MyTeam, TeamInvite } from "../../types";
+import { IconArrowLeft } from "../ui/icons";
 
 const roleOptions: { value: MemberRole; label: string; hint: string }[] = [
   { value: "admin", label: "Admin", hint: "edita tudo e gerencia a equipe" },
@@ -64,9 +65,10 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
         >
-          ← Voltar
+          <IconArrowLeft size={14} />
+          Voltar
         </button>
         <InlineEditableText
           value={team.name}

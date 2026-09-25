@@ -9,7 +9,8 @@ import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
-import { MarkdownEditor } from "./MarkdownEditor";
+import { MarkdownEditor } from "./MarkdownEditor";
+import { IconX } from "../ui/icons";
 
 interface CardDetailPanelProps {
   card: CardType;
@@ -62,10 +63,10 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-2 py-1 text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+            className="rounded-lg p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary"
             aria-label="Fechar painel"
           >
-            ×
+            <IconX size={18} />
           </button>
         </div>
 

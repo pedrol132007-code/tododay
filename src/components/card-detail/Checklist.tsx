@@ -6,6 +6,7 @@ import {
   useToggleChecklistItem,
 } from "../../hooks/useChecklistItems";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { IconPlus, IconX } from "../ui/icons";
 
 interface ChecklistProps {
   cardId: number;
@@ -62,7 +63,7 @@ export function Checklist({ cardId }: ChecklistProps) {
                 aria-label="Excluir item"
                 className="text-text-muted hover:text-danger"
               >
-                ×
+                <IconX size={14} />
               </button>
             )}
           </div>
@@ -81,9 +82,10 @@ export function Checklist({ cardId }: ChecklistProps) {
           <button
             type="button"
             onClick={handleAdd}
-            className="btn-primary px-3 py-1.5"
+            className="btn-primary px-2.5 py-1.5"
+            aria-label="Adicionar item"
           >
-            +
+            <IconPlus size={16} />
           </button>
         </div>
       )}

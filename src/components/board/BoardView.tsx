@@ -37,6 +37,7 @@ import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
+import { IconPlus } from "../ui/icons";
 
 // The detail panel pulls in the markdown renderer, so it only loads once a card is opened.
 const CardDetailPanel = lazy(() =>
@@ -436,20 +437,25 @@ export function BoardView({
               <button
                 type="button"
                 onClick={handleAddList}
-                className="btn-primary px-3 py-1.5"
+                className="btn-primary inline-flex items-center justify-center gap-1 px-3 py-1.5"
               >
-                + Adicionar coluna
+                <IconPlus size={14} /> Adicionar coluna
               </button>
             </div>
           )}
         </div>
         <DragOverlay>
           {activeCard ? (
-            <div className={`flex items-center justify-between gap-2 rounded-xl border border-border bg-bg-card shadow-lg ${compact ? "px-2 py-1 text-sm" : "px-3 py-2"}`}>
+            // "Lifted" look while it follows the pointer: bigger shadow and a slight tilt.
+            <div
+              className={`flex cursor-grabbing items-center justify-between gap-2 rounded-xl border border-primary/40 bg-bg-card shadow-2xl motion-safe:rotate-2 motion-safe:scale-[1.03] ${
+                compact ? "px-2 py-1 text-sm" : "px-3 py-2"
+              }`}
+            >
               <span className="flex-1 px-2 py-1">{activeCard.title}</span>
             </div>
           ) : activeList ? (
-            <div className="flex w-72 flex-col gap-3 rounded-2xl border border-border bg-bg-column p-4 shadow-lg">
+            <div className="flex w-72 cursor-grabbing flex-col gap-3 rounded-2xl border border-primary/40 bg-bg-column p-4 shadow-2xl motion-safe:rotate-1">
               <span className="text-lg font-semibold">{activeList.name}</span>
             </div>
           ) : null}

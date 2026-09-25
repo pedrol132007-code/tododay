@@ -9,6 +9,7 @@ import {
 } from "../../hooks/useLabels";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { readableTextOn } from "../../lib/contrast";
+import { IconPlus, IconTrash, IconX } from "../ui/icons";
 
 interface LabelPickerProps {
   boardId: number;
@@ -52,9 +53,9 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
                 type="button"
                 onClick={() => setCardLabel.mutate({ labelId: label.id, on: false })}
                 aria-label={`Remover label ${label.name}`}
-                className="hover:opacity-70"
+                className="flex hover:opacity-70"
               >
-                ×
+                <IconX size={12} />
               </button>
             )}
           </span>
@@ -63,9 +64,9 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="rounded-full border border-border px-2 py-0.5 text-xs text-text-primary hover:bg-bg-elevated"
+            className="inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-text-primary hover:bg-bg-elevated"
           >
-            + Labels
+            <IconPlus size={12} /> Labels
           </button>
         ) : (
           (cardLabels ?? []).length === 0 && <span className="text-xs">Nenhuma.</span>
@@ -99,7 +100,7 @@ export function LabelPicker({ boardId, cardId }: LabelPickerProps) {
                   aria-label={`Excluir label ${label.name}`}
                   className="text-text-muted hover:text-danger"
                 >
-                  ×
+                  <IconTrash size={14} />
                 </button>
               </div>
             ))}

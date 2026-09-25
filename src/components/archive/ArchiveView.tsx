@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { IconArrowLeft } from "../ui/icons";
 
 interface ArchiveViewProps {
   boardId: number;
@@ -22,9 +23,10 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
         >
-          ← Voltar
+          <IconArrowLeft size={14} />
+          Voltar
         </button>
         <h1 className="text-2xl font-semibold text-text-primary">Arquivados — {boardName}</h1>
       </div>

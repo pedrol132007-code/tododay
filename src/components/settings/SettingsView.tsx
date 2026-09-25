@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { usePreferences } from "../../hooks/usePreferences";
 import type { Density, ThemePref } from "../../lib/preferences";
+import { IconArrowLeft } from "../ui/icons";
 
 const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
   { value: "system", label: "Sistema" },
@@ -72,9 +73,10 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
         <button
           type="button"
           onClick={onBack}
-          className="rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+          className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
         >
-          ← Voltar
+          <IconArrowLeft size={14} />
+          Voltar
         </button>
         <h1 className="text-2xl font-semibold text-text-primary">Configurações</h1>
       </div>

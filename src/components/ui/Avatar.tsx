@@ -1,3 +1,6 @@
+import { memberColor } from "../../lib/boardVisuals";
+import { readableTextOn } from "../../lib/contrast";
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -6,11 +9,14 @@ export function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-export function Avatar({ name, title }: { name: string; title?: string }) {
+/** Iniciais numa bolinha com a cor fixa da pessoa (memberColor). */
+export function Avatar({ userId, name, title }: { userId: string; name: string; title?: string }) {
+  const color = memberColor(userId);
   return (
     <span
       title={title ?? name}
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-on-accent"
+      style={{ backgroundColor: color, color: readableTextOn(color) }}
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold"
     >
       {initials(name)}
     </span>

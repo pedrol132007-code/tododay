@@ -17,7 +17,8 @@ import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
 import type { MyTeam, SearchResult } from "./types";
-import { IconSettings } from "./components/ui/icons";
+import { IconColumns, IconSettings } from "./components/ui/icons";
+import { EmptyState } from "./components/ui/EmptyState";
 
 const ACTIVE_TEAM_KEY = "tododay.activeTeamId";
 
@@ -195,8 +196,12 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
           />
         )
       ) : (
-        <div className="flex flex-1 items-center justify-center text-text-muted">
-          Nenhum board ainda.
+        <div className="flex flex-1 items-center justify-center">
+          <EmptyState
+            icon={<IconColumns size={22} />}
+            title="Nenhum board ainda"
+            description="Crie o primeiro board em “Novo board”, no topo da tela."
+          />
         </div>
       )}
       <AnimatePresence>

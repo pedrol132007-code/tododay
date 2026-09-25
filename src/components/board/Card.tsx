@@ -6,42 +6,16 @@ import { useArchiveCard, useRenameCard } from "../../hooks/useCards";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { useTeamMembers } from "../../hooks/useTeams";
-import { dueState, formatDue, type DueState } from "../../lib/boardVisuals";
 import { Avatar } from "../ui/Avatar";
+import { DueBadge } from "../ui/DueBadge";
 import { InlineEditableText } from "../ui/InlineEditableText";
-import { IconArchive, IconCalendar } from "../ui/icons";
+import { IconArchive } from "../ui/icons";
 
 interface CardProps {
   card: CardType;
   onOpenDetail: (id: number) => void;
   labels?: Label[];
   checklistProgress?: { done: number; total: number };
-}
-
-const DUE_STYLE: Record<DueState, string> = {
-  overdue: "bg-danger text-on-accent",
-  today: "bg-highlight text-black",
-  upcoming: "border border-border text-text-muted",
-};
-
-const DUE_TITLE: Record<DueState, string> = {
-  overdue: "Atrasado",
-  today: "Vence hoje",
-  upcoming: "Vence em",
-};
-
-function DueBadge({ due }: { due: string }) {
-  const today = new Date();
-  const state = dueState(due, today)!;
-  return (
-    <span
-      title={`${DUE_TITLE[state]} ${formatDue(due, today)}`}
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-0.5 text-[11px] font-medium ${DUE_STYLE[state]}`}
-    >
-      <IconCalendar size={12} />
-      {formatDue(due, today)}
-    </span>
-  );
 }
 
 export function Card({ card, onOpenDetail, labels, checklistProgress }: CardProps) {

@@ -13,7 +13,7 @@ import { ActivityList } from "../ui/ActivityList";
 import { useTeamActivity } from "../../hooks/useActivity";
 import { inviteUrl } from "../../lib/pendingInvite";
 import type { MemberRole, MyTeam, TeamInvite } from "../../types";
-import { IconArrowLeft } from "../ui/icons";
+import { PageHeader } from "../ui/PageHeader";
 
 const roleOptions: { value: MemberRole; label: string; hint: string }[] = [
   { value: "admin", label: "Admin", hint: "edita tudo e gerencia a equipe" },
@@ -61,22 +61,18 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
 
   return (
     <div className="flex h-full flex-col overflow-y-auto p-6">
-      <div className="mb-6 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
-        >
-          <IconArrowLeft size={14} />
-          Voltar
-        </button>
-        <InlineEditableText
+      <PageHeader
+        eyebrow="Equipe"
+        title={
+          <InlineEditableText
           value={team.name}
           onSave={(name) => renameTeam.mutate(name)}
-          className="text-2xl font-semibold text-text-primary"
+          
           readOnly={!isAdmin}
         />
-      </div>
+        }
+        onBack={onBack}
+      />
 
       <div className="flex max-w-3xl flex-col gap-8">
         {actionError && (

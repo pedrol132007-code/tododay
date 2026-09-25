@@ -7,6 +7,7 @@ import {
 } from "../../hooks/useChecklistItems";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { IconPlus, IconX } from "../ui/icons";
+import { PanelSection } from "./PanelSection";
 
 interface ChecklistProps {
   cardId: number;
@@ -31,8 +32,7 @@ export function Checklist({ cardId }: ChecklistProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm text-text-muted">Checklist{total > 0 ? ` — ${done}/${total}` : ""}</span>
+    <PanelSection title="Checklist" aside={total > 0 ? `${done}/${total}` : undefined}>
 
       {total > 0 && (
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
@@ -89,6 +89,6 @@ export function Checklist({ cardId }: ChecklistProps) {
           </button>
         </div>
       )}
-    </div>
+    </PanelSection>
   );
 }

@@ -37,7 +37,9 @@ import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
-import { IconPlus } from "../ui/icons";
+import { IconColumns, IconPlus } from "../ui/icons";
+import { EmptyState } from "../ui/EmptyState";
+import { PageHeader } from "../ui/PageHeader";
 
 // The detail panel pulls in the markdown renderer, so it only loads once a card is opened.
 const CardDetailPanel = lazy(() =>
@@ -392,7 +394,7 @@ export function BoardView({
 
   return (
     <div className="flex h-full flex-col p-6">
-      <h1 className="mb-6 text-2xl font-semibold text-text-primary">{boardName}</h1>
+      <PageHeader title={boardName} />
       <DndContext
         // Sem sensores não há arraste: leitores só abrem os cards.
         sensors={canEdit ? sensors : []}
@@ -408,9 +410,15 @@ export function BoardView({
             strategy={horizontalListSortingStrategy}
           >
             {renderedBoard.length === 0 ? (
-              <div className="rounded-2xl border border-border bg-bg-surface p-6 text-text-muted">
-                Nenhuma lista ainda.
-              </div>
+              <EmptyState
+                icon={<IconColumns size={22} />}
+                title="Nenhuma coluna ainda"
+                description={
+                  canEdit
+                    ? "Crie a primeira coluna ao lado, por exemplo “A fazer”, “Fazendo” e “Feito”."
+                    : "Quando alguém da equipe criar colunas, elas aparecem aqui."
+                }
+              />
             ) : (
               renderedBoard.map((list) => (
                 <List

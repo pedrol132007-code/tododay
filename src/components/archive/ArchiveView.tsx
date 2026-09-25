@@ -2,7 +2,9 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
-import { IconArrowLeft } from "../ui/icons";
+import { IconArchive } from "../ui/icons";
+import { EmptyState } from "../ui/EmptyState";
+import { PageHeader } from "../ui/PageHeader";
 
 interface ArchiveViewProps {
   boardId: number;
@@ -19,21 +21,15 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
 
   return (
     <div className="flex h-full flex-col p-6">
-      <div className="mb-6 flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
-        >
-          <IconArrowLeft size={14} />
-          Voltar
-        </button>
-        <h1 className="text-2xl font-semibold text-text-primary">Arquivados — {boardName}</h1>
-      </div>
+      <PageHeader eyebrow="Arquivados" title={boardName} onBack={onBack} />
 
       {(cards ?? []).length === 0 ? (
-        <div className="flex flex-1 items-center justify-center text-text-muted">
-          Nenhum card arquivado.
+        <div className="flex flex-1 items-start justify-center">
+          <EmptyState
+            icon={<IconArchive size={22} />}
+            title="Nenhum card arquivado"
+            description="Cards arquivados neste board aparecem aqui e podem ser restaurados."
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-2">

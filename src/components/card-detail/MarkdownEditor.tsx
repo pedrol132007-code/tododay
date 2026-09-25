@@ -2,6 +2,10 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+// O reset do Tailwind tira marcadores e espaçamentos; devolve o básico ao markdown renderizado.
+const markdownClass =
+  "[&_a]:text-primary [&_a]:underline [&_code]:rounded [&_code]:bg-bg-elevated [&_code]:px-1 [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+*]:mt-2 [&_ul]:list-disc [&_ul]:pl-5";
+
 interface MarkdownEditorProps {
   value: string;
   onSave: (value: string) => void;
@@ -20,7 +24,7 @@ export function MarkdownEditor({ value, onSave, onSaveAndClose, readOnly }: Mark
 
   if (readOnly) {
     return (
-      <div className="min-h-[80px] p-3 text-sm text-text-primary">
+      <div className={`min-h-[80px] p-3 text-sm text-text-primary ${markdownClass}`}>
         {value.trim() ? (
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
         ) : (
@@ -59,7 +63,7 @@ export function MarkdownEditor({ value, onSave, onSaveAndClose, readOnly }: Mark
         setDraft(value);
         setEditing(true);
       }}
-      className="min-h-[80px] cursor-text rounded-lg border border-transparent p-3 text-sm text-text-primary hover:border-border hover:bg-bg-elevated"
+      className={`min-h-[80px] cursor-text rounded-lg border border-transparent p-3 text-sm text-text-primary hover:border-border hover:bg-bg-elevated ${markdownClass}`}
     >
       {value.trim() ? (
         <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -23,7 +23,6 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { AnimatePresence, motion } from "framer-motion";
-import { CardDetailPanel } from "../card-detail/CardDetailPanel";
 import { useChecklistProgressForCards } from "../../hooks/useChecklistItems";
 import {
   useCardsByListIds,
@@ -38,6 +37,11 @@ import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType } from "../../types";
 import { List } from "./List";
+
+// The detail panel pulls in the markdown renderer, so it only loads once a card is opened.
+const CardDetailPanel = lazy(() =>
+  import("../card-detail/CardDetailPanel").then((m) => ({ default: m.CardDetailPanel })),
+);
 
 // Lists only ever reorder sideways. The default sortableKeyboardCoordinates scans every
 // droppable in the board — including cards inside other lists — so Left/Right ends up jumping
@@ -475,7 +479,9 @@ export function BoardView({
       </AnimatePresence>
       <AnimatePresence>
         {selectedCard && (
-          <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />
+          <Suspense key="detail" fallback={null}>
+            <CardDetailPanel card={selectedCard} boardId={boardId} onClose={() => setSelectedCardId(null)} />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

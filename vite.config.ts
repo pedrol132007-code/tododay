@@ -27,6 +27,22 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
     },
+    build: {
+      rollupOptions: {
+        output: {
+          // Bibliotecas em arquivos próprios: mudam pouco, então o navegador reaproveita o cache
+          // entre deploys e só baixa de novo o código do app.
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return;
+            if (/node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return "react";
+            if (id.includes("@supabase")) return "supabase";
+            if (/framer-motion|motion-dom|motion-utils/.test(id)) return "motion";
+            if (id.includes("@dnd-kit")) return "dnd";
+            if (id.includes("@tanstack")) return "query";
+          },
+        },
+      },
+    },
     clearScreen: false,
     server: {
       port: 1420,

@@ -15,3 +15,7 @@ src-tauri/gen/
 
 # Capturas do guia de marca (~50 MB), só locais
 docs/identidade-benner/screenshots/
+
+# Playwright
+test-results/
+playwright-report/

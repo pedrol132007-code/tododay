@@ -20,11 +20,22 @@ const num = (v: number, digits = 0) => v.toLocaleString("pt-BR", { maximumFracti
 const days = (v: number | null) => (v == null ? "—" : `${num(v, 1)} d`);
 const pct = (v: number | null) => (v == null ? "—" : `${num(v * 100)}%`);
 
-function relative(cur: number | null, prev: number | null, period: Period): string | null {
+/** `words` diz o que a seta significa quando "subir" não é óbvio (ex.: tempo maior = mais lento). */
+function relative(cur: number | null, prev: number | null, period: Period, words?: { up: string; down: string }): string | null {
   const c = compare(cur, prev);
   if (c == null) return null;
-  const arrow = c > 0.005 ? "▲" : c < -0.005 ? "▼" : "■";
-  return `${arrow} ${num(Math.abs(c * 100))}% vs. ${period} semanas anteriores`;
+  const dir = c > 0.005 ? "up" : c < -0.005 ? "down" : null;
+  const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "■";
+  const meaning = dir && words ? ` ${words[dir]}` : "";
+  return `${arrow} ${num(Math.abs(c * 100))}%${meaning} vs. ${period} semanas anteriores`;
+}
+
+/** Variação em palavras para leitores de tela: "alta de 18%", "queda de 5%", "estável". */
+function trendWords(cur: number | null, prev: number | null): string | null {
+  const c = compare(cur, prev);
+  if (c == null) return null;
+  if (Math.abs(c) <= 0.005) return "estável";
+  return `${c > 0 ? "alta" : "queda"} de ${num(Math.abs(c * 100))}%`;
 }
 
 function points(cur: number | null, prev: number | null, period: Period): string | null {
@@ -142,6 +153,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
   const labels = view.weeks.map((w) => formatDue(w, today));
   const subject = person ? person.name.split(" ")[0] : "Equipe";
   const refName = "Média da equipe";
+  const deliveredTrend = trendWords(view.sum.delivered, view.prev.delivered);
 
   return (
     <div className="flex flex-col gap-6">
@@ -185,7 +197,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         <StatTile
           label="Tempo médio"
           value={days(view.sum.avgCycleDays)}
-          delta={relative(view.sum.avgCycleDays, view.prev.avgCycleDays, period)}
+          delta={relative(view.sum.avgCycleDays, view.prev.avgCycleDays, period, { up: "mais lento", down: "mais rápido" })}
         />
         <StatTile label="No prazo" value={pct(view.sum.onTimeRate)} delta={points(view.sum.onTimeRate, view.prev.onTimeRate, period)} />
       </div>
@@ -206,7 +218,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
             format={(v) => num(v, 1)}
             reference={view.team?.map((p) => p.delivered)}
             referenceName={refName}
-            ariaLabel={`Entregas por semana de ${subject}: ${period} semanas, total ${num(view.sum.delivered)}`}
+            ariaLabel={`Entregas por semana de ${subject}: ${period} semanas, total ${num(view.sum.delivered)}${deliveredTrend ? `, ${deliveredTrend} vs. ${period} semanas anteriores` : ""}`}
           />
         </ChartFrame>
 

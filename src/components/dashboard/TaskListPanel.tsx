@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import type { DashboardPerson, DashboardTask } from "../../types";
 import { isOverdue, stalledDays } from "../../lib/dashboardRules";
-import { daysBetween, statusOn } from "../../lib/metrics";
+import { completedDay, daysBetween, statusOn } from "../../lib/metrics";
 import { Avatar } from "../ui/Avatar";
 import { IconX } from "../ui/icons";
 
@@ -10,15 +10,30 @@ const STATUS_LABEL = { planned: "Planejada", in_progress: "Em andamento", done: 
 
 function dueText(t: DashboardTask, day: string): { text: string; late: boolean } | null {
   if (!t.dueDay) return null;
+  const done = completedDay(t);
+  if (done && done <= day) {
+    const after = daysBetween(t.dueDay, done);
+    return after > 0 ? { text: `entregue ${after} ${after === 1 ? "dia" : "dias"} após o prazo`, late: true } : { text: "entregue no prazo", late: false };
+  }
   const diff = daysBetween(day, t.dueDay);
   if (isOverdue(t, day)) return { text: `venceu há ${-diff} ${-diff === 1 ? "dia" : "dias"}`, late: true };
   if (diff === 0) return { text: "vence hoje", late: false };
-  return { text: diff > 0 ? `vence em ${diff} ${diff === 1 ? "dia" : "dias"}` : "prazo cumprido", late: false };
+  return { text: `vence em ${diff} ${diff === 1 ? "dia" : "dias"}`, late: false };
 }
 
-/** Mais urgente primeiro: atrasadas (a mais vencida antes), depois as paradas há mais tempo, depois pelo prazo. */
+/**
+ * Abertas antes das concluídas. Abertas: atrasadas (a mais vencida antes), depois as paradas há mais
+ * tempo, depois pelo prazo. Concluídas: a entrega mais recente primeiro.
+ */
 function byUrgency(day: string) {
   return (a: DashboardTask, b: DashboardTask) => {
+    // Concluída depois do dia da lista ainda estava aberta naquele dia.
+    const doneBy = (t: DashboardTask) => {
+      const done = completedDay(t);
+      return done && done <= day ? done : null;
+    };
+    const doneA = doneBy(a), doneB = doneBy(b);
+    if (doneA || doneB) return doneA && doneB ? doneB.localeCompare(doneA) : doneA ? 1 : -1;
     const late = Number(isOverdue(b, day)) - Number(isOverdue(a, day));
     if (late) return late;
     const stalled = (stalledDays(b, day) ?? 0) - (stalledDays(a, day) ?? 0);
@@ -107,7 +122,7 @@ export function TaskListPanel({
                   </span>
                   {status && <span>{STATUS_LABEL[status]}</span>}
                   {due && <span className={due.late ? "font-semibold text-danger" : ""}>{due.text}</span>}
-                  {stalled != null && <span className="font-semibold text-text-primary">parada há {stalled} dias</span>}
+                  {stalled != null && <span className="font-semibold text-text-primary">parada há {stalled} {stalled === 1 ? "dia" : "dias"}</span>}
                 </div>
               </li>
             );

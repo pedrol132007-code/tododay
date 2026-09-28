@@ -17,6 +17,7 @@ export default {
         "bg-card": token("bg-card"),
         primary: token("primary"),
         danger: token("danger"),
+        success: token("success"),
         highlight: token("highlight"),
         "on-accent": token("on-accent"),
         "text-primary": token("text-primary"),

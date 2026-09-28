@@ -15,6 +15,7 @@
     --bg-card: 255 255 255;
     --primary: 37 56 255; /* azul Benner #2538FF */
     --danger: 229 30 71; /* vermelho Benner #E51E47 */
+    --success: 14 122 62; /* verde #0E7A3E: mudança boa no dashboard; 5,4:1 no card branco */
     --highlight: 251 167 71; /* laranja #FBA747 */
     --on-accent: 255 255 255;
     --text-primary: 51 51 51; /* #333 */
@@ -35,6 +36,7 @@
     --bg-card: 45 51 56;
     --primary: 91 108 255; /* azul mais claro, para contraste no escuro */
     --danger: 255 77 109;
+    --success: 63 185 80; /* #3FB950: 5,9:1 no card grafite */
     --highlight: 251 167 71;
     --on-accent: 255 255 255;
     --text-primary: 242 242 242;

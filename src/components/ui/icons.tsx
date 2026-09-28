@@ -61,6 +61,12 @@ export const IconCalendar = (p: IconProps) => (
   </Icon>
 );
 
+export const IconChevronDown = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 9l6 6 6-6" />
+  </Icon>
+);
+
 export const IconColumns = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="4" width="5" height="16" rx="1" />

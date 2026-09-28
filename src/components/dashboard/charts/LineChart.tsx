@@ -89,7 +89,7 @@ export function LineChart({
               </text>
             ) : null,
           )}
-          {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + h} className="stroke-text-muted" strokeWidth={1} />}
+          {hover != null && <line x1={x(hover)} x2={x(hover)} y1={PAD.t} y2={PAD.t + h} className="stroke-chart-hover" strokeWidth={2} />}
           {series.map((s) => (
             <path
               key={s.name}

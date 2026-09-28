@@ -104,12 +104,13 @@ export interface DashboardData {
 | Token | Claro | Escuro | Uso |
 |---|---|---|---|
 | `--chart-1` | `#2538FF` | `#5B6CFF` | série principal (= `primary`) |
-| `--chart-2` | `#D9730D` | `#D9730D` | segunda série (criados; em andamento) |
+| `--chart-2` | `#E51E47` | `#E51E47` | segunda série (criados; em andamento) — vermelho Benner |
+| `--chart-hover` | `#FBA747` | `#FBA747` | coluna/linha guia no hover (laranja dos botões da marca) |
 | `--chart-ref` | `#6B7280` | `#6B7280` | média da equipe (referência) |
 | grade/eixos | `border` / `text-muted` | idem | recessivos |
 
 Todas passam faixa de luminosidade, croma, separação para daltonismo (ΔE ≥ 32) e contraste
-≥ 3:1. O laranja `#FBA747` da marca reprovou (claro demais) e fica só para hover da UI.
+≥ 3:1. O laranja `#FBA747` da marca reprovou como série (claro demais) e fica só para o hover. Identidade Benner nos gráficos: filete vermelho antes do título e faixa com o degradê azul→vermelho no topo dos blocos de número (decoração, não dado).
 Texto dos gráficos usa `text-primary`/`text-muted`, nunca a cor da série.
 
 ### Marcas (`src/components/dashboard/charts/`)

@@ -23,8 +23,12 @@ export function ChartFrame({
   return (
     <section className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-5">
       <div className="flex flex-col gap-1.5">
-        <div className="flex items-baseline gap-4">
-          <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+        <div className="flex items-center gap-4">
+          <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary">
+            {/* Filete vermelho antes do título, como no site da Benner. */}
+            <span className="h-0.5 w-4 shrink-0 bg-danger" aria-hidden="true" />
+            {title}
+          </h3>
           <button type="button" onClick={() => setAsTable((v) => !v)} className="ml-auto shrink-0 text-xs text-text-muted hover:text-primary">
             {asTable ? "Ver gráfico" : "Ver tabela"}
           </button>

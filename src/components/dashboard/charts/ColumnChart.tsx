@@ -65,7 +65,7 @@ export function ColumnChart({
               <rect x={PAD.l + band * i} y={PAD.t} width={band} height={h} fill="transparent" />
               <path
                 d={barPath(cx(i) - barW / 2, y(v), barW, PAD.t + h - y(v), 4)}
-                className={`fill-chart-1 transition-opacity ${hover != null && hover !== i ? "opacity-50" : ""}`}
+                className={`transition-colors ${hover === i ? "fill-chart-hover" : "fill-chart-1"}`}
               />
             </g>
           ))}

@@ -21,7 +21,7 @@ Plano da migração para Supabase, com as decisões de produto: `docs/superpower
 - Botão de ação principal usa a classe `.btn-primary` (caixa alta, hover laranja); o componente só define padding/largura.
 - Preferências da instalação (tema sistema/claro/escuro e densidade normal/compacta) vivem em `PreferencesProvider` (`src/hooks/usePreferences.tsx`), salvas no localStorage (`tododay.theme`, `tododay.density`) e editadas na tela Configurações. Não vão para o banco. Um script inline no `index.html` aplica a classe `dark` antes do React. Fonte: Montserrat (a da Benner, mundial, é licenciada pelo Adobe Fonts).
 - Sem abstrações antecipadas — resolva o problema atual, não o hipotético.
-- Dashboard (`src/components/dashboard/`): cálculos puros em `src/lib/dashboard.ts` sobre um `DashboardData`; hoje só `src/lib/demoData.ts` gera dados (demonstração em memória, pessoas fictícias). Gráficos são SVG próprios com as cores `chart-1`/`chart-2`/`chart-ref` — validadas com a skill dataviz; não use outras cores em gráficos.
+- Dashboard (`src/components/dashboard/`): cálculos puros em `src/lib/dashboard.ts` sobre um `DashboardData`; hoje só `src/lib/demoData.ts` gera dados (demonstração em memória, pessoas fictícias). Gráficos são SVG próprios com as cores `chart-1` (azul Benner), `chart-2` (vermelho Benner), `chart-ref` (cinza, média da equipe) e `chart-hover` (laranja, só no hover) — o par azul+vermelho foi validado com a skill dataviz; não use outras cores em gráficos.
 
 ## Modelo de dados
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useBoards } from "./hooks/useBoards";
 import { useMyTeams } from "./hooks/useTeams";
@@ -16,9 +16,13 @@ import { BrandMark } from "./components/ui/BrandMark";
 import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
-import type { MyTeam, SearchResult } from "./types";
+import type { MyTeam, SearchResult } from "./types";
 import { IconColumns, IconSettings } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
+import { DashboardErrorBoundary } from "./components/dashboard/DashboardErrorBoundary";
+
+// Carregado só ao abrir o Dashboard: os gráficos não pesam para quem usa só o board.
+const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })));
 
 const ACTIVE_TEAM_KEY = "tododay.activeTeamId";
 
@@ -93,7 +97,7 @@ interface TeamWorkspaceProps {
 function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps) {
   const { data: boards } = useBoards(team.id);
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
-  const [view, setView] = useState<"board" | "archive" | "team" | "settings">("board");
+  const [view, setView] = useState<"board" | "archive" | "team" | "settings" | "dashboard">("board");
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
@@ -158,6 +162,15 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         )}
         <button
           type="button"
+          onClick={() => setView((v) => (v === "dashboard" ? "board" : "dashboard"))}
+          className={`shrink-0 rounded-lg px-3 py-1 text-sm hover:bg-bg-elevated hover:text-text-primary ${
+            view === "dashboard" ? "text-text-primary" : "text-text-muted"
+          }`}
+        >
+          Dashboard
+        </button>
+        <button
+          type="button"
           onClick={() => setView((v) => (v === "team" ? "board" : "team"))}
           className={`mx-2 shrink-0 rounded-lg px-3 py-1 text-sm hover:bg-bg-elevated hover:text-text-primary ${
             view === "team" ? "text-text-primary" : "text-text-muted"
@@ -178,7 +191,13 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         </button>
         <UserMenu userId={userId} />
       </div>
-      {view === "settings" ? (
+      {view === "dashboard" ? (
+        <DashboardErrorBoundary>
+          <Suspense fallback={null}>
+            <DashboardView teamName={team.name} />
+          </Suspense>
+        </DashboardErrorBoundary>
+      ) : view === "settings" ? (
         <SettingsView onBack={() => setView("board")} />
       ) : view === "team" ? (
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />

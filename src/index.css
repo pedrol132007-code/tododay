@@ -20,6 +20,10 @@
     --text-primary: 51 51 51; /* #333 */
     --text-muted: 107 107 107;
     --border: 219 219 219; /* #DBDBDB */
+    --chart-1: 37 56 255; /* = primary; validado com a skill dataviz */
+    --chart-2: 229 30 71; /* = vermelho Benner #E51E47; par azul+vermelho validado com a skill dataviz */
+    --chart-hover: 251 167 71; /* laranja #FBA747: hover, como os botões da marca */
+    --chart-ref: 107 114 128; /* #6B7280: média da equipe */
   }
 
   .dark {
@@ -36,6 +40,10 @@
     --text-primary: 242 242 242;
     --text-muted: 163 169 174;
     --border: 58 65 71;
+    --chart-1: 91 108 255;
+    --chart-2: 229 30 71; /* o #FF4D6D do danger escuro reprova no gráfico; o vermelho da marca passa */
+    --chart-hover: 251 167 71;
+    --chart-ref: 107 114 128;
   }
 
   body {

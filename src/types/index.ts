@@ -115,3 +115,34 @@ export interface Activity {
   payload: Record<string, unknown>;
   created_at: string;
 }
+
+/** Dashboard (docs/superpowers/specs/2026-09-25-dashboard-design.md). Hoje só a demonstração gera. */
+export interface DashboardPerson {
+  id: string;
+  name: string;
+}
+
+export interface DashboardWeek {
+  personId: string;
+  /** "AAAA-MM-DD", segunda-feira. */
+  weekStart: string;
+  created: number;
+  delivered: number;
+  /** Em andamento no fim da semana. */
+  inProgress: number;
+  /** Soma dos dias até concluir, dos entregues na semana (para a média). */
+  cycleDaysTotal: number;
+  /** Entregues que tinham prazo. */
+  withDue: number;
+  /** Desses, entregues até o prazo. */
+  onTime: number;
+}
+
+export interface DashboardData {
+  people: DashboardPerson[];
+  /** Semanas em ordem, a mais antiga primeiro. */
+  weeks: string[];
+  /** Uma linha por pessoa por semana. */
+  rows: DashboardWeek[];
+  isDemo: boolean;
+}

@@ -67,3 +67,23 @@ test("configurações trocam tema e densidade e ficam salvas", async ({ page }) 
   await page.getByRole("radio", { name: "Sistema" }).click();
   await page.getByRole("radio", { name: "Normal" }).click();
 });
+
+test("dashboard gera demonstração, troca período e pessoa, mostra tabela e sai", async ({ page }) => {
+  await signIn(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByText("O dashboard ainda não tem dados")).toBeVisible();
+
+  await page.getByRole("button", { name: "Gerar demonstração" }).click();
+  await expect(page.getByText("Demonstração", { exact: true })).toBeVisible();
+  await expect(page.getByText("Entregas por semana")).toBeVisible();
+
+  await page.getByRole("radio", { name: "26 sem." }).click();
+  await page.getByRole("radio", { name: /Carla Dias/ }).click();
+  await expect(page.getByText("Carga ao longo do tempo")).toBeVisible();
+
+  await page.getByRole("button", { name: "Ver tabela" }).first().click();
+  await expect(page.locator("table").first().locator("tbody tr")).toHaveCount(26);
+
+  await page.getByRole("button", { name: "Sair da demonstração" }).click();
+  await expect(page.getByText("O dashboard ainda não tem dados")).toBeVisible();
+});

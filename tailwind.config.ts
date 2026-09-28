@@ -22,6 +22,10 @@ export default {
         "text-primary": token("text-primary"),
         "text-muted": token("text-muted"),
         border: token("border"),
+        "chart-1": token("chart-1"),
+        "chart-2": token("chart-2"),
+        "chart-ref": token("chart-ref"),
+        "chart-hover": token("chart-hover"),
       },
       fontFamily: {
         sans: ["Montserrat", "ui-sans-serif", "system-ui", "sans-serif"],

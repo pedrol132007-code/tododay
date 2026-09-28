@@ -2,11 +2,14 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
-import { alertTasks, attentionAlerts } from "../../lib/dashboardRules";
+import { alertTasks, attentionAlerts, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
 import { generateDemo } from "../../lib/demoData";
-import { teamLoad } from "../../lib/teamLoad";
+import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
   compare,
+  deliveredIn,
+  deliveredLateIn,
+  openAt,
   periodMetrics,
   previousRange,
   rangeLength,
@@ -27,7 +30,8 @@ import { dayNum, days, num, pct } from "./format";
 import { AttentionCard } from "./AttentionCard";
 import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } from "./PeriodPicker";
 import { TaskListPanel } from "./TaskListPanel";
-import { TeamLoadTable } from "./TeamLoadTable";
+import { StalledSection } from "./StalledSection";
+import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
 
 const VS = "vs. período anterior";
 
@@ -76,14 +80,17 @@ export function DashboardView({ teamName }: { teamName: string }) {
     setPersonId(null);
   }
 
+  const person = data?.people.find((p) => p.id === personId) ?? null;
+
   return (
     <div className="relative flex h-full flex-col overflow-y-auto p-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageHeader
-          eyebrow="Dashboard"
+          eyebrow={person ? teamName : "Dashboard"}
+          onBack={person ? () => setPersonId(null) : undefined}
           title={
             <span className="inline-flex flex-wrap items-center gap-3">
-              {teamName}
+              {person ? `Dashboard · ${person.name}` : teamName}
               {data?.isDemo && (
                 <span className="rounded-lg bg-highlight px-2 py-1 text-xs font-semibold uppercase tracking-wider text-black">Demonstração</span>
               )}
@@ -135,16 +142,17 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
   const view = useMemo(() => {
     const range = selectionRange(period, data.today);
     const prevRange = previousRange(range);
-    const tasks = personId ? data.tasks.filter((t) => t.assigneeId === personId) : data.tasks;
+    const tasks = person ? data.tasks.filter((t) => t.assigneeId === person.id) : data.tasks;
     const series = seriesByBucket(tasks, range);
     const sum = periodMetrics(tasks, range);
     // Sem dados completos para o período anterior inteiro, não há com o que comparar.
     const prev: PeriodMetrics | null = prevRange.start >= data.since ? periodMetrics(tasks, prevRange) : null;
-    const team = personId ? teamAverageSeries(data.tasks, range, data.people.length) : null;
-    // Atenção olha o último dia do período, como a carga; na visão de uma pessoa, só ela.
+    const team = person ? teamAverageSeries(data.tasks, range, data.people.length) : null;
+    // Atenção, carga e paradas olham o último dia do período; na visão de uma pessoa, só ela.
     const alerts = attentionAlerts(person ? [person] : data.people, tasks, range.end);
-    return { range, tasks, series, sum, prev, team, alerts, load: teamLoad(data.people, data.tasks, range) };
-  }, [data, period, personId, person]);
+    const stalled = person ? stalledList(tasks, range.end) : [];
+    return { range, tasks, series, sum, prev, team, alerts, stalled, load: teamLoad(data.people, data.tasks, range) };
+  }, [data, period, person]);
 
   const todayDate = new Date(`${data.today}T12:00:00`);
   const labels = view.series.map((p) => formatDue(p.range.start, todayDate));
@@ -156,6 +164,22 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
   const { sum, prev } = view;
   const deliveredTrend = trendWords(sum.delivered, prev?.delivered ?? null);
   const refLegend = view.team ? [{ label: subject, color: "chart-1" as const }, { label: refName, color: "chart-ref" as const, dashed: true }] : undefined;
+  const of = person ? ` de ${subject}` : "";
+
+  function openLoadList(row: PersonLoad, kind: LoadList) {
+    const first = row.person.name.split(" ")[0];
+    const own = data.tasks.filter((t) => t.assigneeId === row.person.id);
+    const day = view.range.end;
+    const lists: Record<LoadList, { title: string; tasks: DashboardTask[] }> = {
+      inProgress: { title: `${first}: ${row.inProgress} em andamento`, tasks: own.filter((t) => isInProgress(t, day)) },
+      overdue: { title: `${first}: ${row.overdue} ${row.overdue === 1 ? "atrasada" : "atrasadas"}`, tasks: own.filter((t) => isOverdue(t, day)) },
+      stalled: {
+        title: `${first}: ${row.stalled} ${row.stalled === 1 ? "parada" : "paradas"} há mais de ${STALLED_DAYS} dias`,
+        tasks: own.filter((t) => stalledDays(t, day) != null),
+      },
+    };
+    setList(lists[kind]);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -191,6 +215,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           delta={relative(sum.delivered, prev?.delivered ?? null)}
           tone={tone(sum.delivered, prev?.delivered ?? null, "up")}
           spark={view.series.map((p) => p.delivered)}
+          onOpen={() => setList({ title: `Entregas${of} · ${periodName}`, tasks: deliveredIn(view.tasks, view.range) })}
         />
         <StatTile
           label="Backlog"
@@ -198,6 +223,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           delta={backlogText(sum.backlogChange)}
           tone={sum.backlogChange > 0 ? "bad" : sum.backlogChange < 0 ? "good" : "neutral"}
           spark={view.series.map((p) => p.openAtEnd)}
+          onOpen={() => setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })}
         />
         <StatTile
           label="Tempo de conclusão"
@@ -213,6 +239,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           }
           delta={relative(sum.cycleP85, prev?.cycleP85 ?? null, { up: "mais lento", down: "mais rápido" })}
           tone={tone(sum.cycleP85, prev?.cycleP85 ?? null, "down")}
+          spark={view.series.map((p) => p.cycleP85)}
         />
         <StatTile
           label="No prazo"
@@ -221,6 +248,8 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           note={sum.onTimeRate == null ? undefined : `${num(sum.withDue)} entregas com prazo no período`}
           delta={points(sum.onTimeRate, prev?.onTimeRate ?? null)}
           tone={tone(sum.onTimeRate, prev?.onTimeRate ?? null, "up")}
+          spark={view.series.map((p) => p.onTimeRate)}
+          onOpen={() => setList({ title: `Entregues fora do prazo${of} · ${periodName}`, tasks: deliveredLateIn(view.tasks, view.range) })}
         />
       </div>
 
@@ -228,6 +257,20 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         alerts={view.alerts}
         onOpen={(alert) => setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })}
       />
+
+      {person ? (
+        <StalledSection
+          items={view.stalled}
+          day={view.range.end}
+          onOpenAll={() =>
+            setList({ title: `${subject}: paradas há mais de ${STALLED_DAYS} dias`, tasks: view.stalled.map((x) => x.task) })
+          }
+        />
+      ) : (
+        <ChartFrame title="Carga da equipe">
+          <TeamLoadTable rows={view.load} onSelect={onSelectPerson} onOpenList={openLoadList} />
+        </ChartFrame>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartFrame
@@ -266,7 +309,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         </ChartFrame>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className={`grid gap-4 ${person ? "xl:grid-cols-2" : ""}`}>
         <ChartFrame
           title="Backlog ao longo do tempo (tarefas abertas)"
           legend={refLegend}
@@ -289,76 +332,24 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           />
         </ChartFrame>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {person && (
           <ChartFrame
-            title="Tempo p85 (dias)"
-            legend={refLegend}
-            table={{
-              columns: view.team ? ["Início", "Dias", `${refName} (dias)`] : ["Início", "Dias"],
-              rows: view.series.map((p, i) =>
-                view.team ? [labels[i], dayNum(p.cycleP85), dayNum(view.team[i].cycleP85)] : [labels[i], dayNum(p.cycleP85)],
-              ),
-            }}
+            title="Carga ao longo do tempo"
+            legend={[{ label: "Entregues", color: "chart-1" }, { label: "Em andamento", color: "chart-2" }]}
+            table={{ columns: ["Início", "Entregues", "Em andamento"], rows: view.series.map((p, i) => [labels[i], p.delivered, p.inProgressAtEnd]) }}
           >
             <LineChart
               labels={labels}
-              height={160}
               series={[
-                { name: subject, values: view.series.map((p) => p.cycleP85), color: "chart-1" },
-                ...(view.team ? [{ name: refName, values: view.team.map((p) => p.cycleP85), color: "chart-ref" as const, dashed: true }] : []),
+                { name: "Entregues", values: view.series.map((p) => p.delivered), color: "chart-1" },
+                { name: "Em andamento", values: view.series.map((p) => p.inProgressAtEnd), color: "chart-2" },
               ]}
               format={(v) => num(v, 1)}
-              tipFormat={days}
-              ariaLabel={`85% das tarefas de ${subject} fecham em até ${days(sum.cycleP85)}`}
+              ariaLabel={`Carga de ${subject} ${per}`}
             />
           </ChartFrame>
-          <ChartFrame
-            title="No prazo (%)"
-            legend={refLegend}
-            table={{
-              columns: view.team ? ["Início", "No prazo", refName] : ["Início", "No prazo"],
-              rows: view.series.map((p, i) =>
-                view.team ? [labels[i], pct(p.onTimeRate), pct(view.team[i].onTimeRate)] : [labels[i], pct(p.onTimeRate)],
-              ),
-            }}
-          >
-            <LineChart
-              labels={labels}
-              height={160}
-              series={[
-                { name: subject, values: view.series.map((p) => (p.onTimeRate == null ? null : p.onTimeRate * 100)), color: "chart-1" },
-                ...(view.team
-                  ? [{ name: refName, values: view.team.map((p) => (p.onTimeRate == null ? null : p.onTimeRate * 100)), color: "chart-ref" as const, dashed: true }]
-                  : []),
-              ]}
-              format={(v) => `${num(v)}%`}
-              ariaLabel={`Entregas no prazo de ${subject}: ${pct(sum.onTimeRate)}`}
-            />
-          </ChartFrame>
-        </div>
+        )}
       </div>
-
-      {person ? (
-        <ChartFrame
-          title="Carga ao longo do tempo"
-          legend={[{ label: "Entregues", color: "chart-1" }, { label: "Em andamento", color: "chart-2" }]}
-          table={{ columns: ["Início", "Entregues", "Em andamento"], rows: view.series.map((p, i) => [labels[i], p.delivered, p.inProgressAtEnd]) }}
-        >
-          <LineChart
-            labels={labels}
-            series={[
-              { name: "Entregues", values: view.series.map((p) => p.delivered), color: "chart-1" },
-              { name: "Em andamento", values: view.series.map((p) => p.inProgressAtEnd), color: "chart-2" },
-            ]}
-            format={(v) => num(v, 1)}
-            ariaLabel={`Carga de ${subject} ${per}`}
-          />
-        </ChartFrame>
-      ) : (
-        <ChartFrame title="Carga da equipe">
-          <TeamLoadTable rows={view.load} onSelect={onSelectPerson} />
-        </ChartFrame>
-      )}
 
       <AnimatePresence>
         {list && (

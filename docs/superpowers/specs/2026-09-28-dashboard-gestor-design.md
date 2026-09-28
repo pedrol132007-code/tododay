@@ -88,7 +88,11 @@ Cada fase termina com o app rodando, build e testes passando, capturas de tela e
   escritos como fatos de carga e risco; todos clicáveis; estado vazio positivo.
 - **Fase 4 — Pessoa e integração.** "Dashboard · Nome" com tudo filtrado e a lista do que está
   parado e há quanto tempo; números clicáveis abrem a lista filtrada; Tempo e No prazo viram mini
-  cards com sparkline, liberando espaço.
+  cards com sparkline, liberando espaço. *Implementado:* os dois gráficos pequenos saíram e a
+  tendência deles virou sparkline dentro dos próprios KPIs de Tempo e No prazo (cards separados
+  repetiriam o mesmo número). O espaço foi para a Carga da equipe, que subiu para logo abaixo do
+  Atenção, e para o Backlog em largura total. Números clicáveis: Entregas, Backlog (abertas no fim),
+  No prazo (entregues fora do prazo) e, na Carga, em andamento / atrasadas / paradas de cada pessoa.
 
 ## Testes
 

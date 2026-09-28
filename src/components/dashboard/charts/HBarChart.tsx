@@ -1,23 +1,45 @@
 import { axis } from "../../../lib/chartScale";
-import { BG } from "./colors";
 
-/** Barras horizontais empilhadas (a + b) por pessoa, com 2px entre os segmentos. */
-export function HBarChart({ rows, aLabel, bLabel }: { rows: { id: string; name: string; a: number; b: number }[]; aLabel: string; bLabel: string }) {
-  const { max } = axis(Math.max(0, ...rows.map((r) => r.a + r.b)), { integer: true });
+/**
+ * Uma barra por pessoa (`value`) com o degradê azul→vermelho da marca revelado até o tamanho da barra,
+ * e ao lado um número à parte (`extra`) que não é somado à barra (ex.: em andamento agora).
+ */
+export function HBarChart({
+  rows,
+  valueLabel,
+  extraLabel,
+}: {
+  rows: { id: string; name: string; value: number; extra: number }[];
+  valueLabel: string;
+  extraLabel: string;
+}) {
+  const { max } = axis(Math.max(0, ...rows.map((r) => r.value)), { integer: true });
+  const grid = "grid grid-cols-[7.5rem_1fr_4.5rem_8rem] items-center gap-3";
   return (
-    <ul className="flex flex-col gap-2.5" aria-label={`${aLabel} e ${bLabel} por pessoa`}>
-      {rows.map((r) => (
-        <li key={r.id} className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 border-l-2 border-transparent pl-2 text-sm transition-colors hover:border-chart-hover" title={`${r.name}: ${r.a} ${aLabel.toLowerCase()}, ${r.b} ${bLabel.toLowerCase()}`}>
-          <span className="truncate text-text-primary">{r.name}</span>
-          <span className="flex h-3 gap-[2px]">
-            {r.a > 0 && <span className={`h-full rounded-l ${r.b === 0 ? "rounded-r" : ""} ${BG["chart-1"]}`} style={{ width: `${(r.a / max) * 100}%` }} />}
-            {r.b > 0 && <span className={`h-full rounded-r ${r.a === 0 ? "rounded-l" : ""} ${BG["chart-2"]}`} style={{ width: `${(r.b / max) * 100}%` }} />}
-          </span>
-          <span className="text-right text-xs tabular-nums text-text-muted">
-            {r.a} · {r.b}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-2.5">
+      <div className={`${grid} whitespace-nowrap pl-2 text-xs text-text-muted`} aria-hidden="true">
+        <span />
+        <span />
+        <span className="text-right">{valueLabel}</span>
+        <span className="text-right">{extraLabel}</span>
+      </div>
+      <ul className="flex flex-col gap-2.5" aria-label={`${valueLabel} por pessoa`}>
+        {rows.map((r) => (
+          <li
+            key={r.id}
+            className={`${grid} border-l-2 border-transparent pl-2 text-sm transition-colors hover:border-chart-hover`}
+            title={`${r.name}: ${r.value} ${valueLabel.toLowerCase()}, ${r.extra} ${extraLabel.toLowerCase()}`}
+          >
+            <span className="truncate text-text-primary">{r.name}</span>
+            <span
+              className="h-3 w-full bg-gradient-to-r from-chart-1 to-chart-2"
+              style={{ clipPath: `inset(0 ${100 - (r.value / max) * 100}% 0 0 round 4px)` }}
+            />
+            <span className="text-right tabular-nums text-text-primary">{r.value}</span>
+            <span className="text-right text-xs tabular-nums text-text-muted">{r.extra}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

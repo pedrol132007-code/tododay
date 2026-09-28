@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { axis, labelStep } from "../../../lib/chartScale";
 import { BG, STROKE } from "./colors";
 import { tipPosition } from "./tipPosition";
@@ -6,13 +6,16 @@ import { useElementWidth } from "./useElementWidth";
 
 const PAD = { l: 40, r: 12, t: 12, b: 24 };
 
-/** Colunas com topo arredondado; `reference` desenha a média da equipe tracejada por cima. */
 function barPath(x: number, y: number, w: number, h: number, r: number) {
   if (h <= 0) return "";
   const rr = Math.min(r, w / 2, h);
   return `M${x},${y + h}V${y + rr}Q${x},${y} ${x + rr},${y}H${x + w - rr}Q${x + w},${y} ${x + w},${y + rr}V${y + h}Z`;
 }
 
+/**
+ * Colunas com topo arredondado; `reference` desenha a média da equipe tracejada por cima. O degradê
+ * azul→vermelho da marca ocupa a altura do gráfico, e cada coluna revela o trecho até onde chega.
+ */
 export function ColumnChart({
   labels,
   values,
@@ -34,6 +37,7 @@ export function ColumnChart({
 }) {
   const [ref, width] = useElementWidth<HTMLDivElement>();
   const [hover, setHover] = useState<number | null>(null);
+  const gradientId = useId();
   const w = Math.max(0, width - PAD.l - PAD.r);
   const h = height - PAD.t - PAD.b;
   const all = [...values, ...(reference ?? []).filter((v): v is number => v != null)];
@@ -52,6 +56,12 @@ export function ColumnChart({
     <div ref={ref} className="relative" style={{ height }}>
       {width > 0 && (
         <svg width={width} height={height} role="img" aria-label={ariaLabel} onMouseLeave={() => setHover(null)}>
+          <defs>
+            <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="0" y1={PAD.t + h} x2="0" y2={PAD.t}>
+              <stop offset="0" style={{ stopColor: "rgb(var(--chart-1))" }} />
+              <stop offset="1" style={{ stopColor: "rgb(var(--chart-2))" }} />
+            </linearGradient>
+          </defs>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={PAD.l} x2={PAD.l + w} y1={y(t)} y2={y(t)} className="stroke-border" strokeWidth={1} />
@@ -65,7 +75,8 @@ export function ColumnChart({
               <rect x={PAD.l + band * i} y={PAD.t} width={band} height={h} fill="transparent" />
               <path
                 d={barPath(cx(i) - barW / 2, y(v), barW, PAD.t + h - y(v), 4)}
-                className={`transition-colors ${hover === i ? "fill-chart-hover" : "fill-chart-1"}`}
+                fill={hover === i ? undefined : `url(#${gradientId})`}
+                className={hover === i ? "fill-chart-hover" : undefined}
               />
             </g>
           ))}

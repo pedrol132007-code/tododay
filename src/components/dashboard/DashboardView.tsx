@@ -259,13 +259,12 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         ) : (
           <ChartFrame
             title="Por pessoa"
-            legend={[{ label: "Entregues no período", color: "chart-1" }, { label: "Em andamento agora", color: "chart-2" }]}
-            table={{ columns: ["Pessoa", "Entregues", "Em andamento"], rows: view.people.map((r) => [r.person.name, r.delivered, r.inProgress]) }}
+            table={{ columns: ["Pessoa", "Entregues no período", "Em andamento agora"], rows: view.people.map((r) => [r.person.name, r.delivered, r.inProgress]) }}
           >
             <HBarChart
-              rows={view.people.map((r) => ({ id: r.person.id, name: r.person.name, a: r.delivered, b: r.inProgress }))}
-              aLabel="Entregues"
-              bLabel="Em andamento"
+              rows={view.people.map((r) => ({ id: r.person.id, name: r.person.name, value: r.delivered, extra: r.inProgress }))}
+              valueLabel="Entregues"
+              extraLabel="Em andamento agora"
             />
           </ChartFrame>
         )}

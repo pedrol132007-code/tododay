@@ -38,7 +38,7 @@ tela.
   1. 4 blocos de número: entregas no período (variação vs. período anterior + minigráfico),
      saldo criados − concluídos, tempo médio para concluir (dias), % no prazo.
   2. Entregas por semana (colunas) | Criados x concluídos (duas linhas).
-  3. Por pessoa (barras horizontais: entregues + em andamento) | Prazo e agilidade — **dois
+  3. Por pessoa (uma barra de entregues no período; "em andamento agora" como número ao lado, sem somar à barra) | Prazo e agilidade — **dois
      gráficos pequenos** (tempo médio; % no prazo), nunca eixo duplo.
 - **Visão de um membro:** os mesmos blocos e gráficos só da pessoa, com a **média da equipe em
   cinza** como referência (ênfase: a pessoa em azul, o time em cinza). "Por pessoa" vira
@@ -119,8 +119,11 @@ Texto dos gráficos usa `text-primary`/`text-muted`, nunca a cor da série.
   2px de espaço entre colunas, base no zero.
 - `LineChart` (1–2 séries + referência opcional tracejada): linhas 2px, marcador ≥ 8px só no
   hover, rótulo direto no fim de cada linha.
-- `HBarChart` (por pessoa): barras empilhadas entregues + em andamento, 2px de espaço entre
-  segmentos, nome à esquerda, valores no fim.
+- `HBarChart` (por pessoa): uma barra por pessoa (entregues no período) e, ao lado, o número de
+  em andamento agora — fluxo e estoque não se somam. Nome à esquerda, valores no fim.
+- Degradê da marca: nas colunas e nas barras por pessoa, o degradê azul→vermelho ocupa a área do
+  gráfico e cada barra revela o trecho até onde chega (curtas azuis, longas avermelhadas). Linhas
+  ficam sólidas.
 - `StatTile`: valor grande, variação com seta e texto ("▲ 18% vs. 12 semanas anteriores",
   nunca só cor), minigráfico.
 - Um eixo por gráfico, grade horizontal leve, eixo X com rótulos de semana ("8 set") espaçados.

@@ -5,7 +5,7 @@ export function StatTile({ label, value, delta, spark }: { label: string; value:
   return (
     <div className="relative flex min-w-0 flex-col gap-2 overflow-hidden rounded-2xl border border-border bg-bg-surface p-5">
       {/* Faixa com o degradê azul→vermelho da marca: só decoração, não codifica dado. */}
-      <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-danger" aria-hidden="true" />
+      <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-chart-1 to-chart-2" aria-hidden="true" />
       <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{label}</span>
       <div className="flex items-end justify-between gap-3">
         <span className="text-4xl font-normal leading-none tracking-[-0.03em] text-text-primary tabular-nums">{value}</span>

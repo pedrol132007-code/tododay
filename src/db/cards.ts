@@ -70,8 +70,13 @@ export async function deleteCardPermanently(id: number): Promise<void> {
   must(await supabase.from("card").delete().eq("id", id));
 }
 
+// Só cards ativos: os arquivados não impedem excluir a coluna (somem junto por cascade).
 export async function countCards(listId: number): Promise<number> {
-  const { count, error } = await supabase.from("card").select("*", { count: "exact", head: true }).eq("list_id", listId);
+  const { count, error } = await supabase
+    .from("card")
+    .select("*", { count: "exact", head: true })
+    .eq("list_id", listId)
+    .is("archived_at", null);
   if (error) throw error;
   return count ?? 0;
 }

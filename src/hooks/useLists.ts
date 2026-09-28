@@ -35,7 +35,11 @@ export function useDeleteList(boardId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => deleteList(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["lists", boardId] });
+      // Os cards arquivados da coluna foram apagados junto (on delete cascade).
+      queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
+    },
   });
 }
 

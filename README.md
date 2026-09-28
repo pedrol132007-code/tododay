@@ -23,6 +23,7 @@ Não precisa clonar o repositório para usar o app. A seção **"Como rodar em d
 - **Busca global** (`Ctrl+K`) nos boards da equipe
 - **Arquivamento** de cards, com restauração/exclusão definitiva
 - **Histórico de atividade** por card e por equipe
+- **Dashboard** de desempenho da equipe e de cada membro (entregas, criados x concluídos, carga, prazo), com modo demonstração
 
 ## Stack
 

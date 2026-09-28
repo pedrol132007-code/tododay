@@ -380,7 +380,7 @@ export function BoardView({
   // Cards too: otherwise every column flashes "Nenhum card ainda." before its cards arrive.
   if (isLoading || cardQueries.some((q) => q.isLoading)) {
     return (
-      <div className="flex h-full flex-col p-6">
+      <div className="flex min-h-0 flex-1 flex-col p-6">
         <PageHeader title={boardName} />
         <BoardSkeleton />
       </div>
@@ -389,14 +389,14 @@ export function BoardView({
 
   if (error) {
     return (
-      <div className="flex h-full items-center justify-center text-danger">
+      <div className="flex min-h-0 flex-1 items-center justify-center text-danger">
         Erro ao carregar colunas: {(error as Error).message}
       </div>
     );
   }
 
   return (
-    <div className="flex h-full flex-col p-6">
+    <div className="flex min-h-0 flex-1 flex-col p-6">
       <PageHeader title={boardName} />
       <DndContext
         // Sem sensores não há arraste: leitores só abrem os cards.

@@ -20,7 +20,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
   const canEdit = useCanEdit();
 
   return (
-    <div className="flex h-full flex-col p-6">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
       <PageHeader eyebrow="Arquivados" title={boardName} onBack={onBack} />
 
       {(cards ?? []).length === 0 ? (

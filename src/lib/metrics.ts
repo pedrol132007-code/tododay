@@ -1,6 +1,6 @@
 // Métricas do dashboard a partir das tarefas (docs/superpowers/specs/2026-09-28-dashboard-gestor-design.md).
 // Funções puras: nada de React nem Supabase aqui. Dias são "AAAA-MM-DD" e períodos são inclusivos.
-import type { DashboardPerson, DashboardStatus, DashboardTask } from "../types";
+import type { DashboardStatus, DashboardTask } from "../types";
 
 export interface DayRange {
   start: string;
@@ -147,44 +147,6 @@ export function teamAverageSeries(tasks: DashboardTask[], r: DayRange, people: n
     backlogChange: p.backlogChange / n,
     openAtEnd: p.openAtEnd / n,
     inProgressAtEnd: p.inProgressAtEnd / n,
-  }));
-}
-
-export interface PersonScore {
-  person: DashboardPerson;
-  delivered: number;
-  /** Em andamento no fim do período. */
-  inProgress: number;
-  cycleP85: number | null;
-  onTimeRate: number | null;
-  /** Entregas de cada bloco do período (minigráfico). */
-  trend: number[];
-  /** Bem pior que a equipe: em andamento ou tempo acima de 1,3×; no prazo 10 pts abaixo. */
-  flags: { inProgress: boolean; cycleP85: boolean; onTimeRate: boolean };
-}
-
-const WORSE_FACTOR = 1.3;
-const ON_TIME_GAP = 0.1;
-
-export function perPerson(people: DashboardPerson[], tasks: DashboardTask[], r: DayRange): PersonScore[] {
-  const team = periodMetrics(tasks, r);
-  const rows = people.map((person) => {
-    const own = tasks.filter((t) => t.assigneeId === person.id);
-    return { person, m: periodMetrics(own, r), trend: seriesByBucket(own, r).map((p) => p.delivered) };
-  });
-  const meanInProgress = rows.reduce((acc, row) => acc + row.m.inProgressAtEnd, 0) / Math.max(1, rows.length);
-  return rows.map(({ person, m, trend }) => ({
-    person,
-    delivered: m.delivered,
-    inProgress: m.inProgressAtEnd,
-    cycleP85: m.cycleP85,
-    onTimeRate: m.onTimeRate,
-    trend,
-    flags: {
-      inProgress: meanInProgress > 0 && m.inProgressAtEnd > meanInProgress * WORSE_FACTOR,
-      cycleP85: m.cycleP85 != null && team.cycleP85 != null && m.cycleP85 > team.cycleP85 * WORSE_FACTOR,
-      onTimeRate: m.onTimeRate != null && team.onTimeRate != null && m.onTimeRate < team.onTimeRate - ON_TIME_GAP,
-    },
   }));
 }
 

@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import type { DashboardData } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
 import { generateDemo } from "../../lib/demoData";
+import { teamLoad } from "../../lib/teamLoad";
 import {
   compare,
   periodMetrics,
-  perPerson,
   previousRange,
   rangeLength,
   seriesByBucket,
@@ -23,7 +23,7 @@ import { LineChart } from "./charts/LineChart";
 import { StatTile } from "./charts/StatTile";
 import { dayNum, days, num, pct } from "./format";
 import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } from "./PeriodPicker";
-import { PersonScoreTable } from "./PersonScoreTable";
+import { TeamLoadTable } from "./TeamLoadTable";
 
 const VS = "vs. período anterior";
 
@@ -136,7 +136,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
     // Sem dados completos para o período anterior inteiro, não há com o que comparar.
     const prev: PeriodMetrics | null = prevRange.start >= data.since ? periodMetrics(tasks, prevRange) : null;
     const team = personId ? teamAverageSeries(data.tasks, range, data.people.length) : null;
-    return { range, series, sum, prev, team, people: perPerson(data.people, data.tasks, range) };
+    return { range, series, sum, prev, team, load: teamLoad(data.people, data.tasks, range) };
   }, [data, period, personId]);
 
   const todayDate = new Date(`${data.today}T12:00:00`);
@@ -343,8 +343,8 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           />
         </ChartFrame>
       ) : (
-        <ChartFrame title="Por pessoa">
-          <PersonScoreTable rows={view.people} onSelect={onSelectPerson} />
+        <ChartFrame title="Carga da equipe">
+          <TeamLoadTable rows={view.load} onSelect={onSelectPerson} />
         </ChartFrame>
       )}
     </div>

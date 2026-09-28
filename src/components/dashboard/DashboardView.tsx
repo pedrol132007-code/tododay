@@ -82,7 +82,7 @@ export function DashboardView({ teamName }: { teamName: string }) {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto p-6">
+    <div className="relative flex h-full flex-col overflow-y-auto p-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <PageHeader
           eyebrow="Dashboard"

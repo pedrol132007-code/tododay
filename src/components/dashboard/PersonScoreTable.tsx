@@ -3,14 +3,14 @@ import type { PersonScore } from "../../lib/dashboard";
 import { axis } from "../../lib/chartScale";
 import { Avatar } from "../ui/Avatar";
 import { Sparkline } from "./charts/Sparkline";
-import { days, num, pct } from "./format";
+import { dayNum, num, pct } from "./format";
 
 type SortKey = "name" | "delivered" | "avgCycleDays" | "onTimeRate" | "inProgress";
 
 const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
   { key: "name", label: "Pessoa", align: "left" },
   { key: "delivered", label: "Entregas", align: "left" },
-  { key: "avgCycleDays", label: "Tempo médio", align: "right" },
+  { key: "avgCycleDays", label: "Tempo médio (dias)", align: "right" },
   { key: "onTimeRate", label: "No prazo", align: "right" },
   { key: "inProgress", label: "Em andamento", align: "right" },
 ];
@@ -62,12 +62,12 @@ export function PersonScoreTable({ rows, onSelect }: { rows: PersonScore[]; onSe
                   key={c.key}
                   scope="col"
                   aria-sort={sort.key === c.key ? (sort.desc ? "descending" : "ascending") : "none"}
-                  className={`pb-2 font-medium ${c.align === "right" ? "text-right" : "text-left"} ${c.key === "delivered" ? "pl-3" : ""}`}
+                  className={`pb-2 align-bottom font-medium ${c.align === "right" ? "text-right" : "text-left"} ${c.key === "delivered" ? "pl-3" : ""}`}
                 >
-                  <button type="button" onClick={() => toggle(c.key)} className="whitespace-nowrap hover:text-text-primary">
+                  <button type="button" onClick={() => toggle(c.key)} className="hover:text-text-primary">
                     {c.label}
                     <span aria-hidden="true" className={sort.key === c.key ? "" : "invisible"}>
-                      {sort.desc ? " ↓" : " ↑"}
+                      {sort.desc ? "\u00a0↓" : "\u00a0↑"}
                     </span>
                   </button>
                 </th>
@@ -97,16 +97,16 @@ export function PersonScoreTable({ rows, onSelect }: { rows: PersonScore[]; onSe
                 <td className="py-2 pl-3 pr-3">
                   <div className="flex items-center gap-3">
                     <span
-                      className="h-2.5 w-24 shrink-0 bg-gradient-to-r from-chart-1 to-chart-2"
+                      className="h-2.5 w-20 shrink-0 bg-gradient-to-r from-chart-1 to-chart-2"
                       style={{ clipPath: `inset(0 ${100 - (r.delivered / max) * 100}% 0 0 round 4px)` }}
                       aria-hidden="true"
                     />
                     <span className="w-7 text-right tabular-nums text-text-primary">{num(r.delivered)}</span>
-                    <Sparkline values={r.weekly} width={56} height={20} />
+                    <Sparkline values={r.weekly} width={48} height={20} />
                   </div>
                 </td>
                 <td className="py-2 pl-3 text-right tabular-nums text-text-primary">
-                  <Flagged value={days(r.avgCycleDays)} flagged={r.flags.avgCycleDays} why="tempo bem acima da equipe" />
+                  <Flagged value={dayNum(r.avgCycleDays)} flagged={r.flags.avgCycleDays} why="tempo bem acima da equipe" />
                 </td>
                 <td className="py-2 pl-3 text-right tabular-nums text-text-primary">
                   <Flagged value={pct(r.onTimeRate)} flagged={r.flags.onTimeRate} why="no prazo bem abaixo da equipe" />

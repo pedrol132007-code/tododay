@@ -19,12 +19,15 @@ export function LineChart({
   labels,
   series,
   format,
+  tipFormat = format,
   ariaLabel,
   height = 200,
 }: {
   labels: string[];
   series: LineSeries[];
   format: (v: number) => string;
+  /** Formato dos valores na dica (ex.: com unidade); o eixo usa `format`. */
+  tipFormat?: (v: number) => string;
   ariaLabel: string;
   height?: number;
 }) {
@@ -125,7 +128,7 @@ export function LineChart({
             <p key={s.name} className="flex items-center gap-2 text-text-muted">
               <span className={`h-2 w-2 rounded-full ${BG[s.color]}`} />
               {s.name}
-              <span className="ml-auto pl-3 tabular-nums text-text-primary">{s.values[hover] == null ? "—" : format(s.values[hover]!)}</span>
+              <span className="ml-auto pl-3 tabular-nums text-text-primary">{s.values[hover] == null ? "—" : tipFormat(s.values[hover]!)}</span>
             </p>
           ))}
         </div>

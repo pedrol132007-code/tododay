@@ -11,7 +11,7 @@ import { ChartFrame } from "./charts/ChartFrame";
 import { ColumnChart } from "./charts/ColumnChart";
 import { LineChart } from "./charts/LineChart";
 import { StatTile } from "./charts/StatTile";
-import { days, num, pct } from "./format";
+import { dayNum, days, num, pct } from "./format";
 import { PersonScoreTable } from "./PersonScoreTable";
 
 const PERIODS = [4, 12, 26] as const;
@@ -193,7 +193,8 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         />
         <StatTile
           label="Tempo médio"
-          value={days(view.sum.avgCycleDays)}
+          value={dayNum(view.sum.avgCycleDays)}
+          unit={view.sum.avgCycleDays == null ? undefined : "dias"}
           delta={relative(view.sum.avgCycleDays, view.prev.avgCycleDays, period, { up: "mais lento", down: "mais rápido" })}
         />
         <StatTile label="No prazo" value={pct(view.sum.onTimeRate)} delta={points(view.sum.onTimeRate, view.prev.onTimeRate, period)} />
@@ -264,9 +265,9 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
             title="Tempo médio (dias)"
             legend={view.team ? [{ label: subject, color: "chart-1" }, { label: refName, color: "chart-ref", dashed: true }] : undefined}
             table={{
-              columns: view.team ? ["Semana", "Dias", refName] : ["Semana", "Dias"],
+              columns: view.team ? ["Semana", "Dias", `${refName} (dias)`] : ["Semana", "Dias"],
               rows: view.series.map((p, i) =>
-                view.team ? [labels[i], days(p.avgCycleDays), days(view.team[i].avgCycleDays)] : [labels[i], days(p.avgCycleDays)],
+                view.team ? [labels[i], dayNum(p.avgCycleDays), dayNum(view.team[i].avgCycleDays)] : [labels[i], dayNum(p.avgCycleDays)],
               ),
             }}
           >
@@ -278,6 +279,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
                 ...(view.team ? [{ name: refName, values: view.team.map((p) => p.avgCycleDays), color: "chart-ref" as const, dashed: true }] : []),
               ]}
               format={(v) => num(v, 1)}
+              tipFormat={days}
               ariaLabel={`Tempo médio para concluir de ${subject}: ${days(view.sum.avgCycleDays)}`}
             />
           </ChartFrame>

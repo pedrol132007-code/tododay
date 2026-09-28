@@ -106,7 +106,7 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
     const capacity = heavy ? between(7, 8) : between(3, 8); // tarefas por semana
     // Quem está sobrecarregado vem piorando: entra cada vez mais trabalho e demora cada vez mais.
     const trend = heavy ? between(0.1, 0.35) : between(-0.35, 0.35); // variação da capacidade ao longo do ano
-    const cycleBase = heavy ? between(11, 13) : between(2, 7); // dias até concluir
+    const cycleBase = heavy ? between(11, 13) : between(5, 10); // dias até concluir
     const cycleTrend = heavy ? between(0.1, 0.3) : between(-0.3, 0.3);
     const onTimeBase = between(0.65, 0.92);
     const onTimeTrend = between(-0.1, 0.1);

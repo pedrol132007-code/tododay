@@ -83,6 +83,20 @@ describe("generateDemoTasks", () => {
     }
   });
 
+  it("raramente deixa alguém sem nada em andamento", () => {
+    let zero = 0, total = 0;
+    for (const d of seeds) {
+      for (let k = 0; k < 84; k += 3) {
+        const day = addDays(TODAY, -k);
+        for (const p of d.people) {
+          total++;
+          if (!d.tasks.some((t) => t.assigneeId === p.id && statusOn(t, day) === "in_progress")) zero++;
+        }
+      }
+    }
+    expect(zero / total).toBeLessThan(0.08);
+  });
+
   it("tem entregas no prazo e fora dele, e tempos de conclusão plausíveis", () => {
     for (const d of seeds) {
       const m = periodMetrics(d.tasks, presetRange("12w", TODAY));

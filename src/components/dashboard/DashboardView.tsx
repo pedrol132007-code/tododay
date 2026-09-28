@@ -9,16 +9,13 @@ import { PageHeader } from "../ui/PageHeader";
 import { IconColumns } from "../ui/icons";
 import { ChartFrame } from "./charts/ChartFrame";
 import { ColumnChart } from "./charts/ColumnChart";
-import { HBarChart } from "./charts/HBarChart";
 import { LineChart } from "./charts/LineChart";
 import { StatTile } from "./charts/StatTile";
+import { days, num, pct } from "./format";
+import { PersonScoreTable } from "./PersonScoreTable";
 
 const PERIODS = [4, 12, 26] as const;
 type Period = (typeof PERIODS)[number];
-
-const num = (v: number, digits = 0) => v.toLocaleString("pt-BR", { maximumFractionDigits: digits });
-const days = (v: number | null) => (v == null ? "—" : `${num(v, 1)} d`);
-const pct = (v: number | null) => (v == null ? "—" : `${num(v * 100)}%`);
 
 /** `words` diz o que a seta significa quando "subir" não é óbvio (ex.: tempo maior = mais lento). */
 function relative(cur: number | null, prev: number | null, period: Period, words?: { up: string; down: string }): string | null {
@@ -257,15 +254,8 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
             />
           </ChartFrame>
         ) : (
-          <ChartFrame
-            title="Por pessoa"
-            table={{ columns: ["Pessoa", "Entregues no período", "Em andamento agora"], rows: view.people.map((r) => [r.person.name, r.delivered, r.inProgress]) }}
-          >
-            <HBarChart
-              rows={view.people.map((r) => ({ id: r.person.id, name: r.person.name, value: r.delivered, extra: r.inProgress }))}
-              valueLabel="Entregues"
-              extraLabel="Em andamento agora"
-            />
+          <ChartFrame title="Por pessoa">
+            <PersonScoreTable rows={view.people} onSelect={onSelectPerson} />
           </ChartFrame>
         )}
 

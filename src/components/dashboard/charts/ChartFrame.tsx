@@ -16,7 +16,8 @@ export function ChartFrame({
 }: {
   title: string;
   legend?: LegendItem[];
-  table: { columns: string[]; rows: (string | number)[][] };
+  /** Sem `table` não há alternância (ex.: o conteúdo já é uma tabela). */
+  table?: { columns: string[]; rows: (string | number)[][] };
   children: ReactNode;
 }) {
   const [asTable, setAsTable] = useState(false);
@@ -29,9 +30,11 @@ export function ChartFrame({
             <span className="h-0.5 w-4 shrink-0 bg-danger" aria-hidden="true" />
             {title}
           </h3>
-          <button type="button" onClick={() => setAsTable((v) => !v)} className="ml-auto shrink-0 text-xs text-text-muted hover:text-primary">
-            {asTable ? "Ver gráfico" : "Ver tabela"}
-          </button>
+          {table && (
+            <button type="button" onClick={() => setAsTable((v) => !v)} className="ml-auto shrink-0 text-xs text-text-muted hover:text-primary">
+              {asTable ? "Ver gráfico" : "Ver tabela"}
+            </button>
+          )}
         </div>
         {legend && legend.length > 1 && (
           <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
@@ -46,7 +49,7 @@ export function ChartFrame({
           </ul>
         )}
       </div>
-      {asTable ? (
+      {asTable && table ? (
         <div className="max-h-64 overflow-auto">
           <table className="w-full text-left text-xs">
             <thead className="sticky top-0 bg-bg-surface text-text-muted">

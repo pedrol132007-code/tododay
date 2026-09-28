@@ -95,14 +95,44 @@ export function compare(current: number | null, previous: number | null): number
   return (current - previous) / previous;
 }
 
-export function perPerson(
-  data: DashboardData,
-  weeks: string[],
-): { person: DashboardPerson; delivered: number; inProgress: number }[] {
-  return data.people
-    .map((person) => {
-      const s = summary(weeklySeries(data, weeks, person.id));
-      return { person, delivered: s.delivered, inProgress: s.endInProgress };
-    })
+export interface PersonScore {
+  person: DashboardPerson;
+  delivered: number;
+  /** Em andamento no fim do período. */
+  inProgress: number;
+  avgCycleDays: number | null;
+  onTimeRate: number | null;
+  /** Entregas de cada semana do período (minigráfico). */
+  weekly: number[];
+  /** Bem pior que a equipe: em andamento ou tempo médio acima de 1,3×; no prazo 10 pts abaixo. */
+  flags: { inProgress: boolean; avgCycleDays: boolean; onTimeRate: boolean };
+}
+
+const WORSE_FACTOR = 1.3;
+const ON_TIME_GAP = 0.1;
+
+/** Placar por pessoa no período, quem mais entregou primeiro. */
+export function perPerson(data: DashboardData, weeks: string[]): PersonScore[] {
+  const team = summary(weeklySeries(data, weeks));
+  const rows = data.people.map((person) => {
+    const series = weeklySeries(data, weeks, person.id);
+    const s = summary(series);
+    return { person, s, weekly: series.map((p) => p.delivered) };
+  });
+  const meanInProgress = rows.reduce((acc, r) => acc + r.s.endInProgress, 0) / Math.max(1, rows.length);
+  return rows
+    .map(({ person, s, weekly }) => ({
+      person,
+      delivered: s.delivered,
+      inProgress: s.endInProgress,
+      avgCycleDays: s.avgCycleDays,
+      onTimeRate: s.onTimeRate,
+      weekly,
+      flags: {
+        inProgress: meanInProgress > 0 && s.endInProgress > meanInProgress * WORSE_FACTOR,
+        avgCycleDays: s.avgCycleDays != null && team.avgCycleDays != null && s.avgCycleDays > team.avgCycleDays * WORSE_FACTOR,
+        onTimeRate: s.onTimeRate != null && team.onTimeRate != null && s.onTimeRate < team.onTimeRate - ON_TIME_GAP,
+      },
+    }))
     .sort((a, b) => b.delivered - a.delivered);
 }

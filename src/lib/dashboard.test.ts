@@ -88,11 +88,38 @@ describe("compare", () => {
 });
 
 describe("perPerson", () => {
-  it("lists deliveries in the period and work in progress at its end, most deliveries first", () => {
+  it("scores each person in the period, most deliveries first", () => {
     expect(perPerson(data, periodWeeks(data, 2))).toEqual([
-      { person: { id: "a", name: "Ana" }, delivered: 4, inProgress: 1 },
-      { person: { id: "b", name: "Bruno" }, delivered: 4, inProgress: 1 },
+      {
+        person: { id: "a", name: "Ana" },
+        delivered: 4,
+        inProgress: 1,
+        avgCycleDays: 2.5,
+        onTimeRate: 0.5,
+        weekly: [2, 2],
+        flags: { inProgress: false, avgCycleDays: false, onTimeRate: true },
+      },
+      {
+        person: { id: "b", name: "Bruno" },
+        delivered: 4,
+        inProgress: 1,
+        avgCycleDays: 3.5,
+        onTimeRate: 1,
+        weekly: [3, 1],
+        flags: { inProgress: false, avgCycleDays: false, onTimeRate: false },
+      },
     ]);
     expect(perPerson(data, periodWeeks(data, 2, 1))[0].person.id).toBe("a");
+  });
+  it("flags work in progress and cycle time well above the team", () => {
+    const [a, b] = perPerson(data, ["2026-08-31"]);
+    // Ana: 3 em andamento vs. média 2 (> 1,3×); tempo 4 d vs. equipe 3 d (> 1,3×).
+    expect(a.flags).toMatchObject({ inProgress: true, avgCycleDays: true });
+    expect(b.flags).toMatchObject({ inProgress: false, avgCycleDays: false });
+  });
+  it("never flags a missing rate", () => {
+    const b = perPerson(data, ["2026-09-07"]).find((r) => r.person.id === "b")!;
+    expect(b.avgCycleDays).toBeNull();
+    expect(b.flags).toEqual({ inProgress: false, avgCycleDays: false, onTimeRate: false });
   });
 });

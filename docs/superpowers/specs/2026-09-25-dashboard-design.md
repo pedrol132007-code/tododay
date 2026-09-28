@@ -38,7 +38,8 @@ tela.
   1. 4 blocos de número: entregas no período (variação vs. período anterior + minigráfico),
      saldo criados − concluídos, tempo médio para concluir (dias), % no prazo.
   2. Entregas por semana (colunas) | Criados x concluídos (duas linhas).
-  3. Por pessoa (uma barra de entregues no período; "em andamento agora" como número ao lado, sem somar à barra) | Prazo e agilidade — **dois
+  3. Por pessoa: placar da equipe (uma linha por pessoa: entregas com barra e tendência, tempo médio,
+     no prazo, em andamento; colunas ordenáveis; ▲ em quem está bem pior que a equipe; clicar abre a pessoa) | Prazo e agilidade — **dois
      gráficos pequenos** (tempo médio; % no prazo), nunca eixo duplo.
 - **Visão de um membro:** os mesmos blocos e gráficos só da pessoa, com a **média da equipe em
   cinza** como referência (ênfase: a pessoa em azul, o time em cinza). "Por pessoa" vira
@@ -119,9 +120,10 @@ Texto dos gráficos usa `text-primary`/`text-muted`, nunca a cor da série.
   2px de espaço entre colunas, base no zero.
 - `LineChart` (1–2 séries + referência opcional tracejada): linhas 2px, marcador ≥ 8px só no
   hover, rótulo direto no fim de cada linha.
-- `HBarChart` (por pessoa): uma barra por pessoa (entregues no período) e, ao lado, o número de
-  em andamento agora — fluxo e estoque não se somam. Nome à esquerda, valores no fim.
-- Degradê da marca: nas colunas e nas barras por pessoa, o degradê azul→vermelho ocupa a área do
+- `PersonScoreTable` (por pessoa): tabela-placar ordenável. Destaque "bem pior que a equipe" (▲ + texto, nunca só
+  cor): em andamento ou tempo médio acima de 1,3× a equipe; no prazo 10 pts abaixo. Clicar numa linha
+  abre a visão da pessoa.
+- Degradê da marca: nas colunas e nas barras de entregas do placar, o degradê azul→vermelho ocupa a área do
   gráfico e cada barra revela o trecho até onde chega (curtas azuis, longas avermelhadas). Linhas
   ficam sólidas.
 - `StatTile`: valor grande, variação com seta e texto ("▲ 18% vs. 12 semanas anteriores",

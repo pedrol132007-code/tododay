@@ -47,30 +47,51 @@ export function generateDemoData(seed: number, options: { weeks?: number; today?
     return iso(d);
   });
 
+  // Épocas mais pesadas para a equipe toda (fechamentos, prazos em lote): tudo demora mais.
+  const teamPhase = rand() * Math.PI * 2;
+  const teamStrain = (progress: number) => 1 + 0.07 * Math.sin(progress * Math.PI * 2.5 + teamPhase);
+
   const rows: DashboardWeek[] = [];
   for (const person of DEMO_PEOPLE) {
-    const capacity = between(3, 8);
-    const trend = between(-0.35, 0.35); // variação total ao longo do ano
+    const capacity = between(3, 8); // entregas por semana
+    const trend = between(-0.35, 0.35); // variação total da capacidade ao longo do ano
+    // Quanto trabalho a pessoa costuma ter aberto; a entrada de trabalho puxa o estoque de volta
+    // para esse alvo, que sobe e desce em ondas de acúmulo.
+    const targetWip = between(4, 9);
     const cycleBase = between(2, 9);
-    const onTimeBase = between(0.6, 0.95);
+    const cycleTrend = between(-0.3, 0.3);
+    const onTimeBase = between(0.65, 0.92);
+    const onTimeTrend = between(-0.1, 0.1);
     const phase = rand() * Math.PI * 2;
-    let inProgress = Math.round(between(2, 6));
+    let inProgress = Math.round(targetWip);
 
     weeks.forEach((weekStart, i) => {
       const progress = count > 1 ? i / (count - 1) : 1;
       const onVacation = rand() < 1 / 12;
-      const delivered = onVacation
-        ? 0
-        : clamp(Math.round(capacity * (1 + trend * (progress - 0.5)) + noise() * 1.5), 0, 14);
-      // Ondas de acúmulo: em parte do ano entra mais trabalho do que sai, depois o contrário.
+      const capacityNow = capacity * (1 + trend * (progress - 0.5));
       const wave = Math.sin(progress * Math.PI * 3 + phase);
-      const created = clamp(Math.round((onVacation ? capacity * 0.4 : delivered) * (1 + 0.3 * wave) + noise()), 0, 16);
-      inProgress = clamp(inProgress + created - delivered, 0, 15);
+      const target = targetWip * (1 + 0.3 * wave);
+      // Contagens semanais oscilam mais ou menos como Poisson (desvio ≈ √média).
+      const spread = Math.sqrt(capacityNow);
+      const planned = onVacation ? 0 : clamp(Math.round(capacityNow + noise() * 1.6 * spread), 0, 14);
+      // Parte do trabalho novo é puxada quando algo termina; o resto chega por conta própria.
+      const arriving = onVacation ? capacityNow * 0.4 : 0.4 * planned + 0.6 * capacityNow;
+      const created = Math.max(0, Math.round(arriving + 0.4 * (target - inProgress) + noise() * 1.3 * spread));
+      // Não dá para entregar do que não está aberto: o que já estava em andamento mais parte do
+      // que entrou na semana (o resto ainda nem começou).
+      const delivered = Math.min(planned, inProgress + Math.round(created / 2));
+      const wipBefore = inProgress;
+      inProgress += created - delivered;
 
+      // Mais trabalho aberto, mais tempo até concluir (a lei de Little, grosso modo).
+      const load = (wipBefore + inProgress) / 2 / targetWip;
+      const cycleNow = cycleBase * (1 + cycleTrend * (progress - 0.5)) * (0.7 + 0.3 * load) * teamStrain(progress);
       let cycleDaysTotal = 0;
-      for (let k = 0; k < delivered; k++) cycleDaysTotal += clamp(cycleBase + noise() * 2, 1, 12);
+      for (let k = 0; k < delivered; k++) cycleDaysTotal += clamp(cycleNow + noise() * 2, 1, 12);
       const withDue = Math.round(delivered * between(0.6, 0.9));
-      const onTime = Math.round(withDue * clamp(onTimeBase + noise() * 0.1, 0, 1));
+      // Quando o tempo até concluir sobe, sobra menos folga para o prazo.
+      const onTimeNow = onTimeBase + onTimeTrend * (progress - 0.5) - 0.35 * (cycleNow / cycleBase - 1);
+      const onTime = Math.round(withDue * clamp(onTimeNow + noise() * 0.1, 0, 1));
 
       rows.push({
         personId: person.id,

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { compare, periodWeeks, summary, weeklySeries } from "./dashboard";
 import { DEMO_PEOPLE, generateDemoData } from "./demoData";
 
 const today = new Date(2026, 8, 25); // quinta, 25/09/2026
@@ -53,5 +54,54 @@ describe("generateDemoData", () => {
 
   it("respects a custom length", () => {
     expect(generateDemoData(1, { today, weeks: 8 }).weeks).toHaveLength(8);
+  });
+
+  // Estoque e fluxo: o que está em andamento só muda pelo que entrou e saiu.
+  const seeds = Array.from({ length: 20 }, (_, i) => generateDemoData(1000 + i * 37, { today }));
+  const personRows = (d: ReturnType<typeof generateDemoData>) => d.people.map((p) => d.rows.filter((r) => r.personId === p.id));
+
+  it("keeps work in progress equal to the previous week plus created minus delivered", () => {
+    for (const d of [data, ...seeds]) {
+      for (const rows of personRows(d)) {
+        for (let t = 1; t < rows.length; t++) {
+          expect(rows[t].inProgress).toBe(rows[t - 1].inProgress + rows[t].created - rows[t].delivered);
+        }
+      }
+    }
+  });
+
+  it("rarely leaves someone with nothing in progress", () => {
+    const all = seeds.flatMap((d) => d.rows);
+    const zero = all.filter((r) => r.inProgress === 0).length;
+    expect(zero / all.length).toBeLessThan(0.05);
+  });
+
+  it("keeps work in progress moving and in a plausible range", () => {
+    let runs = 0;
+    let people = 0;
+    for (const d of seeds) {
+      for (const rows of personRows(d)) {
+        people++;
+        let run = 1;
+        for (let t = 1; t < rows.length; t++) {
+          run = rows[t].inProgress === rows[t - 1].inProgress ? run + 1 : 1;
+          if (run === 4) runs++;
+        }
+        expect(Math.max(...rows.map((r) => r.inProgress))).toBeLessThanOrEqual(25);
+      }
+    }
+    // Quatro semanas seguidas com o mesmo número acontece, mas não em quase todo mundo.
+    expect(runs / people).toBeLessThan(0.5);
+  });
+
+  it("lets cycle time and on-time rate change between 12-week periods", () => {
+    const deltas = seeds.map((d) => {
+      const cur = summary(weeklySeries(d, periodWeeks(d, 12)));
+      const prev = summary(weeklySeries(d, periodWeeks(d, 12, 1)));
+      return { cycle: compare(cur.avgCycleDays, prev.avgCycleDays)!, onTime: cur.onTimeRate! - prev.onTimeRate! };
+    });
+    // Em boa parte das sementes a variação é visível (≥ 5% no tempo, ≥ 2 pts no prazo).
+    expect(deltas.filter((x) => Math.abs(x.cycle) >= 0.05).length).toBeGreaterThanOrEqual(seeds.length / 3);
+    expect(deltas.filter((x) => Math.abs(x.onTime) >= 0.02).length).toBeGreaterThanOrEqual(seeds.length / 3);
   });
 });

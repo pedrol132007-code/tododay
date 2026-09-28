@@ -19,6 +19,7 @@ import { CurrentTeamContext } from "./hooks/useCurrentTeam";
 import type { MyTeam, SearchResult } from "./types";
 import { IconColumns, IconSettings } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
+import { DashboardErrorBoundary } from "./components/dashboard/DashboardErrorBoundary";
 
 // Carregado só ao abrir o Dashboard: os gráficos não pesam para quem usa só o board.
 const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })));
@@ -191,9 +192,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <UserMenu userId={userId} />
       </div>
       {view === "dashboard" ? (
-        <Suspense fallback={null}>
-          <DashboardView teamName={team.name} />
-        </Suspense>
+        <DashboardErrorBoundary>
+          <Suspense fallback={null}>
+            <DashboardView teamName={team.name} />
+          </Suspense>
+        </DashboardErrorBoundary>
       ) : view === "settings" ? (
         <SettingsView onBack={() => setView("board")} />
       ) : view === "team" ? (

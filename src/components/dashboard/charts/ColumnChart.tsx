@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { axis, labelStep } from "../../../lib/chartScale";
 import { BG, STROKE } from "./colors";
+import { tipPosition } from "./tipPosition";
 import { useElementWidth } from "./useElementWidth";
 
 const PAD = { l: 40, r: 12, t: 12, b: 24 };
@@ -81,7 +82,7 @@ export function ColumnChart({
       {hover != null && width > 0 && (
         <div
           className="pointer-events-none absolute top-0 z-10 min-w-32 rounded-lg border border-border bg-bg-surface px-3 py-2 text-xs shadow-lg"
-          style={{ left: Math.min(Math.max(0, cx(hover) + 10), width - 150) }}
+          style={tipPosition(cx(hover), PAD.l + w / 2, width)}
         >
           <p className="mb-1 font-semibold text-text-primary">{labels[hover]}</p>
           <p className="flex items-center gap-2 text-text-muted">

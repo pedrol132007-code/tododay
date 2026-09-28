@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { axis, labelStep } from "../../../lib/chartScale";
 import { BG, FILL, STROKE, type ChartColor } from "./colors";
+import { tipPosition } from "./tipPosition";
 import { useElementWidth } from "./useElementWidth";
 
 export interface LineSeries {
@@ -52,7 +53,7 @@ export function LineChart({
     return d;
   };
 
-  // Rótulo no fim de cada linha, afastando os que ficariam a menos de 12px um do outro.
+  // Rótulo no fim de cada linha, afastando os que ficariam a menos de 14px um do outro.
   const ends = series
     .map((s) => {
       const i = s.values.findLastIndex((v) => v != null);
@@ -60,7 +61,7 @@ export function LineChart({
     })
     .filter((e): e is { name: string; y: number } => e != null)
     .sort((a, b) => a.y - b.y);
-  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 12) ends[i].y = ends[i - 1].y + 12;
+  for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
 
   function handleMove(e: React.MouseEvent<SVGSVGElement>) {
     const mx = e.clientX - e.currentTarget.getBoundingClientRect().left;
@@ -117,7 +118,7 @@ export function LineChart({
       {hover != null && width > 0 && (
         <div
           className="pointer-events-none absolute top-0 z-10 min-w-36 rounded-lg border border-border bg-bg-surface px-3 py-2 text-xs shadow-lg"
-          style={{ left: Math.min(Math.max(0, x(hover) + 10), width - 150) }}
+          style={tipPosition(x(hover), PAD.l + w / 2, width)}
         >
           <p className="mb-1 font-semibold text-text-primary">{labels[hover]}</p>
           {series.map((s) => (

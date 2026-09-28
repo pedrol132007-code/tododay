@@ -22,23 +22,25 @@ export function ChartFrame({
   const [asTable, setAsTable] = useState(false);
   return (
     <section className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-5">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-baseline gap-4">
+          <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+          <button type="button" onClick={() => setAsTable((v) => !v)} className="ml-auto shrink-0 text-xs text-text-muted hover:text-primary">
+            {asTable ? "Ver gráfico" : "Ver tabela"}
+          </button>
+        </div>
         {legend && legend.length > 1 && (
-          <ul className="flex flex-wrap gap-3 text-xs text-text-muted">
+          <ul className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
             {legend.map((item) => (
               <li key={item.label} className="inline-flex items-center gap-1.5">
                 <svg width="16" height="6" aria-hidden="true">
-                  <line x1="0" y1="3" x2="16" y2="3" strokeWidth="2" className={STROKE[item.color]} strokeDasharray={item.dashed ? "3 3" : undefined} />
+                  <line x1="0" y1="3" x2="16" y2="3" strokeWidth="2" className={STROKE[item.color]} strokeDasharray={item.dashed ? "4 4" : undefined} />
                 </svg>
                 {item.label}
               </li>
             ))}
           </ul>
         )}
-        <button type="button" onClick={() => setAsTable((v) => !v)} className="ml-auto text-xs text-text-muted hover:text-primary">
-          {asTable ? "Ver gráfico" : "Ver tabela"}
-        </button>
       </div>
       {asTable ? (
         <div className="max-h-64 overflow-auto">

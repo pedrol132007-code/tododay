@@ -129,6 +129,29 @@ export function periodMetrics(tasks: DashboardTask[], r: DayRange): PeriodMetric
   };
 }
 
+// Listas por trás dos números (o que abre ao clicar num KPI). Contam o mesmo que periodMetrics.
+
+/** Entregues no período (KPI Entregas). */
+export function deliveredIn(tasks: DashboardTask[], r: DayRange): DashboardTask[] {
+  return tasks.filter((t) => {
+    const done = completedDay(t);
+    return done != null && within(done, r);
+  });
+}
+
+/** Entregues no período depois do prazo (o que tira do No prazo). */
+export function deliveredLateIn(tasks: DashboardTask[], r: DayRange): DashboardTask[] {
+  return deliveredIn(tasks, r).filter((t) => t.dueDay != null && completedDay(t)! > t.dueDay);
+}
+
+/** Abertas (planejadas + em andamento) no fim de `day` (estoque de backlog). */
+export function openAt(tasks: DashboardTask[], day: string): DashboardTask[] {
+  return tasks.filter((t) => {
+    const status = statusOn(t, day);
+    return status === "planned" || status === "in_progress";
+  });
+}
+
 export interface BucketMetrics extends PeriodMetrics {
   range: DayRange;
 }

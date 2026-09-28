@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardStatus, DashboardTask } from "../types";
-import { alertTasks, attentionAlerts, isDueSoon, isOverdue, isOverloaded, MAX_ALERTS, OVERLOAD_IN_PROGRESS, stalledDays } from "./dashboardRules";
+import { alertTasks, attentionAlerts, stalledList, isDueSoon, isOverdue, isOverloaded, MAX_ALERTS, OVERLOAD_IN_PROGRESS, stalledDays } from "./dashboardRules";
 
 const TODAY = "2026-09-28";
 
@@ -109,5 +109,17 @@ describe("alertas de atenção", () => {
     expect(alertTasks(tasks, alerts[1], TODAY)).toHaveLength(10);
     expect(alertTasks(tasks, alerts[2], TODAY)).toHaveLength(1);
     expect(alertTasks(tasks, alerts[3], TODAY).map((x) => x.assigneeId)).toEqual(["duda"]);
+  });
+});
+
+describe("lista do que está parado", () => {
+  it("traz as paradas com os dias, a mais antiga primeiro", () => {
+    const a = task([["2026-09-01", "planned"], ["2026-09-15", "in_progress"]]);
+    const b = task([["2026-09-01", "planned"], ["2026-09-02", "in_progress"]]);
+    const fresh = task([["2026-09-01", "planned"], ["2026-09-25", "in_progress"]]);
+    expect(stalledList([a, b, fresh], TODAY)).toEqual([
+      { task: b, days: 26 },
+      { task: a, days: 13 },
+    ]);
   });
 });

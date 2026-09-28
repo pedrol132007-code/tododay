@@ -4,7 +4,10 @@ import {
   addDays,
   buckets,
   completedDay,
+  deliveredIn,
+  deliveredLateIn,
   median,
+  openAt,
   percentile,
   periodMetrics,
   presetRange,
@@ -206,5 +209,30 @@ describe("média da equipe", () => {
     expect(avg.map((p) => p.delivered)).toEqual(team.map((p) => p.delivered / 2));
     expect(avg.map((p) => p.openAtEnd)).toEqual(team.map((p) => p.openAtEnd / 2));
     expect(avg.map((p) => p.cycleP85)).toEqual(team.map((p) => p.cycleP85));
+  });
+});
+
+describe("listas por trás dos números", () => {
+  const range = { start: "2026-09-01", end: "2026-09-30" };
+  const onTime = task("2026-09-02", [["2026-09-03", "in_progress"], ["2026-09-06", "done"]], "2026-09-06");
+  const late = task("2026-09-05", [["2026-09-06", "in_progress"], ["2026-09-15", "done"]], "2026-09-10");
+  const noDue = task("2026-08-20", [["2026-08-25", "in_progress"], ["2026-09-02", "done"]]);
+  const before = task("2026-08-01", [["2026-08-02", "in_progress"], ["2026-08-10", "done"]], "2026-08-05");
+  const open = task("2026-09-20", [["2026-09-21", "in_progress"]]);
+  const doneAfter = task("2026-09-10", [["2026-09-11", "in_progress"], ["2026-10-02", "done"]]);
+  const tasks = [onTime, late, noDue, before, open, doneAfter];
+
+  it("entregues no período (o mesmo que o KPI Entregas conta)", () => {
+    expect(deliveredIn(tasks, range)).toEqual([onTime, late, noDue]);
+    expect(deliveredIn(tasks, range)).toHaveLength(periodMetrics(tasks, range).delivered);
+  });
+
+  it("entregues fora do prazo no período", () => {
+    expect(deliveredLateIn(tasks, range)).toEqual([late]);
+  });
+
+  it("abertas num dia (o mesmo que o estoque de backlog)", () => {
+    expect(openAt(tasks, range.end)).toEqual([open, doneAfter]);
+    expect(openAt(tasks, range.end)).toHaveLength(periodMetrics(tasks, range).openAtEnd);
   });
 });

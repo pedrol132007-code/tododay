@@ -129,3 +129,11 @@ export function alertTasks(tasks: DashboardTask[], alert: AttentionAlert, day: s
   };
   return tasks.filter((t) => (!alert.personId || t.assigneeId === alert.personId) && alert.match.some((m) => test[m](t)));
 }
+
+/** O que está parado e há quanto tempo, o mais antigo primeiro (para preparar a conversa individual). */
+export function stalledList(tasks: DashboardTask[], day: string): { task: DashboardTask; days: number }[] {
+  return tasks
+    .map((task) => ({ task, days: stalledDays(task, day) }))
+    .filter((x): x is { task: DashboardTask; days: number } => x.days != null)
+    .sort((a, b) => b.days - a.days);
+}

@@ -138,6 +138,26 @@ export interface DashboardWeek {
   onTime: number;
 }
 
+/** Status de uma tarefa do dashboard (docs/superpowers/specs/2026-09-28-dashboard-gestor-design.md). */
+export type DashboardStatus = "planned" | "in_progress" | "done";
+
+export interface DashboardStatusChange {
+  /** "AAAA-MM-DD". */
+  day: string;
+  to: DashboardStatus;
+}
+
+export interface DashboardTask {
+  id: string;
+  title: string;
+  assigneeId: string;
+  /** "AAAA-MM-DD"; igual ao primeiro item do histórico. */
+  createdDay: string;
+  dueDay: string | null;
+  /** Em ordem; começa em planned e done é final. */
+  history: DashboardStatusChange[];
+}
+
 export interface DashboardData {
   people: DashboardPerson[];
   /** Semanas em ordem, a mais antiga primeiro. */

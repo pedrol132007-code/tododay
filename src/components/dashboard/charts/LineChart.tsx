@@ -10,7 +10,8 @@ export interface LineSeries {
   dashed?: boolean;
 }
 
-const PAD = { l: 40, r: 72, t: 12, b: 24 };
+// r cabe o rótulo mais longo no fim de linha ("Média da equipe", ~93px) sem cortar no card.
+const PAD = { l: 40, r: 112, t: 12, b: 24 };
 
 /** Linhas ao longo das semanas, com linha guia e dica no hover e rótulo no fim de cada série. */
 export function LineChart({

@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
-import type { DashboardData } from "../../types";
+import { AnimatePresence } from "framer-motion";
+import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
+import { alertTasks, attentionAlerts } from "../../lib/dashboardRules";
 import { generateDemo } from "../../lib/demoData";
 import { teamLoad } from "../../lib/teamLoad";
 import {
@@ -22,7 +24,9 @@ import { ColumnChart } from "./charts/ColumnChart";
 import { LineChart } from "./charts/LineChart";
 import { StatTile } from "./charts/StatTile";
 import { dayNum, days, num, pct } from "./format";
+import { AttentionCard } from "./AttentionCard";
 import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } from "./PeriodPicker";
+import { TaskListPanel } from "./TaskListPanel";
 import { TeamLoadTable } from "./TeamLoadTable";
 
 const VS = "vs. período anterior";
@@ -126,6 +130,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
   onSelectPerson: (id: string | null) => void;
 }) {
   const person = data.people.find((p) => p.id === personId) ?? null;
+  const [list, setList] = useState<{ title: string; tasks: DashboardTask[] } | null>(null);
 
   const view = useMemo(() => {
     const range = selectionRange(period, data.today);
@@ -136,8 +141,10 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
     // Sem dados completos para o período anterior inteiro, não há com o que comparar.
     const prev: PeriodMetrics | null = prevRange.start >= data.since ? periodMetrics(tasks, prevRange) : null;
     const team = personId ? teamAverageSeries(data.tasks, range, data.people.length) : null;
-    return { range, series, sum, prev, team, load: teamLoad(data.people, data.tasks, range) };
-  }, [data, period, personId]);
+    // Atenção olha o último dia do período, como a carga; na visão de uma pessoa, só ela.
+    const alerts = attentionAlerts(person ? [person] : data.people, tasks, range.end);
+    return { range, tasks, series, sum, prev, team, alerts, load: teamLoad(data.people, data.tasks, range) };
+  }, [data, period, personId, person]);
 
   const todayDate = new Date(`${data.today}T12:00:00`);
   const labels = view.series.map((p) => formatDue(p.range.start, todayDate));
@@ -216,6 +223,11 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           tone={tone(sum.onTimeRate, prev?.onTimeRate ?? null, "up")}
         />
       </div>
+
+      <AttentionCard
+        alerts={view.alerts}
+        onOpen={(alert) => setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })}
+      />
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartFrame
@@ -347,6 +359,19 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           <TeamLoadTable rows={view.load} onSelect={onSelectPerson} />
         </ChartFrame>
       )}
+
+      <AnimatePresence>
+        {list && (
+          <TaskListPanel
+            title={list.title}
+            tasks={list.tasks}
+            people={data.people}
+            day={view.range.end}
+            isDemo={data.isDemo}
+            onClose={() => setList(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

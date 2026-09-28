@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -37,6 +37,15 @@ export function List({
   const canEdit = useCanEdit();
   const compact = useCompact();
 
+  // Card novo entra no fim: rola a coluna até ele, como no Trello.
+  const cardsRef = useRef<HTMLDivElement | null>(null);
+  const justAdded = useRef(false);
+  useEffect(() => {
+    if (!justAdded.current || !cardsRef.current) return;
+    justAdded.current = false;
+    cardsRef.current.scrollTop = cardsRef.current.scrollHeight;
+  }, [cards.length]);
+
   const canDelete = cardCount !== undefined && cardCount === 0;
 
   const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" } });
@@ -55,6 +64,7 @@ export function List({
     if (!title) return;
     createCard.mutate(title);
     setNewCardTitle("");
+    justAdded.current = true;
   }
 
   return (
@@ -64,13 +74,13 @@ export function List({
         registerRef?.(list.id, node);
       }}
       style={style}
-      className="w-72 shrink-0"
+      className="flex max-h-full w-72 shrink-0 flex-col"
     >
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className={`flex flex-col rounded-2xl border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"} ${
+        className={`flex min-h-0 flex-col rounded-2xl border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"} ${
           sortable.isDragging ? "border-dashed border-primary bg-primary/5 [&>*]:invisible" : "border-border"
         }`}
       >
@@ -78,7 +88,7 @@ export function List({
           ref={sortable.setActivatorNodeRef}
           {...sortable.attributes}
           {...sortable.listeners}
-          className={`flex items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+          className={`flex shrink-0 items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
           <InlineEditableText
             value={list.name}
@@ -100,7 +110,14 @@ export function List({
           )}
         </div>
 
-        <div ref={droppable.setNodeRef} className={`flex flex-col ${compact ? "gap-1.5" : "gap-2"}`}>
+        {/* Título e "Novo card..." ficam fixos; só os cards rolam quando a coluna passa da altura da tela. */}
+        <div
+          ref={(node) => {
+            droppable.setNodeRef(node);
+            cardsRef.current = node;
+          }}
+          className={`-mx-1 flex min-h-0 flex-col overflow-y-auto px-1 ${compact ? "gap-1.5" : "gap-2"}`}
+        >
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
@@ -121,7 +138,7 @@ export function List({
         </div>
 
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex shrink-0 gap-2">
             <input
               value={newCardTitle}
               onChange={(e) => setNewCardTitle(e.target.value)}

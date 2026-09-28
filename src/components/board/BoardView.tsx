@@ -407,7 +407,8 @@ export function BoardView({
         onDragEnd={handleDragEnd}
         onDragCancel={handleDragCancel}
       >
-        <div className="flex flex-1 items-start gap-4 overflow-x-auto">
+        {/* Só rola na horizontal: cada coluna longa rola os próprios cards (List). */}
+        <div className="flex min-h-0 flex-1 items-start gap-4 overflow-x-auto overflow-y-hidden">
           <SortableContext
             items={renderedBoard.map((l) => `list-${l.id}`)}
             strategy={horizontalListSortingStrategy}

@@ -41,7 +41,8 @@ export interface DashboardTask {
   dueDay: string | null;
   history: DashboardStatusChange[]; // em ordem; começa em planned; done é final
 }
-export interface DashboardData { people: DashboardPerson[]; tasks: DashboardTask[]; today: string; isDemo: boolean }
+export interface DashboardData { people: DashboardPerson[]; tasks: DashboardTask[]; today: string; since: string; isDemo: boolean }
+// since = primeiro dia com dados completos (o período personalizado começa nele; sem período anterior completo, não há comparação)
 ```
 
 Granularidade de dia: basta para "parada há 7 dias", tempo em dias e prazo, e evita fuso horário.

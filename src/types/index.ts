@@ -122,22 +122,6 @@ export interface DashboardPerson {
   name: string;
 }
 
-export interface DashboardWeek {
-  personId: string;
-  /** "AAAA-MM-DD", segunda-feira. */
-  weekStart: string;
-  created: number;
-  delivered: number;
-  /** Em andamento no fim da semana. */
-  inProgress: number;
-  /** Soma dos dias até concluir, dos entregues na semana (para a média). */
-  cycleDaysTotal: number;
-  /** Entregues que tinham prazo. */
-  withDue: number;
-  /** Desses, entregues até o prazo. */
-  onTime: number;
-}
-
 /** Status de uma tarefa do dashboard (docs/superpowers/specs/2026-09-28-dashboard-gestor-design.md). */
 export type DashboardStatus = "planned" | "in_progress" | "done";
 
@@ -160,9 +144,10 @@ export interface DashboardTask {
 
 export interface DashboardData {
   people: DashboardPerson[];
-  /** Semanas em ordem, a mais antiga primeiro. */
-  weeks: string[];
-  /** Uma linha por pessoa por semana. */
-  rows: DashboardWeek[];
+  tasks: DashboardTask[];
+  /** Dia a que os dados se referem ("hoje"), "AAAA-MM-DD". */
+  today: string;
+  /** Primeiro dia com dados completos (antes dele os números não são confiáveis). */
+  since: string;
   isDemo: boolean;
 }

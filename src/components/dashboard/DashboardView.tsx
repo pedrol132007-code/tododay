@@ -1,8 +1,18 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState } from "react";
 import type { DashboardData } from "../../types";
-import { compare, perPerson, periodWeeks, summary, teamAverageSeries, weeklySeries } from "../../lib/dashboard";
-import { generateDemoData } from "../../lib/demoData";
 import { formatDue } from "../../lib/boardVisuals";
+import { generateDemo } from "../../lib/demoData";
+import {
+  compare,
+  periodMetrics,
+  perPerson,
+  previousRange,
+  rangeLength,
+  seriesByBucket,
+  teamAverageSeries,
+  tone,
+  type PeriodMetrics,
+} from "../../lib/metrics";
 import { Avatar } from "../ui/Avatar";
 import { EmptyState } from "../ui/EmptyState";
 import { PageHeader } from "../ui/PageHeader";
@@ -12,19 +22,19 @@ import { ColumnChart } from "./charts/ColumnChart";
 import { LineChart } from "./charts/LineChart";
 import { StatTile } from "./charts/StatTile";
 import { dayNum, days, num, pct } from "./format";
+import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } from "./PeriodPicker";
 import { PersonScoreTable } from "./PersonScoreTable";
 
-const PERIODS = [4, 12, 26] as const;
-type Period = (typeof PERIODS)[number];
+const VS = "vs. período anterior";
 
 /** `words` diz o que a seta significa quando "subir" não é óbvio (ex.: tempo maior = mais lento). */
-function relative(cur: number | null, prev: number | null, period: Period, words?: { up: string; down: string }): string | null {
+function relative(cur: number | null, prev: number | null, words?: { up: string; down: string }): string | null {
   const c = compare(cur, prev);
   if (c == null) return null;
   const dir = c > 0.005 ? "up" : c < -0.005 ? "down" : null;
   const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "■";
   const meaning = dir && words ? ` ${words[dir]}` : "";
-  return `${arrow} ${num(Math.abs(c * 100))}%${meaning} vs. ${period} semanas anteriores`;
+  return `${arrow} ${num(Math.abs(c * 100))}%${meaning} ${VS}`;
 }
 
 /** Variação em palavras para leitores de tela: "alta de 18%", "queda de 5%", "estável". */
@@ -35,45 +45,26 @@ function trendWords(cur: number | null, prev: number | null): string | null {
   return `${c > 0 ? "alta" : "queda"} de ${num(Math.abs(c * 100))}%`;
 }
 
-function points(cur: number | null, prev: number | null, period: Period): string | null {
+/** Diferença de taxas em pontos percentuais: "+2 p.p. vs. período anterior". */
+function points(cur: number | null, prev: number | null): string | null {
   if (cur == null || prev == null) return null;
-  const d = (cur - prev) * 100;
-  const arrow = d > 0.5 ? "▲" : d < -0.5 ? "▼" : "■";
-  return `${arrow} ${num(Math.abs(d))} pts vs. ${period} semanas anteriores`;
+  const d = Math.round((cur - prev) * 100);
+  return `${d > 0 ? "+" : d < 0 ? "−" : ""}${num(Math.abs(d))} p.p. ${VS}`;
 }
 
-function Segmented<T extends string | number>({ label, options, value, onChange, format }: {
-  label: string;
-  options: readonly T[];
-  value: T;
-  onChange: (v: T) => void;
-  format: (v: T) => ReactNode;
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="inline-flex w-fit rounded-xl border border-border bg-bg-elevated p-0.5">
-      {options.map((o) => (
-        <button
-          key={String(o)}
-          type="button"
-          role="radio"
-          aria-checked={o === value}
-          onClick={() => onChange(o)}
-          className={`rounded-lg px-3 py-1 text-sm transition-colors ${o === value ? "bg-primary text-on-accent" : "text-text-muted hover:text-text-primary"}`}
-        >
-          {format(o)}
-        </button>
-      ))}
-    </div>
-  );
+function backlogText(change: number): string {
+  if (change > 0) return `entraram ${num(change)} a mais do que saíram`;
+  if (change < 0) return `saíram ${num(-change)} a mais do que entraram`;
+  return "entrou o mesmo tanto que saiu";
 }
 
 export function DashboardView({ teamName }: { teamName: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
-  const [period, setPeriod] = useState<Period>(12);
+  const [period, setPeriod] = useState<PeriodSelection>({ kind: "preset", preset: "12w" });
   const [personId, setPersonId] = useState<string | null>(null);
 
   function generate() {
-    setData(generateDemoData(Math.floor(Math.random() * 2 ** 31)));
+    setData(generateDemo(Math.floor(Math.random() * 2 ** 31)));
   }
 
   function exitDemo() {
@@ -97,7 +88,7 @@ export function DashboardView({ teamName }: { teamName: string }) {
         />
         {data && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
-            <Segmented label="Período" options={PERIODS} value={period} onChange={setPeriod} format={(p) => `${p} sem.`} />
+            <PeriodPicker value={period} onChange={setPeriod} today={data.today} min={data.since} />
             <button type="button" onClick={generate} className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-bg-elevated">
               Gerar de novo
             </button>
@@ -130,27 +121,34 @@ export function DashboardView({ teamName }: { teamName: string }) {
 
 function DashboardBody({ data, period, personId, onSelectPerson }: {
   data: DashboardData;
-  period: Period;
+  period: PeriodSelection;
   personId: string | null;
   onSelectPerson: (id: string | null) => void;
 }) {
-  const today = new Date();
   const person = data.people.find((p) => p.id === personId) ?? null;
 
   const view = useMemo(() => {
-    const weeks = periodWeeks(data, period);
-    const prevWeeks = periodWeeks(data, period, 1);
-    const series = weeklySeries(data, weeks, personId ?? undefined);
-    const sum = summary(series);
-    const prev = summary(weeklySeries(data, prevWeeks, personId ?? undefined));
-    const team = personId ? teamAverageSeries(data, weeks) : null;
-    return { weeks, series, sum, prev, team, people: perPerson(data, weeks) };
+    const range = selectionRange(period, data.today);
+    const prevRange = previousRange(range);
+    const tasks = personId ? data.tasks.filter((t) => t.assigneeId === personId) : data.tasks;
+    const series = seriesByBucket(tasks, range);
+    const sum = periodMetrics(tasks, range);
+    // Sem dados completos para o período anterior inteiro, não há com o que comparar.
+    const prev: PeriodMetrics | null = prevRange.start >= data.since ? periodMetrics(tasks, prevRange) : null;
+    const team = personId ? teamAverageSeries(data.tasks, range, data.people.length) : null;
+    return { range, series, sum, prev, team, people: perPerson(data.people, data.tasks, range) };
   }, [data, period, personId]);
 
-  const labels = view.weeks.map((w) => formatDue(w, today));
+  const todayDate = new Date(`${data.today}T12:00:00`);
+  const labels = view.series.map((p) => formatDue(p.range.start, todayDate));
+  const byDay = rangeLength(view.range) <= 31;
+  const per = byDay ? "por dia" : "por semana";
+  const periodName = selectionLabel(period, data.today).toLowerCase();
   const subject = person ? person.name.split(" ")[0] : "Equipe";
   const refName = "Média da equipe";
-  const deliveredTrend = trendWords(view.sum.delivered, view.prev.delivered);
+  const { sum, prev } = view;
+  const deliveredTrend = trendWords(sum.delivered, prev?.delivered ?? null);
+  const refLegend = view.team ? [{ label: subject, color: "chart-1" as const }, { label: refName, color: "chart-ref" as const, dashed: true }] : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -182,30 +180,49 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
           label="Entregas"
-          value={num(view.sum.delivered)}
-          delta={relative(view.sum.delivered, view.prev.delivered, period)}
+          value={num(sum.delivered)}
+          delta={relative(sum.delivered, prev?.delivered ?? null)}
+          tone={tone(sum.delivered, prev?.delivered ?? null, "up")}
           spark={view.series.map((p) => p.delivered)}
         />
         <StatTile
-          label="Criados − concluídos"
-          value={`${view.sum.balance > 0 ? "+" : ""}${num(view.sum.balance)}`}
-          delta={view.sum.balance > 0 ? "Entrou mais trabalho do que saiu" : view.sum.balance < 0 ? "Saiu mais trabalho do que entrou" : "Equilibrado"}
+          label="Backlog"
+          value={`${sum.backlogChange > 0 ? "+" : sum.backlogChange < 0 ? "−" : ""}${num(Math.abs(sum.backlogChange))}`}
+          delta={backlogText(sum.backlogChange)}
+          tone={sum.backlogChange > 0 ? "bad" : sum.backlogChange < 0 ? "good" : "neutral"}
+          spark={view.series.map((p) => p.openAtEnd)}
         />
         <StatTile
-          label="Tempo médio"
-          value={dayNum(view.sum.avgCycleDays)}
-          unit={view.sum.avgCycleDays == null ? undefined : "dias"}
-          delta={relative(view.sum.avgCycleDays, view.prev.avgCycleDays, period, { up: "mais lento", down: "mais rápido" })}
+          label="Tempo de conclusão"
+          value={dayNum(sum.cycleP85)}
+          unit={sum.cycleP85 == null ? undefined : "dias"}
+          note={
+            sum.cycleP85 == null ? undefined : (
+              <>
+                85% das tarefas fecham em até {days(sum.cycleP85)}
+                <span className="block text-xs text-text-muted">Mediana: {days(sum.cycleMedian)}</span>
+              </>
+            )
+          }
+          delta={relative(sum.cycleP85, prev?.cycleP85 ?? null, { up: "mais lento", down: "mais rápido" })}
+          tone={tone(sum.cycleP85, prev?.cycleP85 ?? null, "down")}
         />
-        <StatTile label="No prazo" value={pct(view.sum.onTimeRate)} delta={points(view.sum.onTimeRate, view.prev.onTimeRate, period)} />
+        <StatTile
+          label="No prazo"
+          value={pct(sum.onTimeRate)}
+          meter={sum.onTimeRate}
+          note={sum.onTimeRate == null ? undefined : `${num(sum.withDue)} entregas com prazo no período`}
+          delta={points(sum.onTimeRate, prev?.onTimeRate ?? null)}
+          tone={tone(sum.onTimeRate, prev?.onTimeRate ?? null, "up")}
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
         <ChartFrame
-          title="Entregas por semana"
-          legend={view.team ? [{ label: subject, color: "chart-1" }, { label: refName, color: "chart-ref", dashed: true }] : undefined}
+          title={`Entregas ${per}`}
+          legend={refLegend}
           table={{
-            columns: view.team ? ["Semana", subject, refName] : ["Semana", "Entregas"],
+            columns: view.team ? ["Início", subject, refName] : ["Início", "Entregas"],
             rows: view.series.map((p, i) => (view.team ? [labels[i], p.delivered, num(view.team[i].delivered, 1)] : [labels[i], p.delivered])),
           }}
         >
@@ -216,14 +233,14 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
             format={(v) => num(v, 1)}
             reference={view.team?.map((p) => p.delivered)}
             referenceName={refName}
-            ariaLabel={`Entregas por semana de ${subject}: ${period} semanas, total ${num(view.sum.delivered)}${deliveredTrend ? `, ${deliveredTrend} vs. ${period} semanas anteriores` : ""}`}
+            ariaLabel={`Entregas ${per} de ${subject}, ${periodName}: total ${num(sum.delivered)}${deliveredTrend ? `, ${deliveredTrend} ${VS}` : ""}`}
           />
         </ChartFrame>
 
         <ChartFrame
           title="Criados x concluídos"
           legend={[{ label: "Concluídos", color: "chart-1" }, { label: "Criados", color: "chart-2" }]}
-          table={{ columns: ["Semana", "Criados", "Concluídos"], rows: view.series.map((p, i) => [labels[i], p.created, p.delivered]) }}
+          table={{ columns: ["Início", "Criados", "Concluídos"], rows: view.series.map((p, i) => [labels[i], p.created, p.delivered]) }}
         >
           <LineChart
             labels={labels}
@@ -232,42 +249,42 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
               { name: "Criados", values: view.series.map((p) => p.created), color: "chart-2" },
             ]}
             format={(v) => num(v, 1)}
-            ariaLabel={`Criados e concluídos por semana: ${num(view.sum.created)} criados, ${num(view.sum.delivered)} concluídos`}
+            ariaLabel={`Criados e concluídos ${per}: ${num(sum.created)} criados, ${num(sum.delivered)} concluídos`}
           />
         </ChartFrame>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        {person ? (
-          <ChartFrame
-            title="Carga ao longo do tempo"
-            legend={[{ label: "Entregues", color: "chart-1" }, { label: "Em andamento", color: "chart-2" }]}
-            table={{ columns: ["Semana", "Entregues", "Em andamento"], rows: view.series.map((p, i) => [labels[i], p.delivered, p.inProgress]) }}
-          >
-            <LineChart
-              labels={labels}
-              series={[
-                { name: "Entregues", values: view.series.map((p) => p.delivered), color: "chart-1" },
-                { name: "Em andamento", values: view.series.map((p) => p.inProgress), color: "chart-2" },
-              ]}
-              format={(v) => num(v, 1)}
-              ariaLabel={`Carga de ${subject} por semana`}
-            />
-          </ChartFrame>
-        ) : (
-          <ChartFrame title="Por pessoa">
-            <PersonScoreTable rows={view.people} onSelect={onSelectPerson} />
-          </ChartFrame>
-        )}
+        <ChartFrame
+          title="Backlog ao longo do tempo (tarefas abertas)"
+          legend={refLegend}
+          table={{
+            columns: view.team ? ["Fim", subject, refName] : ["Fim", "Abertas"],
+            rows: view.series.map((p, i) => {
+              const end = formatDue(p.range.end, todayDate);
+              return view.team ? [end, p.openAtEnd, num(view.team[i].openAtEnd, 1)] : [end, p.openAtEnd];
+            }),
+          }}
+        >
+          <LineChart
+            labels={view.series.map((p) => formatDue(p.range.end, todayDate))}
+            series={[
+              { name: subject, values: view.series.map((p) => p.openAtEnd), color: "chart-1" },
+              ...(view.team ? [{ name: refName, values: view.team.map((p) => p.openAtEnd), color: "chart-ref" as const, dashed: true }] : []),
+            ]}
+            format={(v) => num(v, 1)}
+            ariaLabel={`Tarefas abertas de ${subject} no fim de cada ${byDay ? "dia" : "semana"}: ${num(sum.openAtEnd)} no fim do período`}
+          />
+        </ChartFrame>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <ChartFrame
-            title="Tempo médio (dias)"
-            legend={view.team ? [{ label: subject, color: "chart-1" }, { label: refName, color: "chart-ref", dashed: true }] : undefined}
+            title="Tempo p85 (dias)"
+            legend={refLegend}
             table={{
-              columns: view.team ? ["Semana", "Dias", `${refName} (dias)`] : ["Semana", "Dias"],
+              columns: view.team ? ["Início", "Dias", `${refName} (dias)`] : ["Início", "Dias"],
               rows: view.series.map((p, i) =>
-                view.team ? [labels[i], dayNum(p.avgCycleDays), dayNum(view.team[i].avgCycleDays)] : [labels[i], dayNum(p.avgCycleDays)],
+                view.team ? [labels[i], dayNum(p.cycleP85), dayNum(view.team[i].cycleP85)] : [labels[i], dayNum(p.cycleP85)],
               ),
             }}
           >
@@ -275,19 +292,19 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
               labels={labels}
               height={160}
               series={[
-                { name: subject, values: view.series.map((p) => p.avgCycleDays), color: "chart-1" },
-                ...(view.team ? [{ name: refName, values: view.team.map((p) => p.avgCycleDays), color: "chart-ref" as const, dashed: true }] : []),
+                { name: subject, values: view.series.map((p) => p.cycleP85), color: "chart-1" },
+                ...(view.team ? [{ name: refName, values: view.team.map((p) => p.cycleP85), color: "chart-ref" as const, dashed: true }] : []),
               ]}
               format={(v) => num(v, 1)}
               tipFormat={days}
-              ariaLabel={`Tempo médio para concluir de ${subject}: ${days(view.sum.avgCycleDays)}`}
+              ariaLabel={`85% das tarefas de ${subject} fecham em até ${days(sum.cycleP85)}`}
             />
           </ChartFrame>
           <ChartFrame
             title="No prazo (%)"
-            legend={view.team ? [{ label: subject, color: "chart-1" }, { label: refName, color: "chart-ref", dashed: true }] : undefined}
+            legend={refLegend}
             table={{
-              columns: view.team ? ["Semana", "No prazo", refName] : ["Semana", "No prazo"],
+              columns: view.team ? ["Início", "No prazo", refName] : ["Início", "No prazo"],
               rows: view.series.map((p, i) =>
                 view.team ? [labels[i], pct(p.onTimeRate), pct(view.team[i].onTimeRate)] : [labels[i], pct(p.onTimeRate)],
               ),
@@ -303,11 +320,33 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
                   : []),
               ]}
               format={(v) => `${num(v)}%`}
-              ariaLabel={`Entregas no prazo de ${subject}: ${pct(view.sum.onTimeRate)}`}
+              ariaLabel={`Entregas no prazo de ${subject}: ${pct(sum.onTimeRate)}`}
             />
           </ChartFrame>
         </div>
       </div>
+
+      {person ? (
+        <ChartFrame
+          title="Carga ao longo do tempo"
+          legend={[{ label: "Entregues", color: "chart-1" }, { label: "Em andamento", color: "chart-2" }]}
+          table={{ columns: ["Início", "Entregues", "Em andamento"], rows: view.series.map((p, i) => [labels[i], p.delivered, p.inProgressAtEnd]) }}
+        >
+          <LineChart
+            labels={labels}
+            series={[
+              { name: "Entregues", values: view.series.map((p) => p.delivered), color: "chart-1" },
+              { name: "Em andamento", values: view.series.map((p) => p.inProgressAtEnd), color: "chart-2" },
+            ]}
+            format={(v) => num(v, 1)}
+            ariaLabel={`Carga de ${subject} ${per}`}
+          />
+        </ChartFrame>
+      ) : (
+        <ChartFrame title="Por pessoa">
+          <PersonScoreTable rows={view.people} onSelect={onSelectPerson} />
+        </ChartFrame>
+      )}
     </div>
   );
 }

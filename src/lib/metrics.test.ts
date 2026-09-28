@@ -10,8 +10,10 @@ import {
   presetRange,
   previousRange,
   rangeLength,
+  perPerson,
   seriesByBucket,
   statusOn,
+  teamAverageSeries,
   tone,
 } from "./metrics";
 
@@ -183,5 +185,36 @@ describe("tom da variação", () => {
     expect(tone(5, 5, "up")).toBe("neutral");
     expect(tone(null, 5, "up")).toBe("neutral");
     expect(tone(5, null, "down")).toBe("neutral");
+  });
+});
+
+describe("por pessoa e média da equipe", () => {
+  const people = [
+    { id: "ana", name: "Ana" },
+    { id: "bia", name: "Bia" },
+  ];
+  const range = { start: "2026-09-01", end: "2026-09-14" };
+  const tasks = [
+    task("2026-09-01", [["2026-09-02", "in_progress"], ["2026-09-05", "done"]], "2026-09-06", "ana"),
+    task("2026-09-02", [["2026-09-03", "in_progress"], ["2026-09-12", "done"]], "2026-09-08", "ana"),
+    task("2026-09-03", [["2026-09-04", "in_progress"]], null, "bia"),
+    task("2026-09-04", [["2026-09-05", "in_progress"]], null, "bia"),
+  ];
+
+  it("calcula entregas, carga, tempo e prazo de cada pessoa, na ordem das pessoas", () => {
+    const rows = perPerson(people, tasks, range);
+    expect(rows.map((r) => r.person.id)).toEqual(["ana", "bia"]);
+    expect(rows[0]).toMatchObject({ delivered: 2, inProgress: 0, cycleP85: 10, onTimeRate: 0.5 });
+    expect(rows[1]).toMatchObject({ delivered: 0, inProgress: 2, cycleP85: null, onTimeRate: null });
+    // 14 dias: um valor por dia, com as entregas nos dias 5 e 12.
+    expect(rows[0].trend).toEqual([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0]);
+  });
+
+  it("a média da equipe divide as contagens pelo número de pessoas e mantém as taxas da equipe", () => {
+    const avg = teamAverageSeries(tasks, range, people.length);
+    const team = seriesByBucket(tasks, range);
+    expect(avg.map((p) => p.delivered)).toEqual(team.map((p) => p.delivered / 2));
+    expect(avg.map((p) => p.openAtEnd)).toEqual(team.map((p) => p.openAtEnd / 2));
+    expect(avg.map((p) => p.cycleP85)).toEqual(team.map((p) => p.cycleP85));
   });
 });

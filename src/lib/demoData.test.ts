@@ -1,107 +1,112 @@
 import { describe, expect, it } from "vitest";
-import { compare, periodWeeks, summary, weeklySeries } from "./dashboard";
-import { DEMO_PEOPLE, generateDemoData } from "./demoData";
+import { coversScenarios, DEMO_PEOPLE, generateDemo, generateDemoTasks } from "./demoData";
+import { addDays, completedDay, daysBetween, periodMetrics, presetRange, previousRange, statusOn } from "./metrics";
+import { OVERLOAD_IN_PROGRESS, STALLED_DAYS, DUE_SOON_DAYS } from "./dashboardRules";
 
-const today = new Date(2026, 8, 25); // quinta, 25/09/2026
+const today = new Date(2026, 8, 28); // segunda, 28/09/2026
+const TODAY = "2026-09-28";
 
-describe("generateDemoData", () => {
-  const data = generateDemoData(42, { today });
+describe("generateDemoTasks", () => {
+  const data = generateDemoTasks(42, { today });
 
-  it("is marked as a demo and uses the fictional people", () => {
+  it("é demonstração, com as pessoas fictícias e o dia de hoje", () => {
     expect(data.isDemo).toBe(true);
     expect(data.people).toEqual(DEMO_PEOPLE);
-    expect(data.people.map((p) => p.name)).toEqual(["Ana Souza", "Bruno Lima", "Carla Dias", "Diego Rocha", "Elisa Prado"]);
+    expect(data.today).toBe(TODAY);
   });
 
-  it("covers 52 consecutive weeks starting on Mondays and ending this week", () => {
-    expect(data.weeks).toHaveLength(52);
-    expect(data.weeks[51]).toBe("2026-09-21");
-    for (let i = 0; i < data.weeks.length; i++) {
-      const [y, m, d] = data.weeks[i].split("-").map(Number);
-      expect(new Date(y, m - 1, d).getDay()).toBe(1);
-      if (i > 0) {
-        const [py, pm, pd] = data.weeks[i - 1].split("-").map(Number);
-        const days = (new Date(y, m - 1, d).getTime() - new Date(py, pm - 1, pd).getTime()) / 86_400_000;
-        expect(Math.round(days)).toBe(7);
-      }
+  it("é reproduzível pela semente e muda entre sementes", () => {
+    expect(generateDemoTasks(42, { today })).toEqual(data);
+    expect(generateDemoTasks(43, { today }).tasks).not.toEqual(data.tasks);
+  });
+
+  it("tem histórico coerente em toda tarefa", () => {
+    for (const t of data.tasks) {
+      expect(DEMO_PEOPLE.some((p) => p.id === t.assigneeId)).toBe(true);
+      expect(t.history[0]).toEqual({ day: t.createdDay, to: "planned" });
+      for (let i = 1; i < t.history.length; i++) expect(t.history[i].day > t.history[i - 1].day).toBe(true);
+      expect(t.history.map((h) => h.to).join(">")).toMatch(/^planned(>in_progress(>done)?)?$/);
+      expect(t.history.at(-1)!.day <= TODAY).toBe(true);
+      if (t.dueDay) expect(t.dueDay > t.createdDay).toBe(true);
+      expect(t.title.length).toBeGreaterThan(0);
+    }
+    expect(new Set(data.tasks.map((t) => t.id)).size).toBe(data.tasks.length);
+  });
+
+  it("cobre 6 meses e mais 6 meses anteriores para comparar", () => {
+    expect(data.since <= previousRange(presetRange("6m", TODAY)).start).toBe(true);
+    // Antes de `since` fica só o aquecimento: o estoque já está formado quando os dados começam.
+    expect(periodMetrics(data.tasks, { start: data.since, end: data.since }).openAtEnd).toBeGreaterThan(10);
+  });
+
+  it("tem volume parecido com o de antes (3 a 8 entregas por pessoa por semana)", () => {
+    const m = periodMetrics(data.tasks, presetRange("12w", TODAY));
+    const perPersonWeek = m.delivered / 5 / 12;
+    expect(perPersonWeek).toBeGreaterThan(2.5);
+    expect(perPersonWeek).toBeLessThan(10);
+  });
+
+  it("não entrega em fim de semana", () => {
+    for (const t of data.tasks) {
+      const done = completedDay(t);
+      if (!done) continue;
+      const weekday = new Date(`${done}T12:00:00Z`).getUTCDay();
+      expect(weekday === 0 || weekday === 6).toBe(false);
     }
   });
 
-  it("has one row per person per week with consistent numbers", () => {
-    expect(data.rows).toHaveLength(52 * 5);
-    for (const r of data.rows) {
-      for (const n of [r.created, r.delivered, r.inProgress, r.withDue, r.onTime]) {
-        expect(Number.isInteger(n)).toBe(true);
-        expect(n).toBeGreaterThanOrEqual(0);
-      }
-      expect(r.delivered).toBeLessThanOrEqual(14);
-      expect(r.withDue).toBeLessThanOrEqual(r.delivered);
-      expect(r.onTime).toBeLessThanOrEqual(r.withDue);
-      if (r.delivered > 0) {
-        const avg = r.cycleDaysTotal / r.delivered;
-        expect(avg).toBeGreaterThanOrEqual(1);
-        expect(avg).toBeLessThanOrEqual(12);
-      } else {
-        expect(r.cycleDaysTotal).toBe(0);
-      }
-    }
-  });
+  // Os cenários que o dashboard precisa mostrar aparecem em qualquer semente pedida à tela.
+  const seeds = Array.from({ length: 30 }, (_, i) => generateDemo(1000 + i * 37, { today }));
 
-  it("is reproducible for a seed and different across seeds", () => {
-    expect(generateDemoData(42, { today })).toEqual(data);
-    expect(generateDemoData(43, { today }).rows).not.toEqual(data.rows);
-  });
-
-  it("respects a custom length", () => {
-    expect(generateDemoData(1, { today, weeks: 8 }).weeks).toHaveLength(8);
-  });
-
-  // Estoque e fluxo: o que está em andamento só muda pelo que entrou e saiu.
-  const seeds = Array.from({ length: 20 }, (_, i) => generateDemoData(1000 + i * 37, { today }));
-  const personRows = (d: ReturnType<typeof generateDemoData>) => d.people.map((p) => d.rows.filter((r) => r.personId === p.id));
-
-  it("keeps work in progress equal to the previous week plus created minus delivered", () => {
-    for (const d of [data, ...seeds]) {
-      for (const rows of personRows(d)) {
-        for (let t = 1; t < rows.length; t++) {
-          expect(rows[t].inProgress).toBe(rows[t - 1].inProgress + rows[t].created - rows[t].delivered);
-        }
-      }
-    }
-  });
-
-  it("rarely leaves someone with nothing in progress", () => {
-    const all = seeds.flatMap((d) => d.rows);
-    const zero = all.filter((r) => r.inProgress === 0).length;
-    expect(zero / all.length).toBeLessThan(0.05);
-  });
-
-  it("keeps work in progress moving and in a plausible range", () => {
-    let runs = 0;
-    let people = 0;
+  it("sempre tem tarefas atrasadas e vencendo em breve", () => {
     for (const d of seeds) {
-      for (const rows of personRows(d)) {
-        people++;
-        let run = 1;
-        for (let t = 1; t < rows.length; t++) {
-          run = rows[t].inProgress === rows[t - 1].inProgress ? run + 1 : 1;
-          if (run === 4) runs++;
-        }
-        expect(Math.max(...rows.map((r) => r.inProgress))).toBeLessThanOrEqual(25);
-      }
+      const open = d.tasks.filter((t) => !completedDay(t) && t.dueDay);
+      expect(open.filter((t) => t.dueDay! < TODAY).length).toBeGreaterThan(0);
+      expect(open.filter((t) => t.dueDay! >= TODAY && daysBetween(TODAY, t.dueDay!) <= DUE_SOON_DAYS).length).toBeGreaterThan(0);
     }
-    // Quatro semanas seguidas com o mesmo número acontece, mas não em quase todo mundo.
-    expect(runs / people).toBeLessThan(0.5);
   });
 
-  it("lets cycle time and on-time rate change between 12-week periods", () => {
-    const deltas = seeds.map((d) => {
-      const cur = summary(weeklySeries(d, periodWeeks(d, 12)));
-      const prev = summary(weeklySeries(d, periodWeeks(d, 12, 1)));
-      return { cycle: compare(cur.avgCycleDays, prev.avgCycleDays)!, onTime: cur.onTimeRate! - prev.onTimeRate! };
-    });
-    // Em boa parte das sementes a variação é visível (≥ 5% no tempo, ≥ 2 pts no prazo).
-    expect(deltas.filter((x) => Math.abs(x.cycle) >= 0.05).length).toBeGreaterThanOrEqual(seeds.length / 3);
-    expect(deltas.filter((x) => Math.abs(x.onTime) >= 0.02).length).toBeGreaterThanOrEqual(seeds.length / 3);
+  it("sempre tem tarefas paradas (em andamento, sem mudar de status há mais de 7 dias)", () => {
+    for (const d of seeds) {
+      const stalled = d.tasks.filter(
+        (t) => statusOn(t, TODAY) === "in_progress" && daysBetween(t.history.at(-1)!.day, TODAY) > STALLED_DAYS,
+      );
+      expect(stalled.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("sempre tem alguém acima do limite de sobrecarga, mas não todo mundo", () => {
+    for (const d of seeds) {
+      const load = d.people.map((p) => d.tasks.filter((t) => t.assigneeId === p.id && statusOn(t, TODAY) === "in_progress").length);
+      expect(load.some((n) => n > OVERLOAD_IN_PROGRESS)).toBe(true);
+      expect(load.filter((n) => n > OVERLOAD_IN_PROGRESS).length).toBeLessThan(d.people.length);
+    }
+  });
+
+  it("tem entregas no prazo e fora dele, e tempos de conclusão plausíveis", () => {
+    for (const d of seeds) {
+      const m = periodMetrics(d.tasks, presetRange("12w", TODAY));
+      expect(m.onTimeRate!).toBeGreaterThan(0.4);
+      expect(m.onTimeRate!).toBeLessThan(0.98);
+      expect(m.cycleMedian!).toBeGreaterThanOrEqual(1);
+      expect(m.cycleP85!).toBeLessThan(40);
+      expect(m.cycleP85!).toBeGreaterThanOrEqual(m.cycleMedian!);
+    }
+  });
+
+  it("o backlog sobe e desce ao longo do tempo (ondas de acúmulo)", () => {
+    for (const d of seeds.slice(0, 10)) {
+      const stock = Array.from({ length: 26 }, (_, i) => periodMetrics(d.tasks, { start: d.since, end: addDays(TODAY, -7 * i) }).openAtEnd);
+      expect(Math.max(...stock) - Math.min(...stock)).toBeGreaterThan(5);
+    }
+  });
+
+  it("generateDemo sempre devolve uma demonstração com todos os cenários", () => {
+    for (let i = 0; i < 200; i++) expect(coversScenarios(generateDemo(7 + i * 7919, { today }))).toBe(true);
+  }, 30_000); // ~35 ms por demonstração
+
+  it("generateDemo usa a própria semente quando ela já cobre tudo", () => {
+    expect(coversScenarios(data)).toBe(true);
+    expect(generateDemo(42, { today })).toEqual(data);
   });
 });

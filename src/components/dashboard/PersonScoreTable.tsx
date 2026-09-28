@@ -1,16 +1,16 @@
 import { useState } from "react";
-import type { PersonScore } from "../../lib/dashboard";
+import type { PersonScore } from "../../lib/metrics";
 import { axis } from "../../lib/chartScale";
 import { Avatar } from "../ui/Avatar";
 import { Sparkline } from "./charts/Sparkline";
 import { dayNum, num, pct } from "./format";
 
-type SortKey = "name" | "delivered" | "avgCycleDays" | "onTimeRate" | "inProgress";
+type SortKey = "name" | "delivered" | "cycleP85" | "onTimeRate" | "inProgress";
 
 const COLUMNS: { key: SortKey; label: string; align: "left" | "right" }[] = [
   { key: "name", label: "Pessoa", align: "left" },
   { key: "delivered", label: "Entregas", align: "left" },
-  { key: "avgCycleDays", label: "Tempo médio (dias)", align: "right" },
+  { key: "cycleP85", label: "Tempo p85 (dias)", align: "right" },
   { key: "onTimeRate", label: "No prazo", align: "right" },
   { key: "inProgress", label: "Em andamento", align: "right" },
 ];
@@ -48,7 +48,7 @@ export function PersonScoreTable({ rows, onSelect }: { rows: PersonScore[]; onSe
   });
 
   function toggle(key: SortKey) {
-    setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "name" && key !== "avgCycleDays" }));
+    setSort((s) => (s.key === key ? { key, desc: !s.desc } : { key, desc: key !== "name" && key !== "cycleP85" }));
   }
 
   return (
@@ -102,11 +102,11 @@ export function PersonScoreTable({ rows, onSelect }: { rows: PersonScore[]; onSe
                       aria-hidden="true"
                     />
                     <span className="w-7 text-right tabular-nums text-text-primary">{num(r.delivered)}</span>
-                    <Sparkline values={r.weekly} width={48} height={20} />
+                    <Sparkline values={r.trend} width={48} height={20} />
                   </div>
                 </td>
                 <td className="py-2 pl-3 text-right tabular-nums text-text-primary">
-                  <Flagged value={dayNum(r.avgCycleDays)} flagged={r.flags.avgCycleDays} why="tempo bem acima da equipe" />
+                  <Flagged value={dayNum(r.cycleP85)} flagged={r.flags.cycleP85} why="tempo bem acima da equipe" />
                 </td>
                 <td className="py-2 pl-3 text-right tabular-nums text-text-primary">
                   <Flagged value={pct(r.onTimeRate)} flagged={r.flags.onTimeRate} why="no prazo bem abaixo da equipe" />

@@ -34,4 +34,13 @@ describe("regras de risco", () => {
     expect(isOverloaded(OVERLOAD_IN_PROGRESS)).toBe(false);
     expect(isOverloaded(OVERLOAD_IN_PROGRESS + 1)).toBe(true);
   });
+
+  it("avalia no dia pedido: concluída depois ainda estava atrasada/vencendo naquele dia", () => {
+    const t = task([["2026-09-01", "planned"], ["2026-09-02", "in_progress"], ["2026-09-20", "done"]], "2026-09-10");
+    expect(isOverdue(t, "2026-09-15")).toBe(true);
+    expect(isOverdue(t, "2026-09-20")).toBe(false);
+    expect(isDueSoon(t, "2026-09-08")).toBe(true);
+    expect(isDueSoon(t, "2026-08-31")).toBe(false); // ainda nem existia
+    expect(stalledDays(t, "2026-09-15")).toBe(13);
+  });
 });

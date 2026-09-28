@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { labelStep, niceMax, ticks } from "../../../lib/chartScale";
+import { axis, labelStep } from "../../../lib/chartScale";
 import { BG, STROKE } from "./colors";
 import { useElementWidth } from "./useElementWidth";
 
@@ -36,7 +36,8 @@ export function ColumnChart({
   const w = Math.max(0, width - PAD.l - PAD.r);
   const h = height - PAD.t - PAD.b;
   const all = [...values, ...(reference ?? []).filter((v): v is number => v != null)];
-  const max = niceMax(Math.max(0, ...all));
+  // Tudo no dashboard (contagens, dias, %) lê melhor com marcações inteiras.
+  const { max, ticks } = axis(Math.max(0, ...all), { integer: true });
   const band = labels.length ? w / labels.length : 0;
   const barW = Math.max(2, Math.min(28, band - 2));
   const cx = (i: number) => PAD.l + band * i + band / 2;
@@ -50,7 +51,7 @@ export function ColumnChart({
     <div ref={ref} className="relative" style={{ height }}>
       {width > 0 && (
         <svg width={width} height={height} role="img" aria-label={ariaLabel} onMouseLeave={() => setHover(null)}>
-          {ticks(max).map((t) => (
+          {ticks.map((t) => (
             <g key={t}>
               <line x1={PAD.l} x2={PAD.l + w} y1={y(t)} y2={y(t)} className="stroke-border" strokeWidth={1} />
               <text x={PAD.l - 6} y={y(t)} textAnchor="end" dominantBaseline="middle" className="fill-text-muted text-[10px]">

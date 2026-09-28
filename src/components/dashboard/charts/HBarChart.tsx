@@ -1,9 +1,9 @@
-import { niceMax } from "../../../lib/chartScale";
+import { axis } from "../../../lib/chartScale";
 import { BG } from "./colors";
 
 /** Barras horizontais empilhadas (a + b) por pessoa, com 2px entre os segmentos. */
 export function HBarChart({ rows, aLabel, bLabel }: { rows: { id: string; name: string; a: number; b: number }[]; aLabel: string; bLabel: string }) {
-  const max = niceMax(Math.max(0, ...rows.map((r) => r.a + r.b)));
+  const { max } = axis(Math.max(0, ...rows.map((r) => r.a + r.b)), { integer: true });
   return (
     <ul className="flex flex-col gap-2.5" aria-label={`${aLabel} e ${bLabel} por pessoa`}>
       {rows.map((r) => (

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { labelStep, niceMax, ticks } from "../../../lib/chartScale";
+import { axis, labelStep } from "../../../lib/chartScale";
 import { BG, FILL, STROKE, type ChartColor } from "./colors";
 import { useElementWidth } from "./useElementWidth";
 
@@ -32,7 +32,8 @@ export function LineChart({
   const w = Math.max(0, width - PAD.l - PAD.r);
   const h = height - PAD.t - PAD.b;
   const values = series.flatMap((s) => s.values.filter((v): v is number => v != null));
-  const max = niceMax(Math.max(0, ...values));
+  // Tudo no dashboard (contagens, dias, %) lê melhor com marcações inteiras.
+  const { max, ticks } = axis(Math.max(0, ...values), { integer: true });
   const x = (i: number) => PAD.l + (labels.length <= 1 ? w / 2 : (i * w) / (labels.length - 1));
   const y = (v: number) => PAD.t + h - (v / max) * h;
   const step = labelStep(labels.length, w);
@@ -72,7 +73,7 @@ export function LineChart({
     <div ref={ref} className="relative" style={{ height }}>
       {width > 0 && (
         <svg width={width} height={height} role="img" aria-label={ariaLabel} onMouseMove={handleMove} onMouseLeave={() => setHover(null)}>
-          {ticks(max).map((t) => (
+          {ticks.map((t) => (
             <g key={t}>
               <line x1={PAD.l} x2={PAD.l + w} y1={y(t)} y2={y(t)} className="stroke-border" strokeWidth={1} />
               <text x={PAD.l - 6} y={y(t)} textAnchor="end" dominantBaseline="middle" className="fill-text-muted text-[10px]">

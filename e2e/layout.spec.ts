@@ -1,17 +1,10 @@
 import { expect, test, type Page, type Route } from "@playwright/test";
-import { readEnv } from "./seed";
+import { env, mockSession, USER_ID } from "./mockSession";
 
 // Layout do board com uma coluna longa. Não usa o banco: a sessão vai direto no localStorage e
 // as respostas do Supabase são simuladas, então roda mesmo sem a conta E2E.
 
-const env = readEnv();
-const USER_ID = "00000000-0000-0000-0000-000000000001";
 const NOW = "2026-09-28T12:00:00Z";
-
-function fakeJwt() {
-  const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
-  return `${b64({ alg: "HS256", typ: "JWT" })}.${b64({ sub: USER_ID, role: "authenticated", exp: 4102444800 })}.x`;
-}
 
 const cards = Array.from({ length: 30 }, (_, i) => ({
   id: i + 1,
@@ -59,16 +52,7 @@ async function fulfillRest(route: Route) {
 }
 
 async function openLongBoard(page: Page, path = "/") {
-  const ref = new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0];
-  const session = {
-    access_token: fakeJwt(),
-    refresh_token: "fake",
-    token_type: "bearer",
-    expires_in: 3600,
-    expires_at: 4102444800,
-    user: { id: USER_ID, email: env.E2E_EMAIL, aud: "authenticated", role: "authenticated" },
-  };
-  await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [`sb-${ref}-auth-token`, JSON.stringify(session)]);
+  await mockSession(page);
   await page.route("**/rest/v1/**", fulfillRest);
   await page.goto(path);
   await expect(page.getByText("Card 30")).toBeAttached();
@@ -159,6 +143,12 @@ test("demonstração: o board mostra as tarefas fictícias do dashboard e sai se
   for (const name of ["A fazer", "Em andamento", "Em revisão", "Concluído"]) await expect(page.getByRole("region", { name })).toBeVisible();
   await expect(page.getByText("Card 30")).not.toBeAttached();
   await expectShellFits(page);
+
+  // Alguns cards têm anexos de exemplo, criados no navegador; o card abre só para leitura.
+  await page.getByRole("button", { name: /^Abrir / }).filter({ has: page.getByTitle(/^\d+ anexos?$/) }).first().click();
+  await expect(page.getByText("Arquivos fictícios, criados no seu navegador. Nada foi enviado.")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByText("Arquivos fictícios")).not.toBeAttached();
 
   // A mesma demonstração continua no dashboard.
   await page.getByRole("button", { name: "Dashboard", exact: true }).click();

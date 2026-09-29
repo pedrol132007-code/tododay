@@ -20,7 +20,7 @@ import {
 const TODAY = "2026-09-28";
 
 function task(steps: [string, DashboardStatus][], due: string | null = null): DashboardTask {
-  return { id: "t", title: "T", assigneeId: "p", createdDay: steps[0][0], dueDay: due, history: steps.map(([day, to]) => ({ day, to })) };
+  return { id: "t", title: "T", assigneeId: "p", createdDay: steps[0][0], dueDay: due, priority: null, labels: [], history: steps.map(([day, to]) => ({ day, to })) };
 }
 
 describe("regras de risco", () => {

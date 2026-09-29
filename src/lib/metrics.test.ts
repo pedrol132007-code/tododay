@@ -28,6 +28,8 @@ function task(created: string, steps: [string, DashboardStatus][] = [], due: str
     assigneeId,
     createdDay: created,
     dueDay: due,
+    priority: null,
+    labels: [],
     history: [{ day: created, to: "planned" }, ...steps.map(([day, to]) => ({ day, to }))],
   };
 }

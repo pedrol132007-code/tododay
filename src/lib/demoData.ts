@@ -1,13 +1,14 @@
-// Tarefas de demonstração do dashboard: aleatórias, mas reproduzíveis pela semente. Pessoas
-// fictícias de propósito, para um número inventado nunca ser atribuído a um colega real.
+// Tarefas de demonstração do dashboard e do board: aleatórias, mas reproduzíveis pela semente.
+// Pessoas fictícias de propósito, para um número inventado nunca ser atribuído a um colega real.
 //
-// Simula dia a dia cada pessoa, com o mesmo perfil do gerador semanal anterior: capacidade que
-// muda ao longo do ano, férias, ondas de acúmulo, épocas pesadas para a equipe toda e tempo de
-// conclusão que cresce com a carga. Garante os cenários que o dashboard precisa mostrar: uma pessoa
-// sobrecarregada, tarefas atrasadas, vencendo em breve e paradas.
-import type { DashboardData, DashboardPerson, DashboardStatusChange, DashboardTask } from "../types";
-import { isDueSoon, isInProgress, isOverdue, isOverloaded, localDay, stalledDays } from "./dashboardRules";
-import { addDays, daysBetween } from "./metrics";
+// Simula dia a dia cada pessoa: capacidade que muda ao longo do ano, férias, ondas de acúmulo,
+// épocas pesadas para a equipe toda e tempo de conclusão que cresce com a carga. Cada pessoa tem um
+// perfil, para os problemas ficarem espalhados: uma sobrecarregada, uma com tarefas paradas, uma com
+// atrasos leves e duas em dia. Ninguém concentra todos os problemas.
+import type { CardPriority, DashboardData, DashboardPerson, DashboardStatusChange, DashboardTask } from "../types";
+import { DEMO_DONE_DAYS, DEMO_LABELS, demoBoard, type DemoLabelId } from "./demoBoard";
+import { isDueSoon, isInProgress, isOverdue, isOverloaded, isOverWip, localDay, STALLED_DAYS, stalledDays } from "./dashboardRules";
+import { addDays, daysBetween, statusOn } from "./metrics";
 
 export const DEMO_PEOPLE: DashboardPerson[] = [
   { id: "demo-ana", name: "Ana Souza" },
@@ -17,28 +18,86 @@ export const DEMO_PEOPLE: DashboardPerson[] = [
   { id: "demo-elisa", name: "Elisa Prado" },
 ];
 
-const TITLES = [
-  "Revisar contrato de fornecedor",
-  "Atualizar planilha de custos",
-  "Preparar apresentação mensal",
-  "Responder auditoria interna",
-  "Conciliar notas fiscais",
-  "Ajustar fluxo de aprovação",
-  "Documentar processo de compras",
-  "Levantar requisitos do cliente",
-  "Corrigir cadastro de parceiros",
-  "Validar relatório trimestral",
-  "Organizar treinamento da equipe",
-  "Mapear riscos do projeto",
-  "Negociar renovação de licenças",
-  "Revisar política de acesso",
-  "Consolidar indicadores do mês",
-  "Analisar pedido de reembolso",
-  "Atualizar base de conhecimento",
-  "Planejar migração de dados",
-  "Testar integração com o ERP",
-  "Elaborar parecer técnico",
+// Títulos montados a partir de modelos, para o board não repetir o mesmo card. Nomes de empresas
+// fictícios. {mes} é o mês em que a tarefa foi criada.
+const SLOTS: Record<string, string[]> = {
+  fornecedor: ["Alfa Logística", "TecnoPrint", "Serra Papéis", "Norte Transportes", "Vértice Energia", "Prisma Serviços"],
+  cliente: ["Construtora Horizonte", "Rede Aurora", "Cooperativa Vale Verde", "Metalúrgica Sul", "Clínica Bem Viver", "Transportadora Rota Leste", "Farmácia Boa Saúde"],
+  sistema: ["ERP", "CRM", "portal do cliente", "sistema de ponto", "BI", "app de vendas"],
+  area: ["marketing", "TI", "operações", "RH", "comercial", "logística"],
+  tema: ["LGPD", "segurança da informação", "viagens corporativas", "home office", "uso de equipamentos", "atendimento ao cliente"],
+  item: ["notebooks", "licenças de software", "material de escritório", "cadeiras", "celulares", "monitores"],
+};
+
+const MONTHS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+
+const TEMPLATES: { title: string; labels: DemoLabelId[] }[] = [
+  { title: "Conciliar notas fiscais de {mes}", labels: ["financeiro"] },
+  { title: "Fechar relatório de custos de {mes}", labels: ["financeiro"] },
+  { title: "Consolidar indicadores de {mes}", labels: ["financeiro"] },
+  { title: "Revisar orçamento de {area}", labels: ["financeiro"] },
+  { title: "Aprovar pagamento da {fornecedor}", labels: ["financeiro", "compras"] },
+  { title: "Analisar pedidos de reembolso de {area}", labels: ["financeiro", "pessoas"] },
+  { title: "Revisar contrato com a {fornecedor}", labels: ["juridico", "compras"] },
+  { title: "Elaborar parecer sobre {tema}", labels: ["juridico"] },
+  { title: "Atualizar política de {tema}", labels: ["juridico", "pessoas"] },
+  { title: "Revisar aditivo contratual da {cliente}", labels: ["juridico", "cliente"] },
+  { title: "Cotar {item} com três fornecedores", labels: ["compras"] },
+  { title: "Negociar renovação com a {fornecedor}", labels: ["compras"] },
+  { title: "Emitir pedido de compra de {item}", labels: ["compras"] },
+  { title: "Homologar a {fornecedor} como fornecedora", labels: ["compras", "juridico"] },
+  { title: "Levantar requisitos com a {cliente}", labels: ["cliente"] },
+  { title: "Preparar apresentação para a {cliente}", labels: ["cliente"] },
+  { title: "Responder chamado da {cliente}", labels: ["cliente", "sistemas"] },
+  { title: "Enviar proposta comercial para a {cliente}", labels: ["cliente", "financeiro"] },
+  { title: "Mapear riscos do projeto da {cliente}", labels: ["cliente"] },
+  { title: "Testar integração do {sistema}", labels: ["sistemas"] },
+  { title: "Corrigir cadastros no {sistema}", labels: ["sistemas"] },
+  { title: "Planejar migração de dados do {sistema}", labels: ["sistemas"] },
+  { title: "Liberar acessos ao {sistema} para {area}", labels: ["sistemas", "pessoas"] },
+  { title: "Organizar treinamento de {tema}", labels: ["pessoas"] },
+  { title: "Fechar escala de {mes}", labels: ["pessoas"] },
+  { title: "Documentar processo de {area}", labels: [] },
 ];
+
+const LABEL_NAME = Object.fromEntries(DEMO_LABELS.map((l) => [l.id, l.name])) as Record<DemoLabelId, string>;
+
+/** Chance de cada prioridade (o resto fica sem prioridade). */
+const PRIORITY_ODDS: [CardPriority, number][] = [
+  ["urgent", 0.05],
+  ["high", 0.15],
+  ["medium", 0.35],
+  ["low", 0.15],
+];
+
+type Profile = "overloaded" | "stalled" | "late" | "healthy";
+
+/** Um perfil por pessoa, sorteado a cada demonstração. */
+const PROFILES: Profile[] = ["overloaded", "stalled", "late", "healthy", "healthy"];
+
+interface ProfileParams {
+  /** Tarefas por semana. */
+  capacity: [number, number];
+  /** Variação da capacidade ao longo do ano. */
+  trend: [number, number];
+  /** Dias até concluir. */
+  cycle: [number, number];
+  cycleTrend: [number, number];
+  /** Chance de uma tarefa travar no meio do caminho (fica parada e demora muito mais). */
+  stuck: number;
+  /** Chance de entregar no prazo combinado. */
+  onTime: [number, number];
+  /** Amplitude das ondas de acúmulo. */
+  wave: number;
+}
+
+const PARAMS: Record<Profile, ProfileParams> = {
+  // Recebe mais do que dá conta e vem piorando: entra cada vez mais trabalho e demora cada vez mais.
+  overloaded: { capacity: [6.5, 7.5], trend: [0.1, 0.35], cycle: [10, 12], cycleTrend: [0.1, 0.3], stuck: 0.12, onTime: [0.65, 0.85], wave: 0.15 },
+  stalled: { capacity: [3.5, 5], trend: [-0.2, 0.2], cycle: [6, 9], cycleTrend: [-0.2, 0.2], stuck: 0, onTime: [0.7, 0.9], wave: 0.45 },
+  late: { capacity: [4.5, 6], trend: [-0.3, 0.3], cycle: [6, 10], cycleTrend: [-0.3, 0.3], stuck: 0, onTime: [0.5, 0.7], wave: 0.3 },
+  healthy: { capacity: [4, 6], trend: [-0.3, 0.3], cycle: [6, 10], cycleTrend: [-0.3, 0.3], stuck: 0, onTime: [0.85, 0.95], wave: 0.45 },
+};
 
 /** PRNG pequeno e determinístico (mulberry32): mesma semente, mesma sequência. */
 function mulberry32(seed: number): () => number {
@@ -78,6 +137,7 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
   const weeks = options.weeks ?? 52;
   const rand = mulberry32(seed);
   const between = (lo: number, hi: number) => lo + rand() * (hi - lo);
+  const pick = <T,>(items: readonly T[]) => items[Math.floor(rand() * items.length)];
   // Soma de uniformes ≈ normal em torno de 0, amplitude ±1.5.
   const noise = () => rand() + rand() + rand() - 1.5;
   const poisson = (mean: number) => {
@@ -95,26 +155,35 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
   // Épocas mais pesadas para a equipe toda (fechamentos, prazos em lote): tudo demora mais.
   const teamPhase = rand() * Math.PI * 2;
   const teamStrain = (progress: number) => 1 + 0.07 * Math.sin(progress * Math.PI * 2.5 + teamPhase);
-  // Uma pessoa sempre acumula mais do que dá conta: recebe mais e demora mais.
-  const overloaded = Math.floor(rand() * DEMO_PEOPLE.length);
+  // Perfis embaralhados: cada demonstração põe os problemas em pessoas diferentes.
+  const profiles = [...PROFILES];
+  for (let i = profiles.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [profiles[i], profiles[j]] = [profiles[j], profiles[i]];
+  }
 
   const tasks: DashboardTask[] = [];
+  const profileOf = new Map<string, Profile>();
   DEMO_PEOPLE.forEach((person, index) => {
-    const heavy = index === overloaded;
-    const capacity = heavy ? between(7, 8) : between(3, 8); // tarefas por semana
-    // Quem está sobrecarregado vem piorando: entra cada vez mais trabalho e demora cada vez mais.
-    const trend = heavy ? between(0.1, 0.35) : between(-0.35, 0.35); // variação da capacidade ao longo do ano
-    const cycleBase = heavy ? between(11, 13) : between(5, 10); // dias até concluir
-    const cycleTrend = heavy ? between(0.1, 0.3) : between(-0.3, 0.3);
-    const onTimeBase = between(0.65, 0.92);
+    const profile = profiles[index];
+    profileOf.set(person.id, profile);
+    const p = PARAMS[profile];
+    const capacity = between(...p.capacity);
+    const trend = between(...p.trend);
+    const cycleBase = between(...p.cycle);
+    const cycleTrend = between(...p.cycleTrend);
+    const onTimeBase = between(...p.onTime);
     const onTimeTrend = between(-0.1, 0.1);
     const phase = rand() * Math.PI * 2;
     const lastWeek = Math.floor((totalDays - 1) / 7);
-    // Quem está sobrecarregado não saiu de férias nas últimas semanas (senão a carga já teria caído).
-    const vacationWeeks = new Set(
-      Array.from({ length: lastWeek + 1 }, (_, w) => w).filter((w) => rand() < 1 / 12 && !(heavy && w > lastWeek - 6)),
-    );
+    // Ninguém saiu de férias nas últimas semanas: senão a carga de hoje já teria caído (ou tudo
+    // estaria parado esperando a volta).
+    const vacationWeeks = new Set(Array.from({ length: lastWeek + 1 }, (_, w) => w).filter((w) => rand() < 1 / 12 && w <= lastWeek - 6));
     const onVacation = (day: string) => vacationWeeks.has(Math.floor(daysBetween(first, day) / 7));
+    // Quem tem o perfil de tarefas paradas pegou 2 ou 3 nas últimas semanas que travaram e seguem abertas.
+    const forcedStuck = new Set(
+      profile === "stalled" ? Array.from({ length: 2 + Math.floor(rand() * 2) }, () => toWeekday(addDays(today, -Math.floor(between(13, 26))))) : [],
+    );
     /** Dias de conclusão das tarefas ainda abertas, para medir a carga. */
     let openDone: string[] = [];
 
@@ -124,8 +193,8 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
       const progress = i / (totalDays - 1);
       const capacityNow = capacity * (1 + trend * (progress - 0.5));
       // Ondas de acúmulo: épocas em que entra bem mais trabalho, e depois bem menos.
-      const wave = 1 + (heavy ? 0.15 : 0.45) * Math.sin(progress * Math.PI * 3 + phase);
-      const arrivals = poisson((capacityNow / 5) * wave * (onVacation(day) ? 0.4 : 1));
+      const wave = 1 + p.wave * Math.sin(progress * Math.PI * 3 + phase);
+      const arrivals = poisson((capacityNow / 5) * wave * (onVacation(day) ? 0.4 : 1)) + (forcedStuck.has(day) ? 1 : 0);
       openDone = openDone.filter((d) => d > day);
 
       for (let k = 0; k < arrivals; k++) {
@@ -134,14 +203,21 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
         const cycleNow = cycleBase * (1 + cycleTrend * (progress - 0.5)) * (0.75 + 0.25 * clamp(load, 0, 2)) * teamStrain(progress);
         const planned = Math.round(clamp(cycleNow * (1 + noise() * 0.5), 2, 25));
         // Uma parte trava no meio do caminho e demora muito mais (as "paradas", que estouram o prazo).
-        const duration = rand() < (heavy ? 0.15 : 0.05) ? Math.round(planned * between(2.5, 5)) : planned;
+        const forced = k === 0 && forcedStuck.has(day);
+        const duration = forced
+          ? daysBetween(day, today) + Math.floor(between(5, 20))
+          : rand() < p.stuck
+            ? Math.round(planned * between(2.5, 5))
+            : planned;
         let done = addWeekdays(day, workdays(duration));
         // Nas férias ninguém entrega: fica para depois da volta.
         while (onVacation(done)) done = addDays(done, 7);
         done = toWeekday(done); // a volta das férias pode cair no fim de semana
         if (daysBetween(day, done) < 2) done = addWeekdays(done, 1); // sobra ao menos um dia em andamento
-        // Fica planejada de 1 a 3 dias (nunca o tempo todo) antes de entrar em andamento.
-        const started = addDays(day, Math.min(daysBetween(day, done) - 1, 1 + Math.floor(between(0, 3))));
+        // Fica planejada de 1 a 3 dias antes de entrar em andamento. Quem não trava nunca passa
+        // de STALLED_DAYS em andamento: o que demora mais esperou na fila, planejado.
+        let started = addDays(day, Math.min(daysBetween(day, done) - 1, 1 + Math.floor(between(0, 3))));
+        if (!forced && p.stuck === 0 && daysBetween(started, done) > STALLED_DAYS) started = addDays(done, -STALLED_DAYS);
         openDone.push(done);
 
         let dueDay: string | null = null;
@@ -158,35 +234,82 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
         if (started <= today) history.push({ day: started, to: "in_progress" });
         if (done <= today) history.push({ day: done, to: "done" });
 
-        tasks.push({
-          id: `demo-${tasks.length + 1}`,
-          title: TITLES[Math.floor(rand() * TITLES.length)],
-          assigneeId: person.id,
-          createdDay: day,
-          dueDay,
-          history,
-        });
+        tasks.push({ id: `demo-${tasks.length + 1}`, title: "", assigneeId: person.id, createdDay: day, dueDay, priority: null, labels: [], history });
       }
     }
   });
 
+  // Prazos do que está aberto hoje, pelo perfil: quem não tem atraso renegociou os vencidos para
+  // os próximos dias úteis; quem tem atrasos leves fica com 1 a 3, vencidos há poucos dias.
+  for (const person of DEMO_PEOPLE) {
+    const open = tasks.filter((t) => t.assigneeId === person.id && statusOn(t, today) !== "done");
+    const lateCount = profileOf.get(person.id) === "late" ? 1 + Math.floor(rand() * 3) : 0;
+    // Atraso leve: venceu há 1 a 4 dias (nunca antes de a tarefa existir), e não está parada.
+    const late = new Set(
+      open
+        .filter((t) => daysBetween(t.createdDay, today) >= 2 && stalledDays(t, today) == null)
+        .sort((a, b) => a.createdDay.localeCompare(b.createdDay))
+        .slice(0, lateCount),
+    );
+    for (const t of open) {
+      if (late.has(t)) t.dueDay = addDays(today, -(1 + Math.floor(rand() * Math.min(4, daysBetween(t.createdDay, today) - 1))));
+      else if (t.dueDay != null && t.dueDay < today) t.dueDay = addWeekdays(today, Math.floor(between(0, 8)));
+    }
+  }
+
+  // Título, etiquetas e prioridade. O que aparece no board de hoje não repete título.
+  const used = new Set<string>();
+  const onBoard = (t: DashboardTask) => statusOn(t, today) !== "done" || daysBetween(t.history.at(-1)!.day, today) < DEMO_DONE_DAYS;
+  for (const t of tasks) {
+    const month = MONTHS[Number(t.createdDay.slice(5, 7)) - 1];
+    let template = TEMPLATES[0];
+    let title = "";
+    for (let attempt = 0; attempt < 30; attempt++) {
+      template = pick(TEMPLATES);
+      title = template.title.replace(/\{(\w+)\}/g, (_, slot: string) => (slot === "mes" ? month : pick(SLOTS[slot])));
+      if (!onBoard(t) || !used.has(title)) break;
+    }
+    if (onBoard(t)) used.add(title);
+    t.title = title;
+    // Uma parte fica sem etiqueta: nem todo mundo classifica tudo.
+    t.labels = rand() < 0.12 ? [] : template.labels.map((id) => LABEL_NAME[id]);
+    let r = rand();
+    t.priority = PRIORITY_ODDS.find(([, odds]) => (r -= odds) < 0)?.[0] ?? null;
+  }
+
   return { people: DEMO_PEOPLE, tasks, today, since, isDemo: true };
 }
 
-/** A demonstração mostra todos os alertas e gráficos: atrasadas, vencendo em breve, paradas e alguém sobrecarregado. */
+/**
+ * A demonstração mostra todos os cenários, espalhados entre pessoas diferentes: uma pessoa (só uma)
+ * sobrecarregada, sem atrasos; alguém com tarefas paradas (sem sobrecarga nem atrasos), alguém só
+ * com atrasos, alguém em dia, prazos vencendo em breve e uma coluna do board acima do limite de
+ * WIP. Ninguém tem os três problemas ao mesmo tempo.
+ */
 export function coversScenarios(d: DashboardData): boolean {
-  const load = d.people.map((p) => d.tasks.filter((t) => t.assigneeId === p.id && isInProgress(t, d.today)).length);
+  const facts = d.people.map((p) => {
+    const own = d.tasks.filter((t) => t.assigneeId === p.id);
+    return {
+      overloaded: isOverloaded(own.filter((t) => isInProgress(t, d.today)).length),
+      overdue: own.some((t) => isOverdue(t, d.today)),
+      stalled: own.some((t) => stalledDays(t, d.today) != null),
+    };
+  });
   return (
-    d.tasks.some((t) => isOverdue(t, d.today)) &&
+    facts.filter((f) => f.overloaded).length === 1 &&
+    facts.some((f) => f.overloaded && !f.overdue) &&
+    facts.some((f) => f.stalled && !f.overloaded && !f.overdue) &&
+    facts.some((f) => f.overdue && !f.overloaded && !f.stalled) &&
+    facts.some((f) => !f.overdue && !f.overloaded && !f.stalled) &&
+    !facts.some((f) => f.overdue && f.overloaded && f.stalled) &&
     d.tasks.some((t) => isDueSoon(t, d.today)) &&
-    d.tasks.some((t) => stalledDays(t, d.today) != null) &&
-    load.some(isOverloaded)
+    demoBoard(d).some((l) => isOverWip(l.tasks.length, l.wipLimit))
   );
 }
 
 /**
- * Demonstração para a tela: a semente pedida ou, se ela não cobrir todos os cenários (raro, ~2%),
- * a próxima que cobre. Os números continuam saindo da simulação; só a semente muda.
+ * Demonstração para a tela: a semente pedida ou, se ela não cobrir todos os cenários, a próxima
+ * que cobre. Os números continuam saindo da simulação; só a semente muda.
  */
 export function generateDemo(seed: number, options: { today?: Date } = {}): DashboardData {
   let d = generateDemoTasks(seed, options);

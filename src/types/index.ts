@@ -148,6 +148,10 @@ export interface DashboardTask {
   /** "AAAA-MM-DD"; igual ao primeiro item do histórico. */
   createdDay: string;
   dueDay: string | null;
+  /** null = sem prioridade. */
+  priority: CardPriority | null;
+  /** Nomes das etiquetas. */
+  labels: string[];
   /** Em ordem; começa em planned e done é final. */
   history: DashboardStatusChange[];
 }

@@ -4,7 +4,7 @@ import { teamLoad } from "./teamLoad";
 
 let nextId = 1;
 function task(assigneeId: string, steps: [string, DashboardStatus][], due: string | null = null): DashboardTask {
-  return { id: `t${nextId++}`, title: "T", assigneeId, createdDay: steps[0][0], dueDay: due, history: steps.map(([day, to]) => ({ day, to })) };
+  return { id: `t${nextId++}`, title: "T", assigneeId, createdDay: steps[0][0], dueDay: due, priority: null, labels: [], history: steps.map(([day, to]) => ({ day, to })) };
 }
 
 const people = [

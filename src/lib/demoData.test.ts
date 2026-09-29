@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { coversScenarios, DEMO_PEOPLE, generateDemo, generateDemoTasks } from "./demoData";
+import { DEMO_LABELS, demoBoard } from "./demoBoard";
+import { PRIORITIES } from "./boardVisuals";
 import { addDays, completedDay, daysBetween, periodMetrics, presetRange, previousRange, statusOn } from "./metrics";
-import { OVERLOAD_IN_PROGRESS, STALLED_DAYS, DUE_SOON_DAYS } from "./dashboardRules";
+import { isInProgress, isOverdue, isOverloaded, OVERLOAD_IN_PROGRESS, STALLED_DAYS, DUE_SOON_DAYS, stalledDays } from "./dashboardRules";
 
 const today = new Date(2026, 8, 28); // segunda, 28/09/2026
 const TODAY = "2026-09-28";
@@ -29,6 +31,9 @@ describe("generateDemoTasks", () => {
       expect(t.history.at(-1)!.day <= TODAY).toBe(true);
       if (t.dueDay) expect(t.dueDay > t.createdDay).toBe(true);
       expect(t.title.length).toBeGreaterThan(0);
+      expect(t.title).not.toMatch(/[{}]/);
+      expect(t.priority === null || PRIORITIES.includes(t.priority)).toBe(true);
+      for (const label of t.labels) expect(DEMO_LABELS.some((l) => l.name === label)).toBe(true);
     }
     expect(new Set(data.tasks.map((t) => t.id)).size).toBe(data.tasks.length);
   });
@@ -113,6 +118,52 @@ describe("generateDemoTasks", () => {
       const stock = Array.from({ length: 26 }, (_, i) => periodMetrics(d.tasks, { start: d.since, end: addDays(TODAY, -7 * i) }).openAtEnd);
       expect(Math.max(...stock) - Math.min(...stock)).toBeGreaterThan(5);
     }
+  });
+
+  /** Os problemas de cada pessoa hoje. */
+  const problems = (d: typeof data) =>
+    d.people.map((p) => {
+      const own = d.tasks.filter((t) => t.assigneeId === p.id);
+      return {
+        overloaded: isOverloaded(own.filter((t) => isInProgress(t, TODAY)).length),
+        overdue: own.filter((t) => isOverdue(t, TODAY)),
+        stalled: own.some((t) => stalledDays(t, TODAY) != null),
+      };
+    });
+
+  it("espalha os problemas: sobrecarga, paradas e atrasos em pessoas diferentes, e alguém em dia", () => {
+    for (const d of seeds) {
+      const f = problems(d);
+      expect(f.filter((x) => x.overloaded)).toHaveLength(1);
+      expect(f.some((x) => x.overloaded && x.overdue.length === 0)).toBe(true);
+      expect(f.some((x) => x.stalled && !x.overloaded && x.overdue.length === 0)).toBe(true);
+      expect(f.some((x) => x.overdue.length > 0 && !x.overloaded && !x.stalled)).toBe(true);
+      expect(f.some((x) => x.overdue.length === 0 && !x.overloaded && !x.stalled)).toBe(true);
+      expect(f.some((x) => x.overloaded && x.stalled && x.overdue.length > 0)).toBe(false);
+    }
+  });
+
+  it("os atrasos de hoje são leves: de 1 a 3 tarefas, vencidas há no máximo 4 dias, numa pessoa só", () => {
+    for (const d of seeds) {
+      const late = problems(d).filter((x) => x.overdue.length > 0);
+      expect(late).toHaveLength(1);
+      expect(late[0].overdue.length).toBeLessThanOrEqual(3);
+      for (const t of late[0].overdue) expect(daysBetween(t.dueDay!, TODAY)).toBeLessThanOrEqual(4);
+    }
+  });
+
+  it("o board de hoje não repete título", () => {
+    for (const d of seeds) {
+      const titles = demoBoard(d).flatMap((l) => l.tasks.map((t) => t.title));
+      expect(new Set(titles).size).toBe(titles.length);
+    }
+  });
+
+  it("tem cards com e sem prioridade e com e sem etiqueta", () => {
+    expect(data.tasks.some((t) => t.priority === null)).toBe(true);
+    for (const p of PRIORITIES) expect(data.tasks.some((t) => t.priority === p)).toBe(true);
+    expect(data.tasks.some((t) => t.labels.length === 0)).toBe(true);
+    expect(data.tasks.some((t) => t.labels.length === 2)).toBe(true);
   });
 
   it("generateDemo sempre devolve uma demonstração com todos os cenários", () => {

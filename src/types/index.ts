@@ -7,13 +7,19 @@ export interface Board {
   created_at: string;
 }
 
+/** Tipo por trás da coluna (o nome é livre): é o que as métricas usam. */
+export type ListStatus = "todo" | "doing" | "done";
+
 export interface List {
   id: number;
   board_id: number;
   name: string;
   position: number;
   wip_limit: number | null;
+  status: ListStatus;
 }
+
+export type CardPriority = "low" | "medium" | "high" | "urgent";
 
 export interface Card {
   id: number;
@@ -28,6 +34,10 @@ export interface Card {
   archived_at: string | null;
   /** Membro da equipe (profile.id); o banco recusa quem não é. */
   assignee_id: string | null;
+  /** null = sem prioridade. */
+  priority: CardPriority | null;
+  /** Quando entrou na coluna atual; o banco preenche (só muda ao trocar de coluna). */
+  list_entered_at: string;
 }
 
 export interface Label {

@@ -12,6 +12,11 @@ async function signIn(page: Page) {
   await expect(page.getByText(BOARD_NAME).first()).toBeVisible();
 }
 
+async function openFromMenu(page: Page, item: string) {
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("menuitem", { name: item }).click();
+}
+
 test("cria coluna e card, usa o painel, arquiva e exclui", async ({ page }) => {
   await signIn(page);
   const listName = `Coluna ${Date.now()}`;
@@ -46,7 +51,7 @@ test("configurações trocam tema e densidade e ficam salvas", async ({ page }) 
   await signIn(page);
   const html = page.locator("html");
 
-  await page.getByRole("button", { name: "Configurações" }).click();
+  await openFromMenu(page, "Configurações");
   await expect(page.getByRole("heading", { name: "Configurações" })).toBeVisible();
 
   await page.getByRole("radio", { name: "Escuro" }).click();
@@ -63,14 +68,14 @@ test("configurações trocam tema e densidade e ficam salvas", async ({ page }) 
     "compact",
   ]);
 
-  await page.getByRole("button", { name: "Configurações" }).click();
+  await openFromMenu(page, "Configurações");
   await page.getByRole("radio", { name: "Sistema" }).click();
   await page.getByRole("radio", { name: "Normal" }).click();
 });
 
 test("dashboard gera demonstração, troca período e pessoa, mostra tabela e sai", async ({ page }) => {
   await signIn(page);
-  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await openFromMenu(page, "Dashboard");
   await expect(page.getByText("O dashboard ainda não tem dados")).toBeVisible();
 
   await page.getByRole("button", { name: "Gerar demonstração" }).click();

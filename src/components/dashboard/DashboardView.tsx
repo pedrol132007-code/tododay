@@ -17,6 +17,7 @@ import {
   teamAverageSeries,
   tone,
   type PeriodMetrics,
+  type Tone,
 } from "../../lib/metrics";
 import { Avatar } from "../ui/Avatar";
 import { EmptyState } from "../ui/EmptyState";
@@ -35,11 +36,14 @@ import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
 
 const VS = "vs. período anterior";
 
+/** Até meio ponto percentual a variação aparece como 0%: texto e cor tratam como estável. */
+const FLAT = 0.005;
+
 /** `words` diz o que a seta significa quando "subir" não é óbvio (ex.: tempo maior = mais lento). */
 function relative(cur: number | null, prev: number | null, words?: { up: string; down: string }): string | null {
   const c = compare(cur, prev);
   if (c == null) return null;
-  const dir = c > 0.005 ? "up" : c < -0.005 ? "down" : null;
+  const dir = c > FLAT ? "up" : c < -FLAT ? "down" : null;
   const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "■";
   const meaning = dir && words ? ` ${words[dir]}` : "";
   return `${arrow} ${num(Math.abs(c * 100))}%${meaning} ${VS}`;
@@ -49,15 +53,31 @@ function relative(cur: number | null, prev: number | null, words?: { up: string;
 function trendWords(cur: number | null, prev: number | null): string | null {
   const c = compare(cur, prev);
   if (c == null) return null;
-  if (Math.abs(c) <= 0.005) return "estável";
+  if (Math.abs(c) <= FLAT) return "estável";
   return `${c > 0 ? "alta" : "queda"} de ${num(Math.abs(c * 100))}%`;
 }
 
-/** Diferença de taxas em pontos percentuais: "+2 p.p. vs. período anterior". */
+/** Tom de uma variação relativa: estável quando o texto mostra 0%. */
+function relativeTone(cur: number | null, prev: number | null, better: "up" | "down"): Tone {
+  const c = compare(cur, prev);
+  return c != null && Math.abs(c) <= FLAT ? "neutral" : tone(cur, prev, better);
+}
+
+/** Diferença de taxas em pontos percentuais inteiros, como aparece no texto. */
+function pointsDiff(cur: number | null, prev: number | null): number | null {
+  return cur == null || prev == null ? null : Math.round((cur - prev) * 100);
+}
+
+/** "+2 p.p. vs. período anterior". */
 function points(cur: number | null, prev: number | null): string | null {
-  if (cur == null || prev == null) return null;
-  const d = Math.round((cur - prev) * 100);
+  const d = pointsDiff(cur, prev);
+  if (d == null) return null;
   return `${d > 0 ? "+" : d < 0 ? "−" : ""}${num(Math.abs(d))} p.p. ${VS}`;
+}
+
+/** Tom de uma taxa: estável quando o texto mostra 0 p.p. */
+function pointsTone(cur: number | null, prev: number | null): Tone {
+  return pointsDiff(cur, prev) === 0 ? "neutral" : tone(cur, prev, "up");
 }
 
 function backlogText(change: number): string {
@@ -213,7 +233,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           label="Entregas"
           value={num(sum.delivered)}
           delta={relative(sum.delivered, prev?.delivered ?? null)}
-          tone={tone(sum.delivered, prev?.delivered ?? null, "up")}
+          tone={relativeTone(sum.delivered, prev?.delivered ?? null, "up")}
           spark={view.series.map((p) => p.delivered)}
           onOpen={() => setList({ title: `Entregas${of} · ${periodName}`, tasks: deliveredIn(view.tasks, view.range) })}
         />
@@ -238,7 +258,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
             )
           }
           delta={relative(sum.cycleP85, prev?.cycleP85 ?? null, { up: "mais lento", down: "mais rápido" })}
-          tone={tone(sum.cycleP85, prev?.cycleP85 ?? null, "down")}
+          tone={relativeTone(sum.cycleP85, prev?.cycleP85 ?? null, "down")}
           spark={view.series.map((p) => p.cycleP85)}
         />
         <StatTile
@@ -247,7 +267,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
           meter={sum.onTimeRate}
           note={sum.onTimeRate == null ? undefined : `${num(sum.withDue)} entregas com prazo no período`}
           delta={points(sum.onTimeRate, prev?.onTimeRate ?? null)}
-          tone={tone(sum.onTimeRate, prev?.onTimeRate ?? null, "up")}
+          tone={pointsTone(sum.onTimeRate, prev?.onTimeRate ?? null)}
           spark={view.series.map((p) => p.onTimeRate)}
           onOpen={() => setList({ title: `Entregues fora do prazo${of} · ${periodName}`, tasks: deliveredLateIn(view.tasks, view.range) })}
         />

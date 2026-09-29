@@ -80,10 +80,10 @@ function pointsTone(cur: number | null, prev: number | null): Tone {
   return pointsDiff(cur, prev) === 0 ? "neutral" : tone(cur, prev, "up");
 }
 
-function backlogText(change: number): string {
-  if (change > 0) return `entraram ${num(change)} a mais do que saíram`;
-  if (change < 0) return `saíram ${num(-change)} a mais do que entraram`;
-  return "entrou o mesmo tanto que saiu";
+/** Variação do backlog no período, sem sinal no número: "▼ 16 no período" (diminuiu). */
+function backlogDelta(change: number): string {
+  if (change === 0) return "■ sem variação no período";
+  return `${change > 0 ? "▲" : "▼"} ${num(Math.abs(change))} no período`;
 }
 
 export function DashboardView({ teamName }: { teamName: string }) {
@@ -169,7 +169,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
     const prev: PeriodMetrics | null = prevRange.start >= data.since ? periodMetrics(tasks, prevRange) : null;
     const team = person ? teamAverageSeries(data.tasks, range, data.people.length) : null;
     // Atenção, carga e paradas olham o último dia do período; na visão de uma pessoa, só ela.
-    const alerts = attentionAlerts(person ? [person] : data.people, tasks, range.end);
+    const alerts = attentionAlerts(person ? [person] : data.people, tasks, range.end, { perFact: person != null });
     const stalled = person ? stalledList(tasks, range.end) : [];
     return { range, tasks, series, sum, prev, team, alerts, stalled, load: teamLoad(data.people, data.tasks, range) };
   }, [data, period, person]);
@@ -239,8 +239,9 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
         />
         <StatTile
           label="Backlog"
-          value={`${sum.backlogChange > 0 ? "+" : sum.backlogChange < 0 ? "−" : ""}${num(Math.abs(sum.backlogChange))}`}
-          delta={backlogText(sum.backlogChange)}
+          value={num(sum.openAtEnd)}
+          note="tarefas abertas no fim do período"
+          delta={backlogDelta(sum.backlogChange)}
           tone={sum.backlogChange > 0 ? "bad" : sum.backlogChange < 0 ? "good" : "neutral"}
           spark={view.series.map((p) => p.openAtEnd)}
           onOpen={() => setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })}
@@ -276,6 +277,7 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
       <AttentionCard
         alerts={view.alerts}
         onOpen={(alert) => setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })}
+        onOpenPerson={onSelectPerson}
       />
 
       {person ? (

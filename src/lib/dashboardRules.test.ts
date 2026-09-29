@@ -77,16 +77,35 @@ describe("alertas de atenção", () => {
 
   it("escreve fatos de carga e risco, com o primeiro nome e plural certo", () => {
     expect(alerts[0].text).toBe("Ana tem 2 tarefas atrasadas");
-    expect(alerts[1].text).toBe("Bia tem 10 em andamento (limite 8) e 3 paradas há mais de 7 dias");
+    expect(alerts[1].text).toBe("Bia tem 10 tarefas em andamento (limite 8)");
     expect(alerts[2].text).toBe("Caio tem 1 tarefa parada há mais de 7 dias");
     expect(alerts[3].text).toBe("1 tarefa vence nos próximos 3 dias");
   });
 
-  it("junta todos os fatos da pessoa na mesma frase", () => {
+  it("na equipe, a frase traz só o fato mais grave da pessoa; o resto vira contagem", () => {
     const more = [...tasks, t("ana", [["2026-09-01", "planned"], ["2026-09-05", "in_progress"]], "2026-09-15"), ...busy("ana", 8)];
     const ana = attentionAlerts(people, more, TODAY).find((a) => a.personId === "ana")!;
     expect(ana.kind).toBe("overdue");
-    expect(ana.text).toBe("Ana tem 3 tarefas atrasadas, 10 em andamento (limite 8) e 1 parada há mais de 7 dias");
+    expect(ana.text).toBe("Ana tem 3 tarefas atrasadas");
+    expect(ana.more).toBe(2);
+    expect(ana.match).toEqual(["overdue"]);
+    expect(alerts[1].more).toBe(1);
+    expect(alerts[2].more).toBe(0);
+  });
+
+  it("no detalhe da pessoa, cada fato vira um alerta, do mais grave ao menos grave", () => {
+    const more = [...tasks, t("ana", [["2026-09-01", "planned"], ["2026-09-05", "in_progress"]], "2026-09-15"), ...busy("ana", 8)];
+    const ana = people.filter((p) => p.id === "ana");
+    const own = more.filter((x) => x.assigneeId === "ana");
+    const detail = attentionAlerts(ana, own, TODAY, { perFact: true });
+    expect(detail.map((a) => a.kind)).toEqual(["overdue", "overload", "stalled"]);
+    expect(detail.map((a) => a.text)).toEqual([
+      "Ana tem 3 tarefas atrasadas",
+      "Ana tem 10 tarefas em andamento (limite 8)",
+      "Ana tem 1 tarefa parada há mais de 7 dias",
+    ]);
+    expect(detail.every((a) => a.more === 0)).toBe(true);
+    expect(new Set(detail.map((a) => a.id)).size).toBe(3);
   });
 
   it("mostra no máximo 5, os mais graves", () => {

@@ -13,7 +13,16 @@ const BADGE: Record<AlertKind, { label: string; dot: string }> = {
  * Bloco "Atenção": até 5 alertas gerados pelas regras (src/lib/dashboardRules.ts), do mais grave
  * para o menos grave. Clicar num alerta abre a lista das tarefas que ele descreve.
  */
-export function AttentionCard({ alerts, onOpen }: { alerts: AttentionAlert[]; onOpen: (alert: AttentionAlert) => void }) {
+export function AttentionCard({
+  alerts,
+  onOpen,
+  onOpenPerson,
+}: {
+  alerts: AttentionAlert[];
+  onOpen: (alert: AttentionAlert) => void;
+  /** Abre o detalhe da pessoa, onde estão os fatos que não couberam na frase. */
+  onOpenPerson: (personId: string) => void;
+}) {
   return (
     <section className="flex flex-col gap-3 rounded-2xl border border-border bg-bg-surface p-5">
       <h3 className="inline-flex items-center gap-2 text-sm font-semibold text-text-primary">
@@ -36,11 +45,11 @@ export function AttentionCard({ alerts, onOpen }: { alerts: AttentionAlert[]; on
       ) : (
         <ul className="flex flex-col">
           {alerts.map((alert) => (
-            <li key={alert.id} className="border-t border-border first:border-t-0">
+            <li key={alert.id} className="flex items-center gap-1 border-t border-border first:border-t-0">
               <button
                 type="button"
                 onClick={() => onOpen(alert)}
-                className="group flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-bg-elevated"
+                className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-bg-elevated"
               >
                 <span className="inline-flex w-36 shrink-0 items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
                   <span className={`h-2 w-2 shrink-0 rounded-full ${BADGE[alert.kind].dot}`} aria-hidden="true" />
@@ -49,6 +58,16 @@ export function AttentionCard({ alerts, onOpen }: { alerts: AttentionAlert[]; on
                 <span className="flex-1 text-sm text-text-primary">{alert.text}</span>
                 <span className="shrink-0 text-xs text-text-muted group-hover:text-primary">Ver tarefas →</span>
               </button>
+              {alert.more > 0 && alert.personId && (
+                <button
+                  type="button"
+                  onClick={() => onOpenPerson(alert.personId!)}
+                  title="Ver todos os pontos no detalhe da pessoa"
+                  className="shrink-0 rounded-lg border border-border px-2 py-1 text-xs text-text-muted hover:border-primary hover:text-primary"
+                >
+                  +{alert.more} {alert.more === 1 ? "ponto" : "pontos"}
+                </button>
+              )}
             </li>
           ))}
         </ul>

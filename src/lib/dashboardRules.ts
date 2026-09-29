@@ -47,56 +47,78 @@ export type AlertMatch = "overdue" | "inProgress" | "stalled" | "dueSoon";
 
 export interface AttentionAlert {
   id: string;
-  /** O fato mais grave do alerta (decide a ordem e o selo). */
+  /** O fato do alerta (decide a ordem e o selo). */
   kind: AlertKind;
   /** Fato sobre carga e risco, nunca avaliação da pessoa. */
   text: string;
   personId?: string;
   /** Quais tarefas a lista do alerta mostra. */
   match: AlertMatch[];
+  /** Outros fatos da mesma pessoa que ficaram de fora da frase (estão no detalhe dela). */
+  more: number;
 }
 
 const SEVERITY: Record<AlertKind, number> = { overdue: 3, overload: 2, stalled: 1, dueSoon: 0 };
 
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 
-/** "a", "a e b", "a, b e c". */
-function joinFacts(facts: string[]): string {
-  return facts.length <= 1 ? facts.join("") : `${facts.slice(0, -1).join(", ")} e ${facts[facts.length - 1]}`;
+interface Fact {
+  kind: Exclude<AlertKind, "dueSoon">;
+  match: AlertMatch;
+  count: number;
+  text: string;
+}
+
+/** Os fatos de risco de uma pessoa no dia, do mais grave para o menos grave. */
+function personFacts(own: DashboardTask[], day: string): Fact[] {
+  const overdue = own.filter((t) => isOverdue(t, day)).length;
+  const inProgress = own.filter((t) => isInProgress(t, day)).length;
+  const stalled = own.filter((t) => stalledDays(t, day) != null).length;
+  const facts: Fact[] = [];
+  if (overdue) facts.push({ kind: "overdue", match: "overdue", count: overdue, text: `${overdue} ${plural(overdue, "tarefa atrasada", "tarefas atrasadas")}` });
+  if (isOverloaded(inProgress)) {
+    facts.push({ kind: "overload", match: "inProgress", count: inProgress, text: `${inProgress} tarefas em andamento (limite ${OVERLOAD_IN_PROGRESS})` });
+  }
+  if (stalled) {
+    facts.push({ kind: "stalled", match: "stalled", count: stalled, text: `${stalled} ${plural(stalled, "tarefa parada", "tarefas paradas")} há mais de ${STALLED_DAYS} dias` });
+  }
+  return facts;
 }
 
 /**
- * Alertas do dia, do mais grave para o menos grave (no máximo MAX_ALERTS): um por pessoa em risco,
- * juntando atrasadas, sobrecarga e paradas numa frase, e um da equipe para prazos próximos.
+ * Alertas do dia, do mais grave para o menos grave (no máximo MAX_ALERTS), e um da equipe para
+ * prazos próximos. Na equipe, cada pessoa em risco aparece uma vez, com o fato mais grave; os
+ * outros ficam em `more`. Com `perFact` (o detalhe da pessoa), cada fato vira um alerta.
  */
-export function attentionAlerts(people: DashboardPerson[], tasks: DashboardTask[], day: string): AttentionAlert[] {
+export function attentionAlerts(
+  people: DashboardPerson[],
+  tasks: DashboardTask[],
+  day: string,
+  { perFact = false }: { perFact?: boolean } = {},
+): AttentionAlert[] {
   const ranked: { alert: AttentionAlert; count: number; name: string }[] = [];
 
   for (const person of people) {
-    const own = tasks.filter((t) => t.assigneeId === person.id);
-    const overdue = own.filter((t) => isOverdue(t, day)).length;
-    const inProgress = own.filter((t) => isInProgress(t, day)).length;
-    const stalled = own.filter((t) => stalledDays(t, day) != null).length;
-    const overloaded = isOverloaded(inProgress);
-
-    // A palavra "tarefa" só no primeiro fato: "3 tarefas atrasadas, 10 em andamento e 1 parada".
-    const facts: string[] = [];
-    const noun = (n: number) => (facts.length === 0 ? ` ${plural(n, "tarefa", "tarefas")}` : "");
-    if (overdue) facts.push(`${overdue}${noun(overdue)} ${plural(overdue, "atrasada", "atrasadas")}`);
-    if (overloaded) facts.push(`${inProgress} em andamento (limite ${OVERLOAD_IN_PROGRESS})`);
-    if (stalled) facts.push(`${stalled}${noun(stalled)} ${plural(stalled, "parada", "paradas")} há mais de ${STALLED_DAYS} dias`);
-    if (facts.length === 0) continue;
-
-    const kind: AlertKind = overdue ? "overdue" : overloaded ? "overload" : "stalled";
-    const match: AlertMatch[] = [];
-    if (overdue) match.push("overdue");
-    if (overloaded) match.push("inProgress");
-    if (stalled) match.push("stalled");
-    ranked.push({
-      alert: { id: `${kind}-${person.id}`, kind, text: `${person.name.split(" ")[0]} tem ${joinFacts(facts)}`, personId: person.id, match },
-      count: kind === "overdue" ? overdue : kind === "overload" ? inProgress : stalled,
-      name: person.name,
-    });
+    const facts = personFacts(
+      tasks.filter((t) => t.assigneeId === person.id),
+      day,
+    );
+    const first = person.name.split(" ")[0];
+    const shown = perFact ? facts : facts.slice(0, 1);
+    for (const fact of shown) {
+      ranked.push({
+        alert: {
+          id: `${fact.kind}-${person.id}`,
+          kind: fact.kind,
+          text: `${first} tem ${fact.text}`,
+          personId: person.id,
+          match: [fact.match],
+          more: perFact ? 0 : facts.length - 1,
+        },
+        count: fact.count,
+        name: person.name,
+      });
+    }
   }
 
   const dueSoon = tasks.filter((t) => isDueSoon(t, day)).length;
@@ -107,6 +129,7 @@ export function attentionAlerts(people: DashboardPerson[], tasks: DashboardTask[
         kind: "dueSoon",
         text: `${dueSoon} ${plural(dueSoon, "tarefa vence", "tarefas vencem")} nos próximos ${DUE_SOON_DAYS} dias`,
         match: ["dueSoon"],
+        more: 0,
       },
       count: dueSoon,
       name: "",

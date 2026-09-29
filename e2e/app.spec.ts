@@ -87,3 +87,34 @@ test("dashboard gera demonstração, troca período e pessoa, mostra tabela e sa
   await page.getByRole("button", { name: "Sair da demonstração" }).click();
   await expect(page.getByText("O dashboard ainda não tem dados")).toBeVisible();
 });
+
+test("renomeia e exclui um board", async ({ page }) => {
+  await signIn(page);
+  const name = `Board ${Date.now()}`;
+
+  await page.getByRole("button", { name: "Novo board" }).click();
+  await page.getByPlaceholder("Nome do board...").fill(name);
+  await page.getByPlaceholder("Nome do board...").press("Enter");
+  await page.getByPlaceholder("Nova coluna...").fill("Coluna do board");
+  await page.getByPlaceholder("Nova coluna...").press("Enter");
+  await expect(page.locator("div.bg-bg-column").filter({ hasText: "Coluna do board" })).toBeVisible();
+
+  const renamed = `${name} renomeado`;
+  await page.getByRole("button", { name: `Opções do board ${name}` }).click();
+  await page.getByRole("button", { name: "Renomear" }).click();
+  await page.getByLabel("Novo nome do board").fill(renamed);
+  await page.getByLabel("Novo nome do board").press("Enter");
+  await expect(page.getByRole("button", { name: renamed, exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: `Opções do board ${renamed}` }).click();
+  await page.getByRole("button", { name: "Excluir board" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("1 coluna e 0 cards")).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Excluir board" })).toBeDisabled();
+  await dialog.getByRole("textbox").fill(renamed);
+  await dialog.getByRole("button", { name: "Excluir board" }).click();
+
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole("button", { name: renamed, exact: true })).toHaveCount(0);
+  await expect(page.getByText(BOARD_NAME).first()).toBeVisible();
+});

@@ -102,9 +102,10 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
 
+  // Sem board escolhido, ou o escolhido foi excluído (aqui ou por outra pessoa): abre o primeiro.
   useEffect(() => {
-    if (activeBoardId === null && boards && boards.length > 0) {
-      setActiveBoardId(boards[0].id);
+    if (boards && !boards.some((board) => board.id === activeBoardId)) {
+      setActiveBoardId(boards[0]?.id ?? null);
     }
   }, [boards, activeBoardId]);
 
@@ -141,7 +142,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   useRealtimeSync(team.id, activeBoard?.id ?? null);
 
   return (
-    <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer" }}>
+    <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin" }}>
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       <div className="h-1 shrink-0 bg-brand-gradient" />
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">

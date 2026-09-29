@@ -13,3 +13,24 @@ export async function createBoard(teamId: number, name: string): Promise<number>
   const row = must(await supabase.from("board").insert({ team_id: teamId, name, position }).select("id").single());
   return row.id;
 }
+
+export async function renameBoard(id: number, name: string): Promise<void> {
+  must(await supabase.from("board").update({ name }).eq("id", id));
+}
+
+// A RLS só deixa admin excluir; para os outros o delete passa sem apagar nada, então confere.
+export async function deleteBoard(id: number): Promise<void> {
+  const rows = must(await supabase.from("board").delete().eq("id", id).select("id"));
+  if (rows.length === 0) throw new Error("Só admins da equipe podem excluir boards.");
+}
+
+/** O que some junto com o board (por cascade), para o aviso de confirmação. */
+export async function boardContents(id: number): Promise<{ lists: number; cards: number }> {
+  const [lists, cards] = await Promise.all([
+    supabase.from("list").select("*", { count: "exact", head: true }).eq("board_id", id),
+    supabase.from("card").select("*", { count: "exact", head: true }).eq("board_id", id),
+  ]);
+  if (lists.error) throw lists.error;
+  if (cards.error) throw cards.error;
+  return { lists: lists.count ?? 0, cards: cards.count ?? 0 };
+}

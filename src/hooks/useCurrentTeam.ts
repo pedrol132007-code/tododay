@@ -7,6 +7,8 @@ interface CurrentTeam {
    * esconde os controles.
    */
   canEdit: boolean;
+  /** Só admin exclui boards (a RLS também só deixa admin). */
+  isAdmin: boolean;
 }
 
 export const CurrentTeamContext = createContext<CurrentTeam | null>(null);
@@ -19,6 +21,10 @@ function useCurrentTeam(): CurrentTeam {
 
 export function useCanEdit(): boolean {
   return useCurrentTeam().canEdit;
+}
+
+export function useIsAdmin(): boolean {
+  return useCurrentTeam().isAdmin;
 }
 
 export function useCurrentTeamId(): number {

@@ -7,7 +7,9 @@
 //   { action: "purge" } → apaga do Storage os arquivos da lixeira e os envios que nunca foram aprovados.
 //
 // A chave service_role só existe aqui dentro (o Supabase a fornece em SUPABASE_SERVICE_ROLE_KEY).
-import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
+// Dois imports separados: o empacotador do painel não aceita "type" dentro das chaves.
+import { createClient } from "npm:@supabase/supabase-js@2";
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { checkAttachment, cleanFileName, MAX_ATTACHMENT_BYTES, PROBLEM_TEXT } from "../../../src/lib/attachmentRules.ts";
 
 const BUCKET = "attachments";

@@ -52,6 +52,24 @@ export interface CardLabel {
   label_id: number;
 }
 
+/** Metadados de um anexo; o arquivo fica no bucket privado "attachments" (0011_attachments.sql). */
+export interface CardAttachment {
+  id: number;
+  card_id: number;
+  board_id: number;
+  /** Nome original (só metadado; no Storage o arquivo é "<card_id>/<uuid>"). */
+  name: string;
+  mime_type: string;
+  size_bytes: number;
+  storage_path: string;
+  uploaded_by: string | null;
+  /** Nome de quem enviou, na época. */
+  uploaded_by_name: string;
+  created_at: string;
+  /** Imagem usada como capa do card no board. */
+  is_cover: boolean;
+}
+
 export interface ChecklistItem {
   id: number;
   card_id: number;

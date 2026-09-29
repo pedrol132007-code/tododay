@@ -34,7 +34,7 @@ const PARAMS = ["busca", "responsavel", "prioridade", "etiqueta", "atrasadas", "
 export function slugify(text: string): string {
   return text
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
@@ -97,7 +97,7 @@ export interface FilterableCard {
   enteredDay: string;
 }
 
-const fold = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const fold = (text: string) => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 /** Dias parado numa coluna "Em andamento"; fora dela, null. */
 const stalledFor = (c: FilterableCard, day: string) => (c.listStatus === "doing" ? daysBetween(c.enteredDay, day) : null);

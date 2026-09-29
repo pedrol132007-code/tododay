@@ -3,7 +3,6 @@ import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
 import { alertTasks, attentionAlerts, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
-import { generateDemo } from "../../lib/demoData";
 import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
   compare,
@@ -20,6 +19,7 @@ import {
   type Tone,
 } from "../../lib/metrics";
 import { Avatar } from "../ui/Avatar";
+import { DemoActions, DemoBadge } from "../ui/Demo";
 import { EmptyState } from "../ui/EmptyState";
 import { PageHeader } from "../ui/PageHeader";
 import { IconColumns } from "../ui/icons";
@@ -86,17 +86,18 @@ function backlogDelta(change: number): string {
   return `${change > 0 ? "▲" : "▼"} ${num(Math.abs(change))} no período`;
 }
 
-export function DashboardView({ teamName }: { teamName: string }) {
-  const [data, setData] = useState<DashboardData | null>(null);
+/** `data` vem de fora: a demonstração é a mesma no board e no dashboard. */
+export function DashboardView({ teamName, data, onGenerate, onExit }: {
+  teamName: string;
+  data: DashboardData | null;
+  onGenerate: () => void;
+  onExit: () => void;
+}) {
   const [period, setPeriod] = useState<PeriodSelection>({ kind: "preset", preset: "12w" });
   const [personId, setPersonId] = useState<string | null>(null);
 
-  function generate() {
-    setData(generateDemo(Math.floor(Math.random() * 2 ** 31)));
-  }
-
   function exitDemo() {
-    setData(null);
+    onExit();
     setPersonId(null);
   }
 
@@ -111,21 +112,14 @@ export function DashboardView({ teamName }: { teamName: string }) {
           title={
             <span className="inline-flex flex-wrap items-center gap-3">
               {person ? `Dashboard · ${person.name}` : teamName}
-              {data?.isDemo && (
-                <span className="rounded-lg bg-highlight px-2 py-1 text-xs font-semibold uppercase tracking-wider text-black">Demonstração</span>
-              )}
+              {data?.isDemo && <DemoBadge />}
             </span>
           }
         />
         {data && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <PeriodPicker value={period} onChange={setPeriod} today={data.today} min={data.since} />
-            <button type="button" onClick={generate} className="rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary hover:bg-bg-elevated">
-              Gerar de novo
-            </button>
-            <button type="button" onClick={exitDemo} className="rounded-lg px-3 py-1.5 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary">
-              Sair da demonstração
-            </button>
+            <DemoActions onRegenerate={onGenerate} onExit={exitDemo} />
           </div>
         )}
       </div>
@@ -139,7 +133,7 @@ export function DashboardView({ teamName }: { teamName: string }) {
             title="O dashboard ainda não tem dados"
             description="As métricas reais chegam com o status do card. Enquanto isso, veja como fica com dados de exemplo."
             action={
-              <button type="button" onClick={generate} className="btn-primary px-4 py-2">
+              <button type="button" onClick={onGenerate} className="btn-primary px-4 py-2">
                 Gerar demonstração
               </button>
             }

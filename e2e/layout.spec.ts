@@ -140,3 +140,25 @@ test("dashboard rola só por dentro: a página não ganha barra de rolagem próp
   expect(doc).toEqual({ extraX: 0, extraY: 0 });
   await expectShellFits(page);
 });
+
+test("demonstração: o board mostra as tarefas fictícias do dashboard e sai sem tocar no board real", async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page.getByRole("button", { name: "Gerar demonstração" }).click();
+  await expect(page.getByText("Entregas por semana")).toBeVisible();
+
+  await page.getByRole("button", { name: "Board", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Operações/ })).toBeVisible();
+  for (const name of ["A fazer", "Em andamento", "Em revisão", "Concluído"]) await expect(page.getByRole("region", { name })).toBeVisible();
+  await expect(page.getByText("Card 30")).not.toBeAttached();
+  await expectShellFits(page);
+
+  // A mesma demonstração continua no dashboard.
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await expect(page.getByText("Entregas por semana")).toBeVisible();
+  await page.getByRole("button", { name: "Board", exact: true }).click();
+
+  await page.getByRole("button", { name: "Sair da demonstração" }).click();
+  await expect(page.getByText("Card 30")).toBeAttached();
+});

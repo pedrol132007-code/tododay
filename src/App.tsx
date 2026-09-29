@@ -17,13 +17,15 @@ import { ViewTabs } from "./components/ui/ViewTabs";
 import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
-import type { MyTeam, SearchResult } from "./types";
+import type { DashboardData, MyTeam, SearchResult } from "./types";
 import { IconColumns } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
 import { DashboardErrorBoundary } from "./components/dashboard/DashboardErrorBoundary";
 
 // Carregado só ao abrir o Dashboard: os gráficos não pesam para quem usa só o board.
 const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })));
+// A demonstração também: o gerador e o board fictício só descem quando alguém pede.
+const DemoBoardView = lazy(() => import("./components/board/DemoBoardView").then((m) => ({ default: m.DemoBoardView })));
 
 const ACTIVE_TEAM_KEY = "tododay.activeTeamId";
 
@@ -102,6 +104,9 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
+  // Demonstração em memória: enquanto existe, o Board e o Dashboard mostram as mesmas tarefas fictícias.
+  const [demo, setDemo] = useState<DashboardData | null>(null);
+  const newDemo = () => import("./lib/demoData").then((m) => setDemo(m.generateDemo(Math.floor(Math.random() * 2 ** 31))));
 
   // Sem board escolhido, ou o escolhido foi excluído (aqui ou por outra pessoa): abre o primeiro.
   useEffect(() => {
@@ -123,6 +128,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
 
   function handleNavigate(result: SearchResult) {
     setActiveBoardId(result.board_id);
+    setDemo(null);
     setView("board");
     setPendingCardId(result.type === "card" ? result.id : null);
     setPendingListId(result.type === "list" ? result.id : null);
@@ -134,9 +140,10 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   // it, and without this it would sit in state and could fire a highlight later, on whatever
   // future board happens to contain a list with that same id.
   // Escolher um board no topo sai do Dashboard, da Equipe e das Configurações; nos Arquivados fica,
-  // mostrando os do board escolhido.
+  // mostrando os do board escolhido. Também sai da demonstração: o board escolhido é real.
   function handleSelectBoard(id: number) {
     setActiveBoardId(id);
+    setDemo(null);
     setView((v) => (v === "archive" ? v : "board"));
     setPendingCardId(null);
     setPendingListId(null);
@@ -162,13 +169,17 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
       {view === "dashboard" ? (
         <DashboardErrorBoundary>
           <Suspense fallback={null}>
-            <DashboardView teamName={team.name} />
+            <DashboardView teamName={team.name} data={demo} onGenerate={newDemo} onExit={() => setDemo(null)} />
           </Suspense>
         </DashboardErrorBoundary>
       ) : view === "settings" ? (
         <SettingsView onBack={() => setView("board")} />
       ) : view === "team" ? (
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />
+      ) : demo && view === "board" ? (
+        <Suspense fallback={null}>
+          <DemoBoardView data={demo} onRegenerate={newDemo} onExit={() => setDemo(null)} />
+        </Suspense>
       ) : activeBoard ? (
         view === "archive" ? (
           <ArchiveView boardId={activeBoard.id} boardName={activeBoard.name} onBack={() => setView("board")} />

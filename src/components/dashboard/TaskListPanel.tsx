@@ -44,7 +44,7 @@ function byUrgency(day: string) {
 
 /**
  * Lista filtrada de tarefas (aberta por um alerta ou um número do dashboard). Na demonstração as
- * tarefas são fictícias e não existem no board, então a lista fica aqui mesmo.
+ * tarefas são fictícias: as abertas aparecem também no board de demonstração.
  */
 export function TaskListPanel({
   title,
@@ -95,7 +95,7 @@ export function TaskListPanel({
             <h2 className="text-xl font-normal leading-tight tracking-tight text-text-primary">{title}</h2>
             <span className="text-xs text-text-muted">
               {sorted.length} {sorted.length === 1 ? "tarefa" : "tarefas"}
-              {isDemo && " · demonstração: tarefas fictícias, não estão no board"}
+              {isDemo && " · demonstração: tarefas fictícias"}
             </span>
           </div>
           <button

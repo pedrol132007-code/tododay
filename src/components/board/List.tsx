@@ -13,7 +13,7 @@ import { Card } from "./Card";
 import { IconPlus } from "../ui/icons";
 import { ListMenu } from "./ListMenu";
 import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
-import { isOverWip } from "../../lib/dashboardRules";
+import { ListCounter } from "./ListCounter";
 
 interface ListProps {
   list: ListType;
@@ -50,7 +50,6 @@ export function List({
   }, [cards.length]);
 
   const canDelete = cardCount !== undefined && cardCount === 0;
-  const overWip = isOverWip(cards.length, list.wip_limit);
 
   const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" } });
   const droppable = useDroppable({
@@ -104,16 +103,7 @@ export function List({
             <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <span
-              className={`rounded-md px-1.5 text-xs tabular-nums ${overWip ? "bg-danger/10 font-semibold text-danger" : "text-text-muted"}`}
-              title={
-                list.wip_limit == null
-                  ? `${cards.length} ${cards.length === 1 ? "tarefa" : "tarefas"}`
-                  : `${cards.length} de no máximo ${list.wip_limit}${overWip ? " — acima do limite de WIP" : ""}`
-              }
-            >
-              {list.wip_limit == null ? cards.length : `${cards.length}/${list.wip_limit}`}
-            </span>
+            <ListCounter count={cards.length} wipLimit={list.wip_limit} />
             {canEdit && <ListMenu list={list} canDelete={canDelete} onDelete={() => deleteList.mutate(list.id)} />}
           </div>
         </div>

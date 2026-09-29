@@ -1,15 +1,18 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask, ListStatus } from "../../types";
 import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
 import { hasFilters, matchesFilters, personSlugs, slugify, sortCards, type FilterableCard } from "../../lib/boardFilters";
 import { cardRisk } from "../../lib/dashboardRules";
-import { DEMO_BOARD_NAME, DEMO_LABELS, demoBoard } from "../../lib/demoBoard";
+import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, type DemoAttachment } from "../../lib/demoBoard";
+import { makeDemoFiles, revokeDemoFiles, type DemoFile } from "../../lib/demoFiles";
 import { useBoardFilters } from "../../hooks/useBoardFilters";
 import { useCompact } from "../../hooks/usePreferences";
 import { DemoActions, DemoBadge } from "../ui/Demo";
 import { PageHeader } from "../ui/PageHeader";
 import { BoardToolbar } from "./BoardToolbar";
 import { CardFace } from "./CardFace";
+import { DemoCardPanel } from "./DemoCardPanel";
 import { ListCounter } from "./ListCounter";
 
 const LABEL_OPTIONS = DEMO_LABELS.map((l) => ({ slug: slugify(l.name), name: l.name }));
@@ -30,6 +33,9 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
     [data.people, slugs],
   );
   const lists = useMemo(() => demoBoard(data), [data]);
+  const attachments = useMemo(() => demoAttachments(data), [data]);
+  const files = useDemoFiles(attachments, data);
+  const [opened, setOpened] = useState<{ task: DashboardTask; listStatus: ListStatus } | null>(null);
 
   const filterable = (task: DashboardTask, listStatus: ListStatus): FilterableCard => ({
     title: task.title,
@@ -99,22 +105,73 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
                   {filtered && list.tasks.length > 0 ? "Nenhuma tarefa com esses filtros" : "Nenhuma tarefa aqui"}
                 </div>
               ) : (
-                list.shown.map((task) => <DemoCard key={task.id} task={task} listStatus={list.status} data={data} compact={compact} />)
+                list.shown.map((task) => (
+                  <DemoCard
+                    key={task.id}
+                    task={task}
+                    listStatus={list.status}
+                    data={data}
+                    compact={compact}
+                    attachments={attachments.get(task.id) ?? []}
+                    files={files}
+                    onOpen={() => setOpened({ task, listStatus: list.status })}
+                  />
+                ))
               )}
             </div>
           </section>
         ))}
       </div>
+      <AnimatePresence>
+        {opened && (
+          <DemoCardPanel
+            task={opened.task}
+            person={data.people.find((p) => p.id === opened.task.assigneeId)}
+            done={opened.listStatus === "done"}
+            attachments={attachments.get(opened.task.id) ?? []}
+            files={files}
+            onClose={() => setOpened(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function DemoCard({ task, listStatus, data, compact }: { task: DashboardTask; listStatus: ListStatus; data: DashboardData; compact: boolean }) {
+/** Cria os arquivos dos anexos de exemplo (URLs blob:) e os libera ao trocar de demonstração. */
+function useDemoFiles(attachments: Map<string, DemoAttachment[]>, data: DashboardData): Map<string, DemoFile> {
+  const [files, setFiles] = useState<Map<string, DemoFile>>(new Map());
+  useEffect(() => {
+    let current: Map<string, DemoFile> | null = null;
+    let alive = true;
+    const titleOf = (id: string) => data.tasks.find((t) => t.id === id)?.title ?? "";
+    void makeDemoFiles([...attachments.values()].flat(), titleOf).then((made) => {
+      if (!alive) return revokeDemoFiles(made);
+      current = made;
+      setFiles(made);
+    });
+    return () => {
+      alive = false;
+      if (current) revokeDemoFiles(current);
+    };
+  }, [attachments, data]);
+  return files;
+}
+
+function DemoCard({ task, listStatus, data, compact, attachments, files, onOpen }: {
+  task: DashboardTask;
+  listStatus: ListStatus;
+  data: DashboardData;
+  compact: boolean;
+  attachments: DemoAttachment[];
+  files: Map<string, DemoFile>;
+  onOpen: () => void;
+}) {
   const person = data.people.find((p) => p.id === task.assigneeId);
   const risk = cardRisk({ dueDay: task.dueDay, listStatus, enteredDay: enteredDayOf(task, data.today) }, data.today);
   return (
     // Como no board real, o card fica num invólucro para não encolher quando a coluna rola.
-    <div>
+    <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`Abrir ${task.title}`}>
       <CardFace
         title={<span className="flex-1 px-2 py-1">{task.title}</span>}
         priority={task.priority}
@@ -123,8 +180,10 @@ function DemoCard({ task, listStatus, data, compact }: { task: DashboardTask; li
         stalledDays={risk.stalledDays}
         assignee={person}
         labels={task.labels.map((name) => DEMO_LABELS.find((l) => l.name === name)!)}
+        attachments={attachments.length}
+        cover={files.get(attachments.find((a) => a.isCover)?.id ?? "")?.url}
         compact={compact}
       />
-    </div>
+    </button>
   );
 }

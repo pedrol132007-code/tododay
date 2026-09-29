@@ -1,41 +1,13 @@
 import { useRef, useState } from "react";
-import { AnimatePresence } from "framer-motion";
 import type { CardAttachment } from "../../types";
 import { downloadUrl } from "../../db/attachments";
 import { useAttachmentUrls, useDeleteAttachment, useSetCardCover, type AttachmentUpload } from "../../hooks/useAttachments";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
-import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_MB, typeOfName, type AttachmentKind } from "../../lib/attachmentRules";
-import { formatBytes, formatDue } from "../../lib/boardVisuals";
+import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_MB } from "../../lib/attachmentRules";
 import { localDay } from "../../lib/dashboardRules";
-import { Lightbox } from "../ui/Lightbox";
-import { IconDownload, IconFile, IconImage, IconPaperclip, IconTrash, IconX } from "../ui/icons";
+import { IconImage, IconPaperclip, IconTrash, IconX } from "../ui/icons";
+import { AttachmentList } from "./AttachmentList";
 import { PanelSection } from "./PanelSection";
-
-const KIND_LABEL: Record<Exclude<AttachmentKind, "image">, string> = {
-  pdf: "PDF",
-  document: "DOC",
-  spreadsheet: "XLS",
-  presentation: "PPT",
-  text: "TXT",
-  archive: "ZIP",
-};
-
-const isImage = (a: CardAttachment) => a.mime_type.startsWith("image/");
-
-/** Miniatura da imagem, ou o ícone de arquivo com a sigla do tipo. */
-function Thumb({ attachment, url }: { attachment: CardAttachment; url?: string }) {
-  const box = "flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-bg-elevated";
-  if (isImage(attachment)) {
-    return <span className={box}>{url && <img src={url} alt="" className="h-full w-full object-cover" />}</span>;
-  }
-  const kind = typeOfName(attachment.name)?.kind;
-  return (
-    <span className={`${box} flex-col gap-0 text-text-muted`}>
-      <IconFile size={16} />
-      <span className="text-[9px] font-semibold leading-none">{kind && kind !== "image" ? KIND_LABEL[kind] : ""}</span>
-    </span>
-  );
-}
 
 /**
  * Anexos do card aberto: enviar (botão, arrastar para o painel ou colar imagem), acompanhar o
@@ -55,11 +27,8 @@ export function Attachments({ cardId, attachments, uploads, onFiles, dragging }:
   const setCover = useSetCardCover(cardId);
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
-  const [viewing, setViewing] = useState<number | null>(null);
 
   const list = attachments ?? [];
-  const images = list.filter(isImage);
-  const today = new Date();
 
   return (
     <PanelSection title="Anexos" aside={list.length > 0 ? String(list.length) : undefined}>
@@ -125,98 +94,70 @@ export function Attachments({ cardId, attachments, uploads, onFiles, dragging }:
       {list.length === 0 && uploads.length === 0 && !canEdit && <p className="text-sm text-text-muted">Nenhum anexo.</p>}
 
       {list.length > 0 && (
-        <ul className="flex flex-col gap-1">
-          {list.map((a) => {
+        <AttachmentList
+          items={list.map((a) => {
             const url = urls?.get(a.storage_path);
-            const kind = typeOfName(a.name)?.kind;
-            const meta = `${formatBytes(a.size_bytes)} · ${a.uploaded_by_name} · ${formatDue(localDay(new Date(a.created_at)), today)}`;
-            const nameClass = "min-w-0 truncate text-left text-sm text-text-primary hover:text-primary";
+            return {
+              key: a.id,
+              name: a.name,
+              isImage: a.mime_type.startsWith("image/"),
+              sizeBytes: a.size_bytes,
+              uploaderName: a.uploaded_by_name,
+              day: localDay(new Date(a.created_at)),
+              isCover: a.is_cover,
+              url,
+              downloadHref: url && downloadUrl(url, a.name),
+            };
+          })}
+          actions={(item) => {
+            if (!canEdit) return null;
+            const id = item.key as number;
             return (
-              <li key={a.id} className="group flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-bg-elevated">
-                <Thumb attachment={a} url={url} />
-                <div className="flex min-w-0 flex-1 flex-col">
-                  {/* Imagem amplia aqui; PDF abre em outra aba; o resto baixa com o nome original. */}
-                  {isImage(a) ? (
-                    <button type="button" disabled={!url} onClick={() => setViewing(images.indexOf(a))} className={nameClass} title={a.name}>
-                      {a.name}
-                    </button>
-                  ) : (
-                    <a
-                      href={url && (kind === "pdf" ? url : downloadUrl(url, a.name))}
-                      target={kind === "pdf" ? "_blank" : undefined}
-                      rel="noopener noreferrer"
-                      className={nameClass}
-                      title={a.name}
-                    >
-                      {a.name}
-                    </a>
-                  )}
-                  <span className="truncate text-xs text-text-muted">
-                    {a.is_cover && <span className="mr-1.5 rounded bg-highlight px-1 font-semibold text-black">Capa</span>}
-                    {meta}
-                  </span>
-                </div>
-                {canEdit && isImage(a) && (
+              <>
+                {item.isImage && (
                   <button
                     type="button"
-                    onClick={() => setCover.mutate(a.is_cover ? null : a.id)}
-                    aria-pressed={a.is_cover}
-                    aria-label={a.is_cover ? `Tirar ${a.name} da capa` : `Usar ${a.name} como capa`}
-                    title={a.is_cover ? "Tirar da capa" : "Usar como capa"}
-                    className={`rounded-lg p-1.5 hover:bg-bg-surface ${a.is_cover ? "text-primary" : "text-text-muted hover:text-text-primary"}`}
+                    onClick={() => setCover.mutate(item.isCover ? null : id)}
+                    aria-pressed={item.isCover}
+                    aria-label={item.isCover ? `Tirar ${item.name} da capa` : `Usar ${item.name} como capa`}
+                    title={item.isCover ? "Tirar da capa" : "Usar como capa"}
+                    className={`rounded-lg p-1.5 hover:bg-bg-surface ${item.isCover ? "text-primary" : "text-text-muted hover:text-text-primary"}`}
                   >
                     <IconImage size={15} />
                   </button>
                 )}
-                {url && (
-                  <a href={downloadUrl(url, a.name)} aria-label={`Baixar ${a.name}`} title="Baixar" className="rounded-lg p-1.5 text-text-muted hover:bg-bg-surface hover:text-text-primary">
-                    <IconDownload size={15} />
-                  </a>
-                )}
-                {canEdit &&
-                  (confirmingId === a.id ? (
-                    <span className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          deleteAttachment.mutate(a.id);
-                          setConfirmingId(null);
-                        }}
-                        className="rounded-lg bg-danger px-2 py-1 text-xs font-semibold text-on-accent"
-                      >
-                        Excluir
-                      </button>
-                      <button type="button" onClick={() => setConfirmingId(null)} className="rounded-lg px-2 py-1 text-xs text-text-muted hover:text-text-primary">
-                        Cancelar
-                      </button>
-                    </span>
-                  ) : (
+                {confirmingId === id ? (
+                  <span className="flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => setConfirmingId(a.id)}
-                      aria-label={`Excluir ${a.name}`}
-                      title="Excluir anexo"
-                      className="rounded-lg p-1.5 text-text-muted hover:bg-danger hover:text-on-accent"
+                      onClick={() => {
+                        deleteAttachment.mutate(id);
+                        setConfirmingId(null);
+                      }}
+                      className="rounded-lg bg-danger px-2 py-1 text-xs font-semibold text-on-accent"
                     >
-                      <IconTrash size={15} />
+                      Excluir
                     </button>
-                  ))}
-              </li>
+                    <button type="button" onClick={() => setConfirmingId(null)} className="rounded-lg px-2 py-1 text-xs text-text-muted hover:text-text-primary">
+                      Cancelar
+                    </button>
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingId(id)}
+                    aria-label={`Excluir ${item.name}`}
+                    title="Excluir anexo"
+                    className="rounded-lg p-1.5 text-text-muted hover:bg-danger hover:text-on-accent"
+                  >
+                    <IconTrash size={15} />
+                  </button>
+                )}
+              </>
             );
-          })}
-        </ul>
+          }}
+        />
       )}
-
-      <AnimatePresence>
-        {viewing != null && urls && (
-          <Lightbox
-            images={images.map((a) => ({ url: urls.get(a.storage_path) ?? "", name: a.name, downloadUrl: downloadUrl(urls.get(a.storage_path) ?? "", a.name) }))}
-            index={viewing}
-            onIndex={setViewing}
-            onClose={() => setViewing(null)}
-          />
-        )}
-      </AnimatePresence>
     </PanelSection>
   );
 }

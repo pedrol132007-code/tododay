@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEMO_DONE_DAYS, demoBoard } from "./demoBoard";
+import { DEMO_DONE_DAYS, demoAttachments, demoBoard } from "./demoBoard";
 import { generateDemo } from "./demoData";
 import { PRIORITIES } from "./boardVisuals";
 import { isOverWip, stalledDays } from "./dashboardRules";
@@ -48,5 +48,24 @@ describe("demoBoard", () => {
       const ranks = list.tasks.map((t) => rank(t.priority));
       expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
     }
+  });
+
+  it("põe anexos em alguns cards abertos, com imagem, PDF e uma capa", () => {
+    for (const d of seeds) {
+      const byTask = demoAttachments(d);
+      const all = [...byTask.values()].flat();
+      const openIds = new Set(demoBoard(d).filter((l) => l.status !== "done").flatMap((l) => l.tasks.map((t) => t.id)));
+      expect(byTask.size).toBeGreaterThanOrEqual(3);
+      expect(byTask.size).toBeLessThan(openIds.size / 2);
+      for (const id of byTask.keys()) expect(openIds.has(id)).toBe(true);
+      expect(all.some((a) => a.kind === "pdf")).toBe(true);
+      expect(all.filter((a) => a.isCover)).toHaveLength(1);
+      expect(all.find((a) => a.isCover)!.kind).toBe("image");
+      for (const list of byTask.values()) {
+        expect(list.length).toBeLessThanOrEqual(3);
+        expect(new Set(list.map((a) => a.name)).size).toBe(list.length);
+      }
+    }
+    expect(demoAttachments(seeds[0])).toEqual(demoAttachments(seeds[0]));
   });
 });

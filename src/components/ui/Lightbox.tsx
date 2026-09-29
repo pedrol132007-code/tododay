@@ -55,7 +55,7 @@ export function Lightbox({ images, index, onIndex, onClose }: { images: Lightbox
             {index + 1} de {images.length}
           </span>
         )}
-        <a href={image.downloadUrl} className="rounded-lg p-1.5 hover:bg-on-accent/15" aria-label="Baixar imagem" title="Baixar">
+        <a href={image.downloadUrl} download={image.name} className="rounded-lg p-1.5 hover:bg-on-accent/15" aria-label="Baixar imagem" title="Baixar">
           <IconDownload size={18} />
         </a>
         <button type="button" onClick={onClose} className="rounded-lg p-1.5 hover:bg-on-accent/15" aria-label="Fechar visualização">

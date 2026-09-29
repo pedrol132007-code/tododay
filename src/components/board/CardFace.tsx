@@ -84,7 +84,9 @@ export function CardFace({ title, actions, priority, due, done, stalledDays, ass
 
       {hasMeta && (
         // Metadados numa linha própria, para o título usar a largura toda do card.
+        // O responsável abre a linha, colado ao prazo: quem e até quando ficam juntos.
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2">
+          {assignee && <Avatar userId={assignee.id} name={assignee.name} title={`Responsável: ${assignee.name}`} small />}
           {due && <DueBadge due={due} done={done} />}
           {stalledDays != null && (
             <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] text-text-muted" title="Sem mudar de coluna">
@@ -98,11 +100,6 @@ export function CardFace({ title, actions, priority, due, done, stalledDays, ass
               title="Itens do checklist concluídos"
             >
               ✓ {checklist.done}/{checklist.total}
-            </span>
-          )}
-          {assignee && (
-            <span className="ml-auto">
-              <Avatar userId={assignee.id} name={assignee.name} title={`Responsável: ${assignee.name}`} />
             </span>
           )}
         </div>

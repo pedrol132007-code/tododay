@@ -10,7 +10,10 @@ import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
-import { IconPlus, IconTrash } from "../ui/icons";
+import { IconPlus } from "../ui/icons";
+import { ListMenu } from "./ListMenu";
+import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
+import { isOverWip } from "../../lib/dashboardRules";
 
 interface ListProps {
   list: ListType;
@@ -47,6 +50,7 @@ export function List({
   }, [cards.length]);
 
   const canDelete = cardCount !== undefined && cardCount === 0;
+  const overWip = isOverWip(cards.length, list.wip_limit);
 
   const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" } });
   const droppable = useDroppable({
@@ -90,24 +94,28 @@ export function List({
           {...sortable.listeners}
           className={`flex shrink-0 items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
-          <InlineEditableText
-            value={list.name}
-            onSave={(name) => renameList.mutate({ id: list.id, name })}
-            className="text-lg font-semibold"
-            readOnly={!canEdit}
-          />
-          {canEdit && (
-            <button
-              type="button"
-              disabled={!canDelete}
-              onClick={() => deleteList.mutate(list.id)}
-              title={canDelete ? "Excluir coluna" : "Mova ou arquive os cards antes de excluir"}
-              className="rounded-lg p-1 text-text-muted hover:bg-danger hover:text-on-accent disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-muted"
-              aria-label="Excluir coluna"
+          <div className="flex min-w-0 flex-col">
+            <InlineEditableText
+              value={list.name}
+              onSave={(name) => renameList.mutate({ id: list.id, name })}
+              className="text-lg font-semibold"
+              readOnly={!canEdit}
+            />
+            <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <span
+              className={`rounded-md px-1.5 text-xs tabular-nums ${overWip ? "bg-danger/10 font-semibold text-danger" : "text-text-muted"}`}
+              title={
+                list.wip_limit == null
+                  ? `${cards.length} ${cards.length === 1 ? "tarefa" : "tarefas"}`
+                  : `${cards.length} de no máximo ${list.wip_limit}${overWip ? " — acima do limite de WIP" : ""}`
+              }
             >
-              <IconTrash size={14} />
-            </button>
-          )}
+              {list.wip_limit == null ? cards.length : `${cards.length}/${list.wip_limit}`}
+            </span>
+            {canEdit && <ListMenu list={list} canDelete={canDelete} onDelete={() => deleteList.mutate(list.id)} />}
+          </div>
         </div>
 
         {/* Título e "Novo card..." ficam fixos; só os cards rolam quando a coluna passa da altura da tela. */}
@@ -121,13 +129,14 @@ export function List({
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
-                Nenhum card ainda.
+                Nenhuma tarefa aqui
               </div>
             ) : (
               cards.map((card) => (
                 <Card
                   key={card.id}
                   card={card}
+                  listStatus={list.status}
                   onOpenDetail={onOpenDetail}
                   labels={labelsByCard.get(card.id)}
                   checklistProgress={checklistProgressByCard.get(card.id)}

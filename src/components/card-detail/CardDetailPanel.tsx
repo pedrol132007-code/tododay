@@ -1,8 +1,10 @@
 import { useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import type { Card as CardType } from "../../types";
-import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate } from "../../hooks/useCards";
+import type { CardPriority, Card as CardType } from "../../types";
+import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate, useUpdateCardPriority } from "../../hooks/useCards";
+import { PRIORITIES, PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { useTeamMembers } from "../../hooks/useTeams";
+import { useLists } from "../../hooks/useLists";
 import { useCardActivity } from "../../hooks/useActivity";
 import { ActivityList } from "../ui/ActivityList";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
@@ -13,7 +15,7 @@ import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { PanelSection } from "./PanelSection";
-import { IconCalendar, IconUsers, IconX } from "../ui/icons";
+import { IconCalendar, IconFlag, IconUsers, IconX } from "../ui/icons";
 
 interface CardDetailPanelProps {
   card: CardType;
@@ -41,6 +43,9 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const updateDescription = useUpdateCardDescription(card.list_id);
   const updateDueDate = useUpdateCardDueDate(card.list_id);
   const updateAssignee = useUpdateCardAssignee(card.list_id);
+  const updatePriority = useUpdateCardPriority(card.list_id);
+  const { data: lists } = useLists(boardId);
+  const inDoneList = lists?.find((l) => l.id === card.list_id)?.status === "done";
   const canEdit = useCanEdit();
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const assignee = members?.find((m) => m.user_id === card.assignee_id);
@@ -113,6 +118,26 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
               )}
             </DetailRow>
 
+            <DetailRow icon={<IconFlag size={16} />} label="Prioridade">
+              {canEdit ? (
+                <select
+                  aria-label="Prioridade"
+                  value={card.priority ?? ""}
+                  onChange={(e) => updatePriority.mutate({ id: card.id, priority: (e.target.value || null) as CardPriority | null })}
+                  className={fieldClass}
+                >
+                  <option value="">Sem prioridade</option>
+                  {PRIORITIES.map((p) => (
+                    <option key={p} value={p}>
+                      {PRIORITY_LABEL[p]}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-sm text-text-primary">{card.priority ? PRIORITY_LABEL[card.priority] : "Sem prioridade"}</span>
+              )}
+            </DetailRow>
+
             <DetailRow icon={<IconCalendar size={16} />} label="Vencimento">
               <input
                 type="date"
@@ -122,7 +147,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
                 onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
                 className={fieldClass}
               />
-              {card.due_date && <DueBadge due={card.due_date} withLabel />}
+              {card.due_date && <DueBadge due={card.due_date} withLabel done={inDoneList} />}
             </DetailRow>
           </div>
         </PanelSection>

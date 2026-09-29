@@ -14,7 +14,9 @@ import {
   updateCardDueDate,
   updateCardPosition,
   updateCardPositions,
+  updateCardPriority,
 } from "../db/cards";
+import type { CardPriority } from "../types";
 
 export function useCards(listId: number) {
   return useQuery({
@@ -80,6 +82,14 @@ export function useUpdateCardAssignee(listId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, assigneeId }: { id: number; assigneeId: string | null }) => updateCardAssignee(id, assigneeId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
+  });
+}
+
+export function useUpdateCardPriority(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, priority }: { id: number; priority: CardPriority | null }) => updateCardPriority(id, priority),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cards", listId] }),
   });
 }

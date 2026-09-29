@@ -25,6 +25,8 @@ const cards = Array.from({ length: 30 }, (_, i) => ({
   updated_at: NOW,
   archived_at: null,
   assignee_id: null,
+  priority: null,
+  list_entered_at: NOW,
 }));
 
 const tables: Record<string, unknown> = {
@@ -32,8 +34,8 @@ const tables: Record<string, unknown> = {
   team_member: [{ role: "admin", team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }],
   board: [{ id: 1, team_id: 1, name: "Board E2E", position: 1, created_at: NOW }],
   list: [
-    { id: 1, board_id: 1, name: "Coluna longa", position: 1, wip_limit: null },
-    { id: 2, board_id: 1, name: "Coluna curta", position: 2, wip_limit: null },
+    { id: 1, board_id: 1, name: "Coluna longa", position: 1, wip_limit: null, status: "todo" },
+    { id: 2, board_id: 1, name: "Coluna curta", position: 2, wip_limit: null, status: "todo" },
   ],
   card: cards,
 };

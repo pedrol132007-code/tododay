@@ -1,5 +1,5 @@
 import { must, supabase } from "./supabase";
-import type { List } from "../types";
+import type { List, ListStatus } from "../types";
 
 export async function listLists(boardId: number): Promise<List[]> {
   return must(await supabase.from("list").select("*").eq("board_id", boardId).order("position"));
@@ -16,6 +16,11 @@ export async function createList(boardId: number, name: string): Promise<number>
 
 export async function renameList(id: number, name: string): Promise<void> {
   must(await supabase.from("list").update({ name }).eq("id", id));
+}
+
+/** Tipo da coluna e limite de WIP (null = sem limite), editados no menu da coluna. */
+export async function updateListSettings(id: number, settings: { status?: ListStatus; wip_limit?: number | null }): Promise<void> {
+  must(await supabase.from("list").update(settings).eq("id", id));
 }
 
 export async function deleteList(id: number): Promise<void> {

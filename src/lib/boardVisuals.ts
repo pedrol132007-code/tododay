@@ -1,6 +1,22 @@
 // Regras visuais do board: selo de vencimento e cor de cada pessoa.
 
-export type DueState = "overdue" | "today" | "upcoming";
+import type { CardPriority, ListStatus } from "../types";
+
+export const LIST_STATUS_LABEL: Record<ListStatus, string> = {
+  todo: "A fazer",
+  doing: "Em andamento",
+  done: "Concluído",
+};
+
+/** Da mais para a menos urgente (ordem dos menus e da ordenação). */
+export const PRIORITIES: CardPriority[] = ["urgent", "high", "medium", "low"];
+
+export const PRIORITY_LABEL: Record<CardPriority, string> = {
+  urgent: "Urgente",
+  high: "Alta",
+  medium: "Média",
+  low: "Baixa",
+};
 
 const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
@@ -8,17 +24,6 @@ const MONTHS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "
 function parseDate(due: string): { y: number; m: number; d: number } {
   const [y, m, d] = due.split("-").map(Number);
   return { y, m, d };
-}
-
-const dayKey = (y: number, m: number, d: number) => y * 10_000 + m * 100 + d;
-
-export function dueState(due: string | null, today: Date): DueState | null {
-  if (!due) return null;
-  const { y, m, d } = parseDate(due);
-  const target = dayKey(y, m, d);
-  const now = dayKey(today.getFullYear(), today.getMonth() + 1, today.getDate());
-  if (target < now) return "overdue";
-  return target === now ? "today" : "upcoming";
 }
 
 export function formatDue(due: string, today: Date): string {

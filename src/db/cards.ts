@@ -1,5 +1,5 @@
 import { must, supabase } from "./supabase";
-import type { Card } from "../types";
+import type { Card, CardPriority } from "../types";
 
 // updated_at é mantido por trigger no Postgres (0004), não pelo app.
 
@@ -33,6 +33,10 @@ export async function updateCardDueDate(id: number, dueDate: string | null): Pro
 
 export async function updateCardAssignee(id: number, assigneeId: string | null): Promise<void> {
   must(await supabase.from("card").update({ assignee_id: assigneeId }).eq("id", id));
+}
+
+export async function updateCardPriority(id: number, priority: CardPriority | null): Promise<void> {
+  must(await supabase.from("card").update({ priority }).eq("id", id));
 }
 
 export async function archiveCard(id: number): Promise<void> {

@@ -377,7 +377,7 @@ export function BoardView({
     setDragSourceListId(null);
   }
 
-  // Cards too: otherwise every column flashes "Nenhum card ainda." before its cards arrive.
+  // Cards too: otherwise every column flashes "Nenhuma tarefa aqui" before its cards arrive.
   if (isLoading || cardQueries.some((q) => q.isLoading)) {
     return (
       <div className="flex min-h-0 flex-1 flex-col p-6">

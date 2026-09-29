@@ -25,7 +25,7 @@ test("cria coluna e card, usa o painel, arquiva e exclui", async ({ page }) => {
   await page.getByPlaceholder("Nova coluna...").press("Enter");
   const column = page.locator("div.bg-bg-column").filter({ hasText: listName });
   await expect(column).toBeVisible();
-  await expect(column.getByText("Nenhum card ainda.")).toBeVisible();
+  await expect(column.getByText("Nenhuma tarefa aqui")).toBeVisible();
 
   await column.getByPlaceholder("Novo card...").fill("Card de teste");
   await column.getByPlaceholder("Novo card...").press("Enter");
@@ -41,9 +41,10 @@ test("cria coluna e card, usa o painel, arquiva e exclui", async ({ page }) => {
   await expect(card.getByText("0/1")).toBeVisible();
 
   await card.getByRole("button", { name: "Arquivar card" }).click();
-  await expect(column.getByText("Nenhum card ainda.")).toBeVisible();
+  await expect(column.getByText("Nenhuma tarefa aqui")).toBeVisible();
 
-  await column.getByRole("button", { name: "Excluir coluna" }).click();
+  await column.getByRole("button", { name: `Configurações da coluna ${listName}`, exact: true }).click();
+  await page.getByRole("button", { name: "Excluir coluna" }).click();
   await expect(column).toHaveCount(0);
 });
 

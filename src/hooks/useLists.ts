@@ -6,7 +6,9 @@ import {
   renameList,
   updateListPosition,
   updateListPositions,
+  updateListSettings,
 } from "../db/lists";
+import type { ListStatus } from "../types";
 
 export function useLists(boardId: number) {
   return useQuery({
@@ -27,6 +29,14 @@ export function useRenameList(boardId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, name }: { id: number; name: string }) => renameList(id, name),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] }),
+  });
+}
+
+export function useUpdateListSettings(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...settings }: { id: number; status?: ListStatus; wip_limit?: number | null }) => updateListSettings(id, settings),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lists", boardId] }),
   });
 }

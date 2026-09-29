@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useBoards, useCreateBoard, useRenameBoard } from "../../hooks/useBoards";
 import { useCanEdit, useIsAdmin } from "../../hooks/useCurrentTeam";
-import { IconDots, IconPencil, IconPlus, IconTrash } from "../ui/icons";
+import { IconArchive, IconDots, IconPencil, IconPlus, IconTrash } from "../ui/icons";
 import { DeleteBoardDialog } from "./DeleteBoardDialog";
 import type { Board } from "../../types";
 
@@ -10,9 +10,10 @@ interface BoardSwitcherProps {
   teamId: number;
   activeBoardId: number | null;
   onSelect: (boardId: number) => void;
+  onOpenArchive: () => void;
 }
 
-export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcherProps) {
+export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }: BoardSwitcherProps) {
   const { data: boards } = useBoards(teamId);
   const createBoard = useCreateBoard(teamId);
   const renameBoard = useRenameBoard(teamId);
@@ -109,11 +110,11 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
               type="button"
               onClick={() => onSelect(board.id)}
               onDoubleClick={() => active && canEdit && startRename(board)}
-              className={`py-1 ${active && canEdit ? "pl-3 pr-1" : "px-3"}`}
+              className={`py-1 ${active ? "pl-3 pr-1" : "px-3"}`}
             >
               {board.name}
             </button>
-            {active && canEdit && (
+            {active && (
               <button
                 type="button"
                 onClick={() => setMenuOpen((open) => !open)}
@@ -127,12 +128,24 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect }: BoardSwitcher
             )}
             {active && menuOpen && (
               <div className="absolute left-0 top-full z-40 mt-1 w-48 rounded-xl border border-border bg-bg-surface p-1 font-normal shadow-lg">
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => startRename(board)}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-primary hover:bg-bg-elevated"
+                  >
+                    <IconPencil size={14} /> Renomear
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => startRename(board)}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenArchive();
+                  }}
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-primary hover:bg-bg-elevated"
                 >
-                  <IconPencil size={14} /> Renomear
+                  <IconArchive size={14} /> Arquivados
                 </button>
                 {isAdmin && (
                   <button

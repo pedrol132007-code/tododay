@@ -13,6 +13,7 @@ import { TeamView } from "./components/team/TeamView";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { AppMenu, type AppView } from "./components/ui/AppMenu";
 import { BrandMark } from "./components/ui/BrandMark";
+import { ViewTabs } from "./components/ui/ViewTabs";
 import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
@@ -154,8 +155,9 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         </div>
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
         <div className="h-5 w-px shrink-0 bg-border" />
-        <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} />
-        <AppMenu userId={userId} view={view} hasBoard={!!activeBoard} onNavigate={setView} />
+        <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} onOpenArchive={() => setView("archive")} />
+        <ViewTabs view={view} onNavigate={setView} />
+        <AppMenu userId={userId} view={view} onNavigate={setView} />
       </div>
       {view === "dashboard" ? (
         <DashboardErrorBoundary>

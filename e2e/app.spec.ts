@@ -75,7 +75,7 @@ test("configurações trocam tema e densidade e ficam salvas", async ({ page }) 
 
 test("dashboard gera demonstração, troca período e pessoa, mostra tabela e sai", async ({ page }) => {
   await signIn(page);
-  await openFromMenu(page, "Dashboard");
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
   await expect(page.getByText("O dashboard ainda não tem dados")).toBeVisible();
 
   await page.getByRole("button", { name: "Gerar demonstração" }).click();

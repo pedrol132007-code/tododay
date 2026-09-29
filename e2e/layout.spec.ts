@@ -112,8 +112,8 @@ test("coluna longa rola sozinha, como no Trello, sem mexer no resto da tela", as
 
 test("muitos arquivados rolam dentro da view, sem esconder a barra do topo", async ({ page }) => {
   await openLongBoard(page);
-  await page.getByRole("button", { name: "Menu", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Arquivados" }).click();
+  await page.getByRole("button", { name: "Opções do board Board E2E" }).click();
+  await page.getByRole("button", { name: "Arquivados" }).click();
   const last = page.getByRole("button", { name: "Restaurar" }).last();
   await last.focus();
 
@@ -125,8 +125,7 @@ test("muitos arquivados rolam dentro da view, sem esconder a barra do topo", asy
 test("dashboard rola só por dentro: a página não ganha barra de rolagem própria", async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 768 });
   await openLongBoard(page);
-  await page.getByRole("button", { name: "Menu", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Dashboard" }).click();
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
   await page.getByRole("button", { name: "Gerar demonstração" }).click();
   await expect(page.getByText("Entregas por semana")).toBeVisible();
 

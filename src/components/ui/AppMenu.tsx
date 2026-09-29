@@ -3,20 +3,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "../../db/auth";
 import { useProfile } from "../../hooks/useAuth";
 import { Avatar } from "./Avatar";
-import { IconArchive, IconChart, IconCheck, IconChevronDown, IconColumns, IconSettings, IconSignOut, IconUsers } from "./icons";
+import { IconCheck, IconChevronDown, IconSettings, IconSignOut, IconUsers } from "./icons";
 
 export type AppView = "board" | "archive" | "team" | "settings" | "dashboard";
 
 interface AppMenuProps {
   userId: string;
   view: AppView;
-  /** Arquivados é do board aberto: sem board, a opção some. */
-  hasBoard: boolean;
   onNavigate: (view: AppView) => void;
 }
 
-/** Menu do canto superior direito: telas do app, conta e sair. */
-export function AppMenu({ userId, view, hasBoard, onNavigate }: AppMenuProps) {
+/** Menu da pessoa, no canto superior direito: o que se usa de vez em quando (equipe, preferências, sair). */
+export function AppMenu({ userId, view, onNavigate }: AppMenuProps) {
   const { data: profile } = useProfile(userId);
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -73,9 +71,6 @@ export function AppMenu({ userId, view, hasBoard, onNavigate }: AppMenuProps) {
             </div>
           )}
           <div className="flex flex-col py-1">
-            <Item view={view} onGo={go} target="board" icon={<IconColumns size={16} />}>Board</Item>
-            <Item view={view} onGo={go} target="dashboard" icon={<IconChart size={16} />}>Dashboard</Item>
-            {hasBoard && <Item view={view} onGo={go} target="archive" icon={<IconArchive size={16} />}>Arquivados</Item>}
             <Item view={view} onGo={go} target="team" icon={<IconUsers size={16} />}>Equipe</Item>
             <Item view={view} onGo={go} target="settings" icon={<IconSettings size={16} />}>Configurações</Item>
           </div>

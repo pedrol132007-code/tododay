@@ -1,6 +1,6 @@
-// Limites das regras de risco do dashboard. Único lugar para ajustar: alertas, carga da equipe e a
-// demonstração leem daqui.
-import type { DashboardPerson, DashboardTask } from "../types";
+// Limites e regras de risco. Único lugar para ajustar: board (cards e colunas), alertas, carga da
+// equipe e a demonstração leem daqui.
+import type { DashboardPerson, DashboardTask, ListStatus } from "../types";
 import { daysBetween, statusOn } from "./metrics";
 
 /** "Vence em breve": prazo entre hoje e hoje + N dias, ainda não concluída. */
@@ -12,6 +12,46 @@ export const STALLED_DAYS = 7;
 /** "Sobrecarga": mais de N tarefas em andamento (limite fixo, não relativo à média). */
 export const OVERLOAD_IN_PROGRESS = 8;
 
+// ─── Regras básicas (board e dashboard) ───────────────────────────────────────
+
+/** "AAAA-MM-DD" do dia local de `date` (o "hoje" de quem está olhando). */
+export const localDay = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+export type DueRisk = "overdue" | "soon";
+
+/** Prazo de uma tarefa aberta no dia: atrasado (antes do dia), em breve (até DUE_SOON_DAYS) ou nada. */
+export function dueRisk(dueDay: string | null, day: string): DueRisk | null {
+  if (dueDay == null) return null;
+  if (dueDay < day) return "overdue";
+  return daysBetween(day, dueDay) <= DUE_SOON_DAYS ? "soon" : null;
+}
+
+/** Dias desde a última mudança, se passou de STALLED_DAYS; senão null. */
+export function stalledSince(sinceDay: string, day: string): number | null {
+  const days = daysBetween(sinceDay, day);
+  return days > STALLED_DAYS ? days : null;
+}
+
+/** Coluna acima do limite de WIP (só avisa; não bloqueia). Sem limite, nunca passa. */
+export const isOverWip = (count: number, limit: number | null) => limit != null && count > limit;
+
+/**
+ * Risco de um card do board no dia: prazo (se a coluna não é "Concluído") e dias parado (se está
+ * numa coluna "Em andamento" desde `enteredDay`).
+ */
+export function cardRisk(
+  card: { dueDay: string | null; listStatus: ListStatus; enteredDay: string },
+  day: string,
+): { due: DueRisk | null; stalledDays: number | null } {
+  return {
+    due: card.listStatus === "done" ? null : dueRisk(card.dueDay, day),
+    stalledDays: card.listStatus === "doing" ? stalledSince(card.enteredDay, day) : null,
+  };
+}
+
+// ─── Tarefas do dashboard ─────────────────────────────────────────────────────
+
 // As regras olham a tarefa como ela estava no fim de `day` (hoje, ou o último dia do período).
 const isOpen = (t: DashboardTask, day: string) => {
   const status = statusOn(t, day);
@@ -19,11 +59,10 @@ const isOpen = (t: DashboardTask, day: string) => {
 };
 
 /** Passou do prazo e não está concluída. */
-export const isOverdue = (t: DashboardTask, day: string) => t.dueDay != null && t.dueDay < day && isOpen(t, day);
+export const isOverdue = (t: DashboardTask, day: string) => isOpen(t, day) && dueRisk(t.dueDay, day) === "overdue";
 
 /** Não concluída, com prazo entre o dia e o dia + DUE_SOON_DAYS. */
-export const isDueSoon = (t: DashboardTask, day: string) =>
-  t.dueDay != null && isOpen(t, day) && t.dueDay >= day && daysBetween(day, t.dueDay) <= DUE_SOON_DAYS;
+export const isDueSoon = (t: DashboardTask, day: string) => isOpen(t, day) && dueRisk(t.dueDay, day) === "soon";
 
 export const isInProgress = (t: DashboardTask, day: string) => statusOn(t, day) === "in_progress";
 
@@ -31,8 +70,7 @@ export const isInProgress = (t: DashboardTask, day: string) => statusOn(t, day) 
 export function stalledDays(t: DashboardTask, day: string): number | null {
   if (!isInProgress(t, day)) return null;
   const last = [...t.history].reverse().find((h) => h.day <= day)!;
-  const days = daysBetween(last.day, day);
-  return days > STALLED_DAYS ? days : null;
+  return stalledSince(last.day, day);
 }
 
 export const isOverloaded = (inProgress: number) => inProgress > OVERLOAD_IN_PROGRESS;

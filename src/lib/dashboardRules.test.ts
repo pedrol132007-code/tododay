@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 import type { DashboardStatus, DashboardTask } from "../types";
-import { alertTasks, attentionAlerts, stalledList, isDueSoon, isOverdue, isOverloaded, MAX_ALERTS, OVERLOAD_IN_PROGRESS, stalledDays } from "./dashboardRules";
+import {
+  alertTasks,
+  attentionAlerts,
+  cardRisk,
+  dueRisk,
+  isDueSoon,
+  isOverdue,
+  isOverloaded,
+  isOverWip,
+  localDay,
+  MAX_ALERTS,
+  OVERLOAD_IN_PROGRESS,
+  stalledDays,
+  stalledList,
+  stalledSince,
+} from "./dashboardRules";
 
 const TODAY = "2026-09-28";
 
@@ -140,5 +155,37 @@ describe("lista do que está parado", () => {
       { task: b, days: 26 },
       { task: a, days: 13 },
     ]);
+  });
+});
+
+describe("regras compartilhadas com o board", () => {
+  it("prazo: atrasado antes de hoje, em breve de hoje até +3 dias, nada depois ou sem prazo", () => {
+    expect(dueRisk("2026-09-27", TODAY)).toBe("overdue");
+    expect(dueRisk(TODAY, TODAY)).toBe("soon");
+    expect(dueRisk("2026-10-01", TODAY)).toBe("soon");
+    expect(dueRisk("2026-10-02", TODAY)).toBeNull();
+    expect(dueRisk(null, TODAY)).toBeNull();
+  });
+
+  it("parada: mais de 7 dias desde a última mudança; devolve os dias", () => {
+    expect(stalledSince("2026-09-20", TODAY)).toBe(8);
+    expect(stalledSince("2026-09-21", TODAY)).toBeNull();
+  });
+
+  it("WIP: passa do limite só acima dele; sem limite nunca passa", () => {
+    expect(isOverWip(5, 5)).toBe(false);
+    expect(isOverWip(6, 5)).toBe(true);
+    expect(isOverWip(99, null)).toBe(false);
+  });
+
+  it("card do board: coluna concluída não tem risco; parada só conta em andamento", () => {
+    const base = { dueDay: "2026-09-20", enteredDay: "2026-09-01" };
+    expect(cardRisk({ ...base, listStatus: "doing" }, TODAY)).toEqual({ due: "overdue", stalledDays: 27 });
+    expect(cardRisk({ ...base, listStatus: "todo" }, TODAY)).toEqual({ due: "overdue", stalledDays: null });
+    expect(cardRisk({ ...base, listStatus: "done" }, TODAY)).toEqual({ due: null, stalledDays: null });
+  });
+
+  it("dia local no formato AAAA-MM-DD", () => {
+    expect(localDay(new Date(2026, 0, 5, 23, 30))).toBe("2026-01-05");
   });
 });

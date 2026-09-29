@@ -6,7 +6,7 @@
 // conclusão que cresce com a carga. Garante os cenários que o dashboard precisa mostrar: uma pessoa
 // sobrecarregada, tarefas atrasadas, vencendo em breve e paradas.
 import type { DashboardData, DashboardPerson, DashboardStatusChange, DashboardTask } from "../types";
-import { isDueSoon, isInProgress, isOverdue, isOverloaded, stalledDays } from "./dashboardRules";
+import { isDueSoon, isInProgress, isOverdue, isOverloaded, localDay, stalledDays } from "./dashboardRules";
 import { addDays, daysBetween } from "./metrics";
 
 export const DEMO_PEOPLE: DashboardPerson[] = [
@@ -52,8 +52,6 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-const iso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 /** 0 = domingo … 6 = sábado. */
 const weekday = (day: string) => new Date(`${day}T12:00:00Z`).getUTCDay();
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -89,7 +87,7 @@ export function generateDemoTasks(seed: number, options: { weeks?: number; today
     return k;
   };
 
-  const today = iso(options.today ?? new Date());
+  const today = localDay(options.today ?? new Date());
   const since = addDays(today, -(weeks * 7 - 1));
   const first = addDays(since, -WARMUP_WEEKS * 7);
   const totalDays = daysBetween(first, today) + 1;

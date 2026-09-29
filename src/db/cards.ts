@@ -1,4 +1,5 @@
 import { must, supabase } from "./supabase";
+import { purgeAttachmentTrash } from "./attachments";
 import type { Card, CardPriority } from "../types";
 
 // updated_at é mantido por trigger no Postgres (0004), não pelo app.
@@ -72,6 +73,7 @@ export async function restoreCard(id: number): Promise<void> {
 
 export async function deleteCardPermanently(id: number): Promise<void> {
   must(await supabase.from("card").delete().eq("id", id));
+  void purgeAttachmentTrash();
 }
 
 // Só cards ativos: os arquivados não impedem excluir a coluna (somem junto por cascade).

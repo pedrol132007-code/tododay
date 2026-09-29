@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type DragEvent, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import type { CardPriority, Card as CardType } from "../../types";
 import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate, useUpdateCardPriority } from "../../hooks/useCards";
@@ -6,11 +6,13 @@ import { PRIORITIES, PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { useTeamMembers } from "../../hooks/useTeams";
 import { useLists } from "../../hooks/useLists";
 import { useCardActivity } from "../../hooks/useActivity";
+import { useAttachments, useAttachmentUploads } from "../../hooks/useAttachments";
 import { ActivityList } from "../ui/ActivityList";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Avatar } from "../ui/Avatar";
 import { DueBadge } from "../ui/DueBadge";
+import { Attachments } from "./Attachments";
 import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
@@ -50,6 +52,11 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const assignee = members?.find((m) => m.user_id === card.assignee_id);
   const { data: activities } = useCardActivity(card.id);
+  const { data: attachments } = useAttachments(card.id);
+  const { uploads, send } = useAttachmentUploads(card.id, canEdit);
+  // Arquivos arrastados para qualquer lugar do painel viram anexos.
+  const [dragging, setDragging] = useState(false);
+  const hasFiles = (e: DragEvent) => canEdit && e.dataTransfer.types.includes("Files");
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -75,6 +82,21 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
         exit={{ x: 32, opacity: 0 }}
         transition={{ duration: 0.2 }}
         className="relative flex h-full w-full max-w-md flex-col gap-5 overflow-y-auto border-l border-border bg-bg-surface px-6 pb-6"
+        onDragOver={(e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "copy";
+          setDragging(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false);
+        }}
+        onDrop={(e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          setDragging(false);
+          send([...e.dataTransfer.files]);
+        }}
       >
         <div className="-mx-6 h-1 shrink-0 bg-brand-gradient" />
         <div className="flex items-start justify-between gap-2">
@@ -162,6 +184,8 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             readOnly={!canEdit}
           />
         </PanelSection>
+
+        <Attachments cardId={card.id} attachments={attachments} uploads={uploads} onFiles={send} dragging={dragging} />
 
         <Checklist cardId={card.id} />
 

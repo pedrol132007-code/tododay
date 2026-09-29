@@ -1,4 +1,5 @@
 import { must, supabase } from "./supabase";
+import { purgeAttachmentTrash } from "./attachments";
 import type { Board } from "../types";
 
 export async function listBoards(teamId: number): Promise<Board[]> {
@@ -22,6 +23,8 @@ export async function renameBoard(id: number, name: string): Promise<void> {
 export async function deleteBoard(id: number): Promise<void> {
   const rows = must(await supabase.from("board").delete().eq("id", id).select("id"));
   if (rows.length === 0) throw new Error("Só admins da equipe podem excluir boards.");
+  // Os anexos dos cards foram para a lixeira em cascata: apaga os arquivos.
+  void purgeAttachmentTrash();
 }
 
 /** O que some junto com o board (por cascade), para o aviso de confirmação. */

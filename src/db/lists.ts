@@ -1,4 +1,5 @@
 import { must, supabase } from "./supabase";
+import { purgeAttachmentTrash } from "./attachments";
 import type { List, ListStatus } from "../types";
 
 export async function listLists(boardId: number): Promise<List[]> {
@@ -25,6 +26,8 @@ export async function updateListSettings(id: number, settings: { status?: ListSt
 
 export async function deleteList(id: number): Promise<void> {
   must(await supabase.from("list").delete().eq("id", id));
+  // Cards arquivados da coluna somem junto, com os anexos.
+  void purgeAttachmentTrash();
 }
 
 export async function updateListPosition(id: number, position: number): Promise<void> {

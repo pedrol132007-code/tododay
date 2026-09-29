@@ -52,3 +52,11 @@ export function memberColor(userId: string): string {
   }
   return MEMBER_COLORS[(hash >>> 0) % MEMBER_COLORS.length];
 }
+
+/** Tamanho de arquivo em português: "820 KB", "1,4 MB". */
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${Math.round(kb)} KB`;
+  return `${(kb / 1024).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;
+}

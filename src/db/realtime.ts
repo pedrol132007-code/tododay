@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item" | "activity";
+export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item" | "card_attachment" | "activity";
 
 /**
  * Avisa (só o nome da tabela) quando algo muda nos boards da equipe ou no board aberto.
@@ -22,6 +22,7 @@ export function subscribeToChanges(
     listen("list", `board_id=eq.${boardId}`);
     listen("card", `board_id=eq.${boardId}`);
     listen("label", `board_id=eq.${boardId}`);
+    listen("card_attachment", `board_id=eq.${boardId}`);
     listen("card_label");
     listen("checklist_item");
   }

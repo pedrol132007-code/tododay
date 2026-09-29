@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDue, memberColor, MEMBER_COLORS } from "./boardVisuals";
+import { formatBytes, formatDue, memberColor, MEMBER_COLORS } from "./boardVisuals";
 
 const today = new Date(2026, 8, 25, 15, 30); // 25/09/2026, meio da tarde
 
@@ -29,5 +29,14 @@ describe("memberColor", () => {
   it("spreads different people across the palette", () => {
     const ids = Array.from({ length: 40 }, (_, i) => `user-${i}`);
     expect(new Set(ids.map(memberColor)).size).toBeGreaterThanOrEqual(5);
+  });
+});
+
+describe("formatBytes", () => {
+  it("usa B, KB e MB com vírgula", () => {
+    expect(formatBytes(512)).toBe("512 B");
+    expect(formatBytes(820 * 1024)).toBe("820 KB");
+    expect(formatBytes(1.44 * 1024 * 1024)).toBe("1,4 MB");
+    expect(formatBytes(20 * 1024 * 1024)).toBe("20 MB");
   });
 });

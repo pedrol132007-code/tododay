@@ -11,15 +11,18 @@ const BADGE: Record<AlertKind, { label: string; dot: string }> = {
 
 /**
  * Bloco "Atenção": até 5 alertas gerados pelas regras (src/lib/dashboardRules.ts), do mais grave
- * para o menos grave. Clicar num alerta abre a lista das tarefas que ele descreve.
+ * para o menos grave. Clicar num alerta abre as tarefas que ele descreve (no board filtrado, quando dá).
  */
 export function AttentionCard({
   alerts,
   onOpen,
   onOpenPerson,
+  openLabel,
 }: {
   alerts: AttentionAlert[];
   onOpen: (alert: AttentionAlert) => void;
+  /** O que o clique faz: "Ver no board" (abre o board filtrado) ou "Ver tarefas" (a lista aqui). */
+  openLabel: string;
   /** Abre o detalhe da pessoa, onde estão os fatos que não couberam na frase. */
   onOpenPerson: (personId: string) => void;
 }) {
@@ -56,7 +59,7 @@ export function AttentionCard({
                   {BADGE[alert.kind].label}
                 </span>
                 <span className="flex-1 text-sm text-text-primary">{alert.text}</span>
-                <span className="shrink-0 text-xs text-text-muted group-hover:text-primary">Ver tarefas →</span>
+                <span className="shrink-0 text-xs text-text-muted group-hover:text-primary">{openLabel} →</span>
               </button>
               {alert.more > 0 && alert.personId && (
                 <button

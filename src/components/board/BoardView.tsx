@@ -30,13 +30,18 @@ import {
   useUpdateCardPosition,
   useUpdateCardPositions,
 } from "../../hooks/useCards";
-import { useLabelsForCards } from "../../hooks/useLabels";
+import { useLabels, useLabelsForCards } from "../../hooks/useLabels";
+import { useBoardFilters } from "../../hooks/useBoardFilters";
+import { useTeamMembers } from "../../hooks/useTeams";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
-import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
+import { hasFilters, matchesFilters, personSlugs, slugify, sortCards, type FilterableCard } from "../../lib/boardFilters";
+import { localDay } from "../../lib/dashboardRules";
 import { useCompact } from "../../hooks/usePreferences";
-import type { Card as CardType, List as ListType } from "../../types";
+import type { Card as CardType, List as ListType, ListStatus } from "../../types";
 import { BoardSkeleton } from "./BoardSkeleton";
+import { BoardToolbar } from "./BoardToolbar";
 import { List } from "./List";
 import { IconColumns, IconPlus } from "../ui/icons";
 import { EmptyState } from "../ui/EmptyState";
@@ -202,6 +207,29 @@ export function BoardView({
   // drop (see handleDragEnd) can detect that a newer drag has since started and skip itself,
   // instead of nulling out the newer drag's live preview mid-flight.
   const dragEpochRef = useRef(0);
+
+  const [filters, setFilters] = useBoardFilters();
+  const { data: members } = useTeamMembers(useCurrentTeamId());
+  const { data: boardLabels } = useLabels(boardId);
+  const slugs = personSlugs((members ?? []).map((m) => ({ id: m.user_id, name: m.profile.display_name })));
+  // Com filtro ou ordenação a coluna mostra só parte dos cards, fora da ordem: arrastar calcularia a
+  // posição pelos vizinhos errados, então fica desligado até limpar.
+  const narrowed = hasFilters(filters) || filters.sort !== "manual";
+  const today = localDay(new Date());
+  const filterable = (card: CardType, listStatus: ListStatus): FilterableCard => ({
+    title: card.title,
+    assigneeSlug: card.assignee_id ? (slugs.get(card.assignee_id) ?? null) : null,
+    priority: card.priority,
+    labelSlugs: (labelsByCard?.get(card.id) ?? []).map((l) => slugify(l.name)),
+    dueDay: card.due_date,
+    listStatus,
+    enteredDay: localDay(new Date(card.list_entered_at)),
+  });
+  const shownCards = (list: BoardList) =>
+    narrowed
+      ? sortCards(list.cards.filter((c) => matchesFilters(filterable(c, list.status), filters, today)), filters.sort, (c) => filterable(c, list.status), today)
+      : list.cards;
+  const allCards = computedBoard.flatMap((l) => l.cards);
 
   const renderedBoard = dragPreview ?? computedBoard;
 
@@ -398,9 +426,21 @@ export function BoardView({
   return (
     <div className="flex min-h-0 flex-1 flex-col p-6">
       <PageHeader title={boardName} />
+      <BoardToolbar
+        filters={filters}
+        onChange={setFilters}
+        people={(members ?? [])
+          .map((m) => ({ slug: slugs.get(m.user_id)!, name: m.profile.display_name }))
+          .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))}
+        labels={(boardLabels ?? []).map((l) => ({ slug: slugify(l.name), name: l.name }))}
+        shown={computedBoard.reduce((n, l) => n + shownCards(l).length, 0)}
+        total={allCards.length}
+        peopleCount={new Set(allCards.map((c) => c.assignee_id).filter(Boolean)).size}
+        dragOff={canEdit && narrowed}
+      />
       <DndContext
-        // Sem sensores não há arraste: leitores só abrem os cards.
-        sensors={canEdit ? sensors : []}
+        // Sem sensores não há arraste: leitores só abrem os cards, e com filtro ninguém arrasta.
+        sensors={canEdit && !narrowed ? sensors : []}
         collisionDetection={(args) => (args.pointerCoordinates ? pointerWithin(args) : closestCenter(args))}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
@@ -428,7 +468,9 @@ export function BoardView({
                 <List
                   key={list.id}
                   list={list}
-                  cards={list.cards}
+                  cards={shownCards(list)}
+                  total={list.cards.length}
+                  filtered={hasFilters(filters)}
                   onOpenDetail={setSelectedCardId}
                   labelsByCard={labelsByCard ?? new Map()}
                   checklistProgressByCard={checklistProgressByCard ?? new Map()}

@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
-import { alertTasks, attentionAlerts, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
+import { EMPTY_FILTERS, personSlugs, type BoardFilters } from "../../lib/boardFilters";
+import { alertTasks, attentionAlerts, type AttentionAlert, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
 import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
   compare,
@@ -33,6 +34,15 @@ import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } fr
 import { TaskListPanel } from "./TaskListPanel";
 import { StalledSection } from "./StalledSection";
 import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
+
+/** O filtro do board que mostra o que cada alerta descreve (a pessoa entra à parte). */
+const ALERT_FILTER: Record<AttentionAlert["kind"], Partial<BoardFilters>> = {
+  overdue: { due: "overdue" },
+  overload: {},
+  stalled: { stalled: STALLED_DAYS },
+  dueSoon: { due: "soon" },
+};
+const LOAD_FILTER: Record<LoadList, Partial<BoardFilters>> = { inProgress: {}, overdue: { due: "overdue" }, stalled: { stalled: STALLED_DAYS } };
 
 const VS = "vs. período anterior";
 
@@ -86,12 +96,16 @@ function backlogDelta(change: number): string {
   return `${change > 0 ? "▲" : "▼"} ${num(Math.abs(change))} no período`;
 }
 
-/** `data` vem de fora: a demonstração é a mesma no board e no dashboard. */
-export function DashboardView({ teamName, data, onGenerate, onExit }: {
+/**
+ * `data` vem de fora: a demonstração é a mesma no board e no dashboard. `onOpenBoard` abre o board
+ * com filtros (os links dos alertas e da carga da equipe).
+ */
+export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard }: {
   teamName: string;
   data: DashboardData | null;
   onGenerate: () => void;
   onExit: () => void;
+  onOpenBoard: (filters: BoardFilters) => void;
 }) {
   const [period, setPeriod] = useState<PeriodSelection>({ kind: "preset", preset: "12w" });
   const [personId, setPersonId] = useState<string | null>(null);
@@ -125,7 +139,7 @@ export function DashboardView({ teamName, data, onGenerate, onExit }: {
       </div>
 
       {data ? (
-        <DashboardBody data={data} period={period} personId={personId} onSelectPerson={setPersonId} />
+        <DashboardBody data={data} period={period} personId={personId} onSelectPerson={setPersonId} onOpenBoard={onOpenBoard} />
       ) : (
         <div className="flex flex-1 items-start justify-center">
           <EmptyState
@@ -144,11 +158,12 @@ export function DashboardView({ teamName, data, onGenerate, onExit }: {
   );
 }
 
-function DashboardBody({ data, period, personId, onSelectPerson }: {
+function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: {
   data: DashboardData;
   period: PeriodSelection;
   personId: string | null;
   onSelectPerson: (id: string | null) => void;
+  onOpenBoard: (filters: BoardFilters) => void;
 }) {
   const person = data.people.find((p) => p.id === personId) ?? null;
   const [list, setList] = useState<{ title: string; tasks: DashboardTask[] } | null>(null);
@@ -180,7 +195,18 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
   const refLegend = view.team ? [{ label: subject, color: "chart-1" as const }, { label: refName, color: "chart-ref" as const, dashed: true }] : undefined;
   const of = person ? ` de ${subject}` : "";
 
+  // O board mostra hoje: só dá para abrir nele o que o período olha no dia de hoje. Num período
+  // que termina antes, a lista continua aqui mesmo.
+  const toBoard = view.range.end === data.today;
+  const slugs = personSlugs(data.people);
+  const boardFilters = (id: string | undefined, changes: Partial<BoardFilters>): BoardFilters => ({
+    ...EMPTY_FILTERS,
+    assignee: id ? (slugs.get(id) ?? null) : null,
+    ...changes,
+  });
+
   function openLoadList(row: PersonLoad, kind: LoadList) {
+    if (toBoard) return onOpenBoard(boardFilters(row.person.id, LOAD_FILTER[kind]));
     const first = row.person.name.split(" ")[0];
     const own = data.tasks.filter((t) => t.assigneeId === row.person.id);
     const day = view.range.end;
@@ -270,7 +296,12 @@ function DashboardBody({ data, period, personId, onSelectPerson }: {
 
       <AttentionCard
         alerts={view.alerts}
-        onOpen={(alert) => setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })}
+        onOpen={(alert) =>
+          toBoard
+            ? onOpenBoard(boardFilters(alert.personId, ALERT_FILTER[alert.kind]))
+            : setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })
+        }
+        openLabel={toBoard ? "Ver no board" : "Ver tarefas"}
         onOpenPerson={onSelectPerson}
       />
 

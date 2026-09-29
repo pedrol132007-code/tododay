@@ -17,6 +17,7 @@ import { ViewTabs } from "./components/ui/ViewTabs";
 import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
+import { setBoardFilters } from "./hooks/useBoardFilters";
 import type { DashboardData, MyTeam, SearchResult } from "./types";
 import { IconColumns } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
@@ -169,7 +170,16 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
       {view === "dashboard" ? (
         <DashboardErrorBoundary>
           <Suspense fallback={null}>
-            <DashboardView teamName={team.name} data={demo} onGenerate={newDemo} onExit={() => setDemo(null)} />
+            <DashboardView
+              teamName={team.name}
+              data={demo}
+              onGenerate={newDemo}
+              onExit={() => setDemo(null)}
+              onOpenBoard={(filters) => {
+                setBoardFilters(filters);
+                setView("board");
+              }}
+            />
           </Suspense>
         </DashboardErrorBoundary>
       ) : view === "settings" ? (

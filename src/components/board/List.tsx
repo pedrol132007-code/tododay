@@ -17,7 +17,12 @@ import { ListCounter } from "./ListCounter";
 
 interface ListProps {
   list: ListType;
+  /** Os cards que aparecem (com filtro, só os que passam). */
   cards: CardType[];
+  /** Cards da coluna inteira, para o contador e o WIP; sem filtro, igual a cards.length. */
+  total?: number;
+  /** Há filtro ligado: a coluna vazia diz que é por causa dele. */
+  filtered?: boolean;
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
@@ -27,6 +32,8 @@ interface ListProps {
 export function List({
   list,
   cards,
+  total = cards.length,
+  filtered = false,
   onOpenDetail,
   labelsByCard,
   checklistProgressByCard,
@@ -103,7 +110,7 @@ export function List({
             <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <ListCounter count={cards.length} wipLimit={list.wip_limit} />
+            <ListCounter count={total} wipLimit={list.wip_limit} />
             {canEdit && <ListMenu list={list} canDelete={canDelete} onDelete={() => deleteList.mutate(list.id)} />}
           </div>
         </div>
@@ -119,7 +126,7 @@ export function List({
           <SortableContext items={cards.map((c) => `card-${c.id}`)} strategy={verticalListSortingStrategy}>
             {cards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
-                Nenhuma tarefa aqui
+                {filtered && total > 0 ? "Nenhuma tarefa com esses filtros" : "Nenhuma tarefa aqui"}
               </div>
             ) : (
               cards.map((card) => (

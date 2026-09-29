@@ -46,13 +46,19 @@ async function fulfillRest(route: Route) {
   const table = url.pathname.split("/").pop()!;
   // Os cards são todos da coluna 1; a coluna 2 fica vazia.
   const ofList = table === "card" && url.searchParams.get("list_id") === "eq.2" ? [] : null;
+  // team_member responde a duas consultas: as equipes do usuário (com team) e os membros (com profile).
+  if (table === "team_member" && url.searchParams.get("select")?.includes("profile")) {
+    return route.fulfill({
+      json: [{ team_id: 1, user_id: USER_ID, role: "admin", job_title: "", joined_at: NOW, profile: { email: env.E2E_EMAIL, display_name: "E2E" } }],
+    });
+  }
   if (request.method() === "HEAD") {
     return route.fulfill({ status: 200, headers: { "content-range": `0-0/${ofList ? 0 : cards.length}` }, body: "" });
   }
   return route.fulfill({ json: ofList ?? tables[table] ?? [] });
 }
 
-async function openLongBoard(page: Page) {
+async function openLongBoard(page: Page, path = "/") {
   const ref = new URL(env.VITE_SUPABASE_URL).hostname.split(".")[0];
   const session = {
     access_token: fakeJwt(),
@@ -64,7 +70,7 @@ async function openLongBoard(page: Page) {
   };
   await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [`sb-${ref}-auth-token`, JSON.stringify(session)]);
   await page.route("**/rest/v1/**", fulfillRest);
-  await page.goto("/");
+  await page.goto(path);
   await expect(page.getByText("Card 30")).toBeAttached();
 }
 
@@ -161,4 +167,32 @@ test("demonstração: o board mostra as tarefas fictícias do dashboard e sai se
 
   await page.getByRole("button", { name: "Sair da demonstração" }).click();
   await expect(page.getByText("Card 30")).toBeAttached();
+});
+
+test("filtros na URL: o link abre o board filtrado, com chip e Limpar filtros", async ({ page }) => {
+  await openLongBoard(page, "/?busca=card%203");
+  await expect(page.getByText("2 de 30 tarefas")).toBeVisible();
+  await expect(page.getByText("Card 3", { exact: true })).toBeVisible();
+  await expect(page.getByText("Card 12", { exact: true })).not.toBeAttached();
+  await expect(page.getByRole("button", { name: "Remover filtro Busca: “card 3”" })).toBeVisible();
+  await expect(page.getByText("arrastar cards fica desligado")).toBeVisible();
+  await expect(page.getByText("Nenhuma tarefa aqui")).toBeVisible(); // a coluna curta já era vazia
+
+  await page.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(page.getByText("Card 12", { exact: true })).toBeAttached();
+  expect(new URL(page.url()).search).toBe("");
+});
+
+test("link do dashboard abre o board de demonstração já filtrado", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page.getByRole("button", { name: "Gerar demonstração" }).click();
+  await page.getByRole("button", { name: /tarefas? atrasadas?.*Ver no board/ }).click();
+
+  await expect(page.getByRole("heading", { name: /Operações/ })).toBeVisible();
+  const search = new URL(page.url()).searchParams;
+  expect(search.get("atrasadas")).toBe("1");
+  expect(search.get("responsavel")).toBeTruthy();
+  await expect(page.getByRole("button", { name: "Remover filtro Atrasadas" })).toBeVisible();
+  await expect(page.getByText(/^\d+ de \d+ tarefas/)).toBeVisible();
 });

@@ -13,6 +13,7 @@ Plano da migração para Supabase, com as decisões de produto: `docs/superpower
 - Toda migration nova de schema/RLS vem com um teste em `supabase/tests/NNNN_*_test.sql`: um bloco `DO` que sempre termina com erro para desfazer tudo (`PASSOU: ...` ou `FALHOU: ...`).
 - `supabase/setup_producao.sql` é gerado (junção das migrations, para um projeto novo). Não edite à mão.
 - Permissões são por equipe (`team_role(team_id)`: `admin` / `member` / `viewer`) e garantidas por RLS no banco. A UI esconde controles de edição do `viewer`, mas quem protege é o RLS.
+- Busca, filtros e ordenação do board ficam na query string (`?responsavel=ana&atrasadas=1&paradas=7&ordem=prazo`), lidos por `useBoardFilters` e aplicados pelas funções puras de `src/lib/boardFilters.ts`, as mesmas no board real e no de demonstração. Os links do Atenção e da Carga da equipe abrem o board assim, quando o período termina hoje. Com filtro ou ordenação, arrastar fica desligado.
 - Mover cards/colunas usa RPCs no banco (`0004_moves_and_search.sql`), não updates soltos de `position`.
 - Posições (`position`) são `double precision`. Inserir no fim: `MAX(position) + 1`. Reordenar entre dois itens: média dos vizinhos (`src/lib/position.ts`).
 - Mudanças de outros usuários chegam via Realtime por board (`src/db/realtime.ts` → `useRealtimeSync`), que só invalida queries do React Query.

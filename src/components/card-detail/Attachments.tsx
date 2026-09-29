@@ -2,13 +2,13 @@ import { useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { CardAttachment } from "../../types";
 import { downloadUrl } from "../../db/attachments";
-import { useAttachmentUrls, useDeleteAttachment, type AttachmentUpload } from "../../hooks/useAttachments";
+import { useAttachmentUrls, useDeleteAttachment, useSetCardCover, type AttachmentUpload } from "../../hooks/useAttachments";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { ACCEPT_ATTRIBUTE, MAX_ATTACHMENT_MB, typeOfName, type AttachmentKind } from "../../lib/attachmentRules";
 import { formatBytes, formatDue } from "../../lib/boardVisuals";
 import { localDay } from "../../lib/dashboardRules";
 import { Lightbox } from "../ui/Lightbox";
-import { IconDownload, IconFile, IconPaperclip, IconTrash, IconX } from "../ui/icons";
+import { IconDownload, IconFile, IconImage, IconPaperclip, IconTrash, IconX } from "../ui/icons";
 import { PanelSection } from "./PanelSection";
 
 const KIND_LABEL: Record<Exclude<AttachmentKind, "image">, string> = {
@@ -52,6 +52,7 @@ export function Attachments({ cardId, attachments, uploads, onFiles, dragging }:
   const canEdit = useCanEdit();
   const { data: urls } = useAttachmentUrls(attachments);
   const deleteAttachment = useDeleteAttachment(cardId);
+  const setCover = useSetCardCover(cardId);
   const inputRef = useRef<HTMLInputElement>(null);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
   const [viewing, setViewing] = useState<number | null>(null);
@@ -150,8 +151,23 @@ export function Attachments({ cardId, attachments, uploads, onFiles, dragging }:
                       {a.name}
                     </a>
                   )}
-                  <span className="truncate text-xs text-text-muted">{meta}</span>
+                  <span className="truncate text-xs text-text-muted">
+                    {a.is_cover && <span className="mr-1.5 rounded bg-highlight px-1 font-semibold text-black">Capa</span>}
+                    {meta}
+                  </span>
                 </div>
+                {canEdit && isImage(a) && (
+                  <button
+                    type="button"
+                    onClick={() => setCover.mutate(a.is_cover ? null : a.id)}
+                    aria-pressed={a.is_cover}
+                    aria-label={a.is_cover ? `Tirar ${a.name} da capa` : `Usar ${a.name} como capa`}
+                    title={a.is_cover ? "Tirar da capa" : "Usar como capa"}
+                    className={`rounded-lg p-1.5 hover:bg-bg-surface ${a.is_cover ? "text-primary" : "text-text-muted hover:text-text-primary"}`}
+                  >
+                    <IconImage size={15} />
+                  </button>
+                )}
                 {url && (
                   <a href={downloadUrl(url, a.name)} aria-label={`Baixar ${a.name}`} title="Baixar" className="rounded-lg p-1.5 text-text-muted hover:bg-bg-surface hover:text-text-primary">
                     <IconDownload size={15} />

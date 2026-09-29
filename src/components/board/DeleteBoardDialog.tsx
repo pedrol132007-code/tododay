@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useBoardContents, useDeleteBoard } from "../../hooks/useBoards";
 import type { Board } from "../../types";
+import { formatBytes } from "../../lib/boardVisuals";
 
 interface DeleteBoardDialogProps {
   board: Board;
@@ -56,7 +57,9 @@ export function DeleteBoardDialog({ board, onDeleted, onClose }: DeleteBoardDial
         </h2>
         <p className="text-sm text-text-muted">
           {contents
-            ? `Isso apaga ${plural(contents.lists, "coluna", "colunas")} e ${plural(contents.cards, "card", "cards")}, incluindo os arquivados. Não dá para desfazer.`
+            ? `Isso apaga ${plural(contents.lists, "coluna", "colunas")} e ${plural(contents.cards, "card", "cards")}, incluindo os arquivados${
+                contents.attachments > 0 ? `, e ${plural(contents.attachments, "anexo", "anexos")} (${formatBytes(contents.attachmentBytes)})` : ""
+              }. Não dá para desfazer.`
             : "Isso apaga todas as colunas e cards do board, incluindo os arquivados. Não dá para desfazer."}
         </p>
         <label className="flex flex-col gap-1 text-sm text-text-primary">

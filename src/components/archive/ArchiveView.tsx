@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useArchivedCards, useDeleteCardPermanently, useRestoreCard } from "../../hooks/useCards";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
+import { useBoardAttachments } from "../../hooks/useAttachments";
+import { formatBytes } from "../../lib/boardVisuals";
 import { IconArchive } from "../ui/icons";
 import { EmptyState } from "../ui/EmptyState";
 import { PageHeader } from "../ui/PageHeader";
@@ -17,6 +19,13 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
   const restoreCard = useRestoreCard(boardId);
   const deleteCardPermanently = useDeleteCardPermanently(boardId);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const { data: attachmentsByCard } = useBoardAttachments(boardId);
+  /** Na confirmação, o que vai junto: "Confirmar? Apaga 3 anexos (4,2 MB)". */
+  const confirmText = (cardId: number) => {
+    const t = attachmentsByCard?.get(cardId);
+    if (!t) return "Confirmar exclusão?";
+    return `Confirmar? Apaga ${t.count === 1 ? "1 anexo" : `${t.count} anexos`} (${formatBytes(t.bytes)})`;
+  };
   const canEdit = useCanEdit();
 
   return (
@@ -66,7 +75,7 @@ export function ArchiveView({ boardId, boardName, onBack }: ArchiveViewProps) {
                   confirmingId === card.id ? "bg-danger text-on-accent" : "text-text-muted"
                 }`}
               >
-                {confirmingId === card.id ? "Confirmar exclusão?" : "Excluir"}
+                {confirmingId === card.id ? confirmText(card.id) : "Excluir"}
               </button>
               </>
               )}

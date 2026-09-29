@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AttachmentError, deleteAttachment, listAttachments, SIGNED_URL_SECONDS, signAttachmentUrls, uploadAttachment } from "../db/attachments";
+import {
+  AttachmentError,
+  deleteAttachment,
+  listAttachments,
+  listAttachmentsOfList,
+  listBoardAttachments,
+  setCardCover,
+  SIGNED_URL_SECONDS,
+  signAttachmentUrls,
+  uploadAttachment,
+  type AttachmentSummary,
+} from "../db/attachments";
 import type { CardAttachment } from "../types";
 
 export function useAttachments(cardId: number) {
@@ -8,7 +19,7 @@ export function useAttachments(cardId: number) {
 }
 
 /** URLs assinadas dos anexos, renovadas antes de vencer. */
-export function useAttachmentUrls(attachments: CardAttachment[] | undefined) {
+export function useAttachmentUrls(attachments: Pick<CardAttachment, "storage_path">[] | undefined) {
   const paths = (attachments ?? []).map((a) => a.storage_path);
   return useQuery({
     queryKey: ["attachmentUrls", paths],
@@ -94,4 +105,48 @@ export function useAttachmentUploads(cardId: number, enabled: boolean) {
   });
 
   return { uploads, send };
+}
+
+export interface CardAttachmentTotals {
+  count: number;
+  bytes: number;
+  /** Caminho da imagem de capa, se houver. */
+  coverPath: string | null;
+}
+
+/** Totais por card de um conjunto de anexos. */
+export function totalsByCard(rows: AttachmentSummary[]): Map<number, CardAttachmentTotals> {
+  const map = new Map<number, CardAttachmentTotals>();
+  for (const r of rows) {
+    const t = map.get(r.card_id) ?? { count: 0, bytes: 0, coverPath: null };
+    t.count++;
+    t.bytes += r.size_bytes;
+    if (r.is_cover) t.coverPath = r.storage_path;
+    map.set(r.card_id, t);
+  }
+  return map;
+}
+
+/** Anexos do board inteiro, somados por card (📎 no card fechado, capa e avisos de exclusão). */
+export function useBoardAttachments(boardId: number) {
+  return useQuery({
+    queryKey: ["boardAttachments", boardId],
+    queryFn: () => listBoardAttachments(boardId),
+    select: totalsByCard,
+  });
+}
+
+/** Quantos anexos (e quanto espaço) somem ao excluir a coluna. Só busca quando `enabled`. */
+export function useListAttachmentTotals(listId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["boardAttachments", "list", listId],
+    queryFn: () => listAttachmentsOfList(listId),
+    select: (rows) => ({ count: rows.length, bytes: rows.reduce((n, r) => n + r.size_bytes, 0) }),
+    enabled,
+  });
+}
+
+export function useSetCardCover(cardId: number) {
+  const invalidate = useInvalidateAttachments(cardId);
+  return useMutation({ mutationFn: (attachmentId: number | null) => setCardCover(cardId, attachmentId), onSuccess: invalidate, onError: invalidate });
 }

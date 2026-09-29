@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { List, ListStatus } from "../../types";
 import { useUpdateListSettings } from "../../hooks/useLists";
-import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
+import { useListAttachmentTotals } from "../../hooks/useAttachments";
+import { formatBytes, LIST_STATUS_LABEL } from "../../lib/boardVisuals";
 import { IconDots, IconTrash } from "../ui/icons";
 
 const STATUSES: ListStatus[] = ["todo", "doing", "done"];
@@ -11,10 +12,13 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
   const updateSettings = useUpdateListSettings(list.board_id);
   const [open, setOpen] = useState(false);
   const [wipDraft, setWipDraft] = useState("");
+  const [confirming, setConfirming] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // Cards arquivados da coluna somem junto com ela, e os anexos deles também.
+  const { data: attachments } = useListAttachmentTotals(list.id, open && canDelete);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return setConfirming(false);
     setWipDraft(list.wip_limit == null ? "" : String(list.wip_limit));
     function handleClick(e: MouseEvent) {
       if (!ref.current?.contains(e.target as Node)) setOpen(false);
@@ -90,17 +94,24 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
           </label>
 
           <div className="mt-3 border-t border-border pt-2">
+            {confirming && attachments && (
+              <p role="alert" className="px-2 pb-2 text-xs text-danger">
+                Excluir a coluna apaga também {attachments.count === 1 ? "1 anexo" : `${attachments.count} anexos`} ({formatBytes(attachments.bytes)}) de cards
+                arquivados nela. Não dá para desfazer.
+              </p>
+            )}
             <button
               type="button"
               disabled={!canDelete}
               onClick={() => {
+                if (attachments && attachments.count > 0 && !confirming) return setConfirming(true);
                 setOpen(false);
                 onDelete();
               }}
               title={canDelete ? undefined : "Mova ou arquive os cards antes de excluir"}
               className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-danger hover:bg-danger hover:text-on-accent disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-danger"
             >
-              <IconTrash size={14} /> Excluir coluna
+              <IconTrash size={14} /> {confirming ? "Confirmar exclusão" : "Excluir coluna"}
             </button>
           </div>
         </div>

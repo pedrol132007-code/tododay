@@ -31,6 +31,7 @@ import {
   useUpdateCardPositions,
 } from "../../hooks/useCards";
 import { useLabels, useLabelsForCards } from "../../hooks/useLabels";
+import { useAttachmentUrls, useBoardAttachments } from "../../hooks/useAttachments";
 import { useBoardFilters } from "../../hooks/useBoardFilters";
 import { useTeamMembers } from "../../hooks/useTeams";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
@@ -198,6 +199,9 @@ export function BoardView({
   const allCardIds = computedBoard.flatMap((l) => l.cards.map((c) => c.id));
   const { data: labelsByCard } = useLabelsForCards(allCardIds);
   const { data: checklistProgressByCard } = useChecklistProgressForCards(allCardIds);
+  const { data: attachmentsByCard } = useBoardAttachments(boardId);
+  const covers = [...(attachmentsByCard?.values() ?? [])].flatMap((t) => (t.coverPath ? [{ storage_path: t.coverPath }] : []));
+  const { data: coverUrls } = useAttachmentUrls(covers);
 
   const [dragPreview, setDragPreview] = useState<BoardList[] | null>(null);
   const [activeCard, setActiveCard] = useState<CardType | null>(null);
@@ -474,6 +478,8 @@ export function BoardView({
                   onOpenDetail={setSelectedCardId}
                   labelsByCard={labelsByCard ?? new Map()}
                   checklistProgressByCard={checklistProgressByCard ?? new Map()}
+                  attachmentsByCard={attachmentsByCard ?? new Map()}
+                  coverUrls={coverUrls ?? new Map()}
                   registerRef={registerListRef}
                 />
               ))

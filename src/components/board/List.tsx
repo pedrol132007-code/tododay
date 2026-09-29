@@ -4,6 +4,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import type { Card as CardType, Label, List as ListType } from "../../types";
+import type { CardAttachmentTotals } from "../../hooks/useAttachments";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
 import { useCanEdit } from "../../hooks/useCurrentTeam";
@@ -26,6 +27,9 @@ interface ListProps {
   onOpenDetail: (id: number) => void;
   labelsByCard: Map<number, Label[]>;
   checklistProgressByCard: Map<number, { done: number; total: number }>;
+  attachmentsByCard: Map<number, CardAttachmentTotals>;
+  /** URL assinada de cada capa, pelo caminho no Storage. */
+  coverUrls: Map<string, string>;
   registerRef?: (id: number, node: HTMLDivElement | null) => void;
 }
 
@@ -37,6 +41,8 @@ export function List({
   onOpenDetail,
   labelsByCard,
   checklistProgressByCard,
+  attachmentsByCard,
+  coverUrls,
   registerRef,
 }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
@@ -137,6 +143,8 @@ export function List({
                   onOpenDetail={onOpenDetail}
                   labels={labelsByCard.get(card.id)}
                   checklistProgress={checklistProgressByCard.get(card.id)}
+                  attachments={attachmentsByCard.get(card.id)?.count}
+                  cover={coverUrls.get(attachmentsByCard.get(card.id)?.coverPath ?? "")}
                 />
               ))
             )}

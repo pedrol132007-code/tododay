@@ -107,3 +107,21 @@ export async function signAttachmentUrls(paths: string[]): Promise<Map<string, s
 
 /** A mesma URL, mas baixando com o nome original (o Storage lê ?download=). */
 export const downloadUrl = (signedUrl: string, name: string) => `${signedUrl}&download=${encodeURIComponent(name)}`;
+
+/** O que o board precisa de cada anexo: contagem e tamanho por card, e a capa. */
+export type AttachmentSummary = Pick<CardAttachment, "card_id" | "mime_type" | "storage_path" | "size_bytes" | "is_cover">;
+
+/** Anexos de todos os cards do board, inclusive os arquivados (para os avisos de exclusão). */
+export async function listBoardAttachments(boardId: number): Promise<AttachmentSummary[]> {
+  return must(await supabase.from("card_attachment").select("card_id, mime_type, storage_path, size_bytes, is_cover").eq("board_id", boardId));
+}
+
+/** Anexos dos cards de uma coluna (os arquivados somem junto com ela). */
+export async function listAttachmentsOfList(listId: number): Promise<Pick<CardAttachment, "size_bytes">[]> {
+  return must(await supabase.from("card_attachment").select("size_bytes, card!inner(list_id)").eq("card.list_id", listId));
+}
+
+/** Liga a capa numa imagem do card; null tira a capa. */
+export async function setCardCover(cardId: number, attachmentId: number | null): Promise<void> {
+  must(await supabase.rpc("set_card_cover", { p_card_id: cardId, p_attachment_id: attachmentId }));
+}

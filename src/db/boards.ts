@@ -28,12 +28,19 @@ export async function deleteBoard(id: number): Promise<void> {
 }
 
 /** O que some junto com o board (por cascade), para o aviso de confirmação. */
-export async function boardContents(id: number): Promise<{ lists: number; cards: number }> {
-  const [lists, cards] = await Promise.all([
+export async function boardContents(id: number): Promise<{ lists: number; cards: number; attachments: number; attachmentBytes: number }> {
+  const [lists, cards, attachments] = await Promise.all([
     supabase.from("list").select("*", { count: "exact", head: true }).eq("board_id", id),
     supabase.from("card").select("*", { count: "exact", head: true }).eq("board_id", id),
+    supabase.from("card_attachment").select("size_bytes").eq("board_id", id),
   ]);
   if (lists.error) throw lists.error;
   if (cards.error) throw cards.error;
-  return { lists: lists.count ?? 0, cards: cards.count ?? 0 };
+  if (attachments.error) throw attachments.error;
+  return {
+    lists: lists.count ?? 0,
+    cards: cards.count ?? 0,
+    attachments: attachments.data.length,
+    attachmentBytes: attachments.data.reduce((n, a) => n + a.size_bytes, 0),
+  };
 }

@@ -4,6 +4,7 @@ import { PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { readableTextOn } from "../../lib/contrast";
 import { Avatar } from "../ui/Avatar";
 import { DueBadge } from "../ui/DueBadge";
+import { IconPaperclip } from "../ui/icons";
 
 /** Faixa na borda esquerda: só cor de token, e o nome da prioridade vai no title e para leitor de tela. */
 const PRIORITY_STRIPE: Record<CardPriority, string> = {
@@ -29,16 +30,20 @@ export interface CardFaceProps {
   assignee?: { id: string; name: string };
   labels?: { id: number | string; name: string; color: string }[];
   checklist?: { done: number; total: number };
+  /** Quantos anexos o card tem (0 ou ausente: não mostra nada). */
+  attachments?: number;
+  /** URL da imagem de capa. No modo compacto a capa não aparece, só o clipe. */
+  cover?: string;
   compact: boolean;
   dragging?: boolean;
 }
 
 /** O visual do card, sem arrastar nem editar: usado pelo board real e pelo de demonstração. */
-export function CardFace({ title, actions, priority, due, done, stalledDays, assignee, labels = [], checklist, compact, dragging }: CardFaceProps) {
+export function CardFace({ title, actions, priority, due, done, stalledDays, assignee, labels = [], checklist, attachments = 0, cover, compact, dragging }: CardFaceProps) {
   const shownLabels = labels.slice(0, MAX_LABELS);
   const hiddenLabels = labels.length - shownLabels.length;
   const hasChecklist = checklist != null && checklist.total > 0;
-  const hasMeta = due != null || hasChecklist || assignee != null || stalledDays != null;
+  const hasMeta = due != null || hasChecklist || attachments > 0 || assignee != null || stalledDays != null;
 
   return (
     <div
@@ -57,6 +62,11 @@ export function CardFace({ title, actions, priority, due, done, stalledDays, ass
         />
       )}
       {priority && <span className="sr-only">Prioridade {PRIORITY_LABEL[priority]}.</span>}
+
+      {cover && !compact && (
+        // Faixa baixa no topo, recortada, sangrando até a borda do card (desfaz o padding dele).
+        <img src={cover} alt="" loading="lazy" className="-mt-2 -ml-3.5 -mr-3 mb-1 h-20 w-[calc(100%+1.625rem)] max-w-none object-cover" />
+      )}
 
       {labels.length > 0 && (
         <div className="flex min-w-0 flex-wrap items-center gap-1 px-2">
@@ -100,6 +110,15 @@ export function CardFace({ title, actions, priority, due, done, stalledDays, ass
               title="Itens do checklist concluídos"
             >
               ✓ {checklist.done}/{checklist.total}
+            </span>
+          )}
+          {attachments > 0 && (
+            <span
+              className="inline-flex items-center gap-0.5 whitespace-nowrap text-xs tabular-nums text-text-muted"
+              title={`${attachments} ${attachments === 1 ? "anexo" : "anexos"}`}
+            >
+              <IconPaperclip size={12} />
+              {attachments}
             </span>
           )}
         </div>

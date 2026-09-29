@@ -18,9 +18,11 @@ interface CardProps {
   onOpenDetail: (id: number) => void;
   labels?: Label[];
   checklistProgress?: { done: number; total: number };
+  attachments?: number;
+  cover?: string;
 }
 
-export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress }: CardProps) {
+export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress, attachments = 0, cover }: CardProps) {
   const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   // Precisa existir antes do arquivamento: o card some da tela, mas o "Desfazer" do aviso ainda
@@ -73,7 +75,10 @@ export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress
                   archiveCard.mutate(card.id, {
                     onSuccess: () =>
                       toast({
-                        message: `“${card.title}” arquivado`,
+                        // Arquivar guarda os anexos; só a exclusão definitiva apaga.
+                        message: `“${card.title}” arquivado${
+                          attachments > 0 ? ` · ${attachments === 1 ? "o anexo continua guardado" : `os ${attachments} anexos continuam guardados`}` : ""
+                        }`,
                         action: { label: "Desfazer", onClick: () => restoreCard.mutate(card.id) },
                       }),
                   });
@@ -92,6 +97,8 @@ export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress
           assignee={assignee && { id: assignee.user_id, name: assignee.profile.display_name }}
           labels={labels}
           checklist={checklistProgress}
+          attachments={attachments}
+          cover={cover}
           compact={compact}
           dragging={isDragging}
         />

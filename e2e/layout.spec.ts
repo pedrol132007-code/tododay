@@ -186,3 +186,36 @@ test("link do dashboard abre o board de demonstração já filtrado", async ({ p
   await expect(page.getByRole("button", { name: "Remover filtro Atrasadas" })).toBeVisible();
   await expect(page.getByText(/^\d+ de \d+ tarefas/)).toBeVisible();
 });
+
+test("número do dashboard = cards no board filtrado; Voltar mantém o período e a pessoa", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page.getByRole("button", { name: "Gerar demonstração" }).click();
+  await page.locator("button[aria-haspopup=dialog]").click();
+  await page.getByRole("radio", { name: "Últimos 30 dias" }).click();
+  await expect(page.locator("button[aria-haspopup=dialog]")).toHaveText(/Últimos 30 dias/);
+
+  // "Em andamento" da carga da equipe: o número clicado é o que o board mostra.
+  const label = (await page.locator("button[aria-label^='Ver as '][aria-label*='em andamento']").first().getAttribute("aria-label"))!;
+  const shown = Number(label.match(/Ver as (\d+)/)![1]);
+  await page.getByRole("button", { name: label, exact: true }).click();
+  await expect(page.getByText(new RegExp(`^${shown} de \\d+ tarefas`))).toBeVisible();
+  await expect(page.getByText(/^Aberto pelo dashboard: Carga da equipe/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remover filtro Colunas em andamento" })).toBeVisible();
+
+  await page.getByRole("button", { name: "← Voltar ao dashboard" }).click();
+  await expect(page.locator("button[aria-haspopup=dialog]")).toHaveText(/Últimos 30 dias/);
+  expect(new URL(page.url()).searchParams.get("coluna")).toBeNull();
+
+  // Na visão de uma pessoa, uma tarefa da lista abre direto no board, e o Voltar volta para ela.
+  await page.getByRole("radio", { name: /Bruno/ }).click();
+  await page.getByRole("button", { name: /^Entregas/ }).first().click();
+  const task = page.locator("aside li button").first();
+  const title = (await task.locator("span").first().innerText()).split("\n")[0];
+  await task.click();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "← Voltar ao dashboard" }).click();
+  await expect(page.getByRole("heading", { name: /Dashboard · Bruno/ })).toBeVisible();
+  await expect(page.locator("button[aria-haspopup=dialog]")).toHaveText(/Últimos 30 dias/);
+});

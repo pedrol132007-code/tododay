@@ -219,3 +219,47 @@ test("número do dashboard = cards no board filtrado; Voltar mantém o período 
   await expect(page.getByRole("heading", { name: /Dashboard · Bruno/ })).toBeVisible();
   await expect(page.locator("button[aria-haspopup=dialog]")).toHaveText(/Últimos 30 dias/);
 });
+
+test("menu da coluna numa janela baixa: Excluir coluna aparece e recebe o clique", async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 650 });
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Configurações da coluna Coluna curta", exact: true }).click();
+  const del = page.getByRole("button", { name: "Excluir coluna", exact: true });
+  await expect(del).toBeInViewport({ ratio: 1 });
+  // Nada por cima (a linha do board cortava o menu): o ponto do meio do botão é o próprio botão.
+  expect(
+    await del.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      return el === top || el.contains(top);
+    }),
+  ).toBe(true);
+
+  // O menu fica num portal: clicar dentro não fecha nem arrasta a coluna; Esc e clique fora fecham.
+  await page.getByRole("radio", { name: "Em andamento" }).click();
+  await expect(del).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(del).toBeHidden();
+  await page.getByRole("button", { name: "Configurações da coluna Coluna curta", exact: true }).click();
+  await page.mouse.click(1000, 600);
+  await expect(del).toBeHidden();
+
+  await page.getByRole("button", { name: "Configurações da coluna Coluna curta", exact: true }).click();
+  const deleted = page.waitForRequest((r) => r.method() === "DELETE" && r.url().includes("/rest/v1/list"));
+  await del.click();
+  expect(new URL((await deleted).url()).searchParams.get("id")).toBe("eq.2");
+});
+
+test("período personalizado: as datas cabem dentro do seletor", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Dashboard", exact: true }).click();
+  await page.getByRole("button", { name: "Gerar demonstração" }).click();
+  await page.locator("button[aria-haspopup=dialog]").click();
+  const dialog = page.getByRole("dialog", { name: "Período" });
+  const box = (await dialog.boundingBox())!;
+  for (const input of await dialog.locator("input[type=date]").all()) {
+    const r = (await input.boundingBox())!;
+    expect(r.x).toBeGreaterThanOrEqual(box.x);
+    expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width);
+  }
+});

@@ -55,12 +55,18 @@ describe.each(SEEDS)("dashboard e board contam igual (semente %i)", (seed) => {
   });
 
   it("cada alerta do Atenção, na equipe e no detalhe de cada pessoa", () => {
+    // O número do alerta é o das tarefas da visão (no detalhe, só as da pessoa), como a tela conta.
     const views = [
-      attentionAlerts(data.people, data.tasks, data.today),
-      ...data.people.map((p) => attentionAlerts([p], data.tasks.filter((t) => t.assigneeId === p.id), data.today, { perFact: true })),
+      { tasks: data.tasks, alerts: attentionAlerts(data.people, data.tasks, data.today) },
+      ...data.people.map((p) => {
+        const own = data.tasks.filter((t) => t.assigneeId === p.id);
+        return { tasks: own, alerts: attentionAlerts([p], own, data.today, { perFact: true }) };
+      }),
     ];
-    for (const alert of views.flat()) {
-      expect(boardCount(data, alertFilters(alert, slugs)), alert.text).toBe(alertTasks(data.tasks, alert, data.today).length);
+    for (const view of views) {
+      for (const alert of view.alerts) {
+        expect(boardCount(data, alertFilters(alert, slugs)), alert.text).toBe(alertTasks(view.tasks, alert, data.today).length);
+      }
     }
   });
 });

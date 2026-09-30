@@ -174,7 +174,8 @@ function personFacts(own: DashboardTask[], day: string): Fact[] {
 /**
  * Alertas do dia, do mais grave para o menos grave (no máximo MAX_ALERTS), e um da equipe para
  * prazos próximos. Na equipe, cada pessoa em risco aparece uma vez, com o fato mais grave; os
- * outros ficam em `more`. Com `perFact` (o detalhe da pessoa), cada fato vira um alerta.
+ * outros ficam em `more`. Com `perFact` (o detalhe da pessoa), cada fato vira um alerta, e o de
+ * prazos próximos é dela (o link filtra pela pessoa, como o número conta).
  */
 export function attentionAlerts(
   people: DashboardPerson[],
@@ -214,6 +215,7 @@ export function attentionAlerts(
         id: "dueSoon",
         kind: "dueSoon",
         text: `${dueSoon} ${plural(dueSoon, "tarefa vence", "tarefas vencem")} nos próximos ${DUE_SOON_DAYS} dias`,
+        personId: perFact && people.length === 1 ? people[0].id : undefined,
         match: ["dueSoon"],
         more: 0,
       },

@@ -30,10 +30,10 @@ function amount(unit: VariationUnit, v: number): string {
   return `${num(v)} ${v === 1 ? "tarefa" : "tarefas"}`;
 }
 
-/** Um valor da métrica, para o tooltip. */
+/** Um valor da métrica, para o tooltip (dias com uma casa, como no KPI). */
 function value(unit: VariationUnit, v: number): string {
   if (unit === "points") return `${num(v * 100)}%`;
-  if (unit === "days") return `${num(v, 1)} ${Math.round(v * 10) === 10 ? "dia" : "dias"}`;
+  if (unit === "days") return amount(unit, v);
   return num(v);
 }
 

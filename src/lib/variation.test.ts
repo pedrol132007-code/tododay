@@ -83,6 +83,10 @@ describe("tooltip: a leitura em frase e os valores comparados", () => {
     );
   });
 
+  it("dias sempre com uma casa, como o número do KPI", () => {
+    expect(variation("cycleTime", 13, 11)!.tooltip).toContain("Período anterior: 11,0 dias; este período: 13,0 dias.");
+  });
+
   it("taxa no prazo mostra as porcentagens", () => {
     expect(variation("onTime", 0.79, 0.81)!.tooltip).toBe("A taxa de entregas no prazo diminuiu — piora. Período anterior: 81%; este período: 79%.");
   });

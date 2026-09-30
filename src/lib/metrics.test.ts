@@ -16,7 +16,6 @@ import {
   seriesByBucket,
   statusOn,
   teamAverageSeries,
-  tone,
 } from "./metrics";
 
 let nextId = 1;
@@ -171,24 +170,6 @@ describe("métricas do período", () => {
     expect(series.reduce((a, p) => a + p.delivered, 0)).toBe(m.delivered);
     expect(series.reduce((a, p) => a + p.created, 0)).toBe(m.created);
     expect(series.at(-1)!.openAtEnd).toBe(m.openAtEnd);
-  });
-});
-
-describe("tom da variação", () => {
-  it("subir é bom quando mais é melhor", () => {
-    expect(tone(12, 10, "up")).toBe("good");
-    expect(tone(8, 10, "up")).toBe("bad");
-  });
-
-  it("descer é bom quando menos é melhor (tempo, backlog)", () => {
-    expect(tone(4, 6, "down")).toBe("good");
-    expect(tone(7, 6, "down")).toBe("bad");
-  });
-
-  it("sem mudança ou sem base, é neutro", () => {
-    expect(tone(5, 5, "up")).toBe("neutral");
-    expect(tone(null, 5, "up")).toBe("neutral");
-    expect(tone(5, null, "down")).toBe("neutral");
   });
 });
 

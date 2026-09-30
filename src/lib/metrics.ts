@@ -173,16 +173,5 @@ export function teamAverageSeries(tasks: DashboardTask[], r: DayRange, people: n
   }));
 }
 
+/** Se uma mudança é boa ou ruim (a cor da variação). */
 export type Tone = "good" | "bad" | "neutral";
-
-/** A cor diz se a mudança é boa ou ruim, não para onde ela aponta. */
-export function tone(current: number | null, previous: number | null, better: "up" | "down"): Tone {
-  if (current == null || previous == null || current === previous) return "neutral";
-  return (current > previous) === (better === "up") ? "good" : "bad";
-}
-
-/** Variação relativa (0.2 = +20%); null quando não há base para comparar. */
-export function compare(current: number | null, previous: number | null): number | null {
-  if (current == null || previous == null || previous === 0) return null;
-  return (current - previous) / previous;
-}

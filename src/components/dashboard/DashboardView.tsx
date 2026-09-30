@@ -6,7 +6,6 @@ import { EMPTY_FILTERS, personSlugs, type BoardFilters } from "../../lib/boardFi
 import { alertTasks, attentionAlerts, type AttentionAlert, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
 import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
-  compare,
   deliveredIn,
   deliveredLateIn,
   openAt,
@@ -15,10 +14,9 @@ import {
   rangeLength,
   seriesByBucket,
   teamAverageSeries,
-  tone,
   type PeriodMetrics,
-  type Tone,
 } from "../../lib/metrics";
+import { variation } from "../../lib/variation";
 import { Avatar } from "../ui/Avatar";
 import { DemoActions, DemoBadge } from "../ui/Demo";
 import { EmptyState } from "../ui/EmptyState";
@@ -34,6 +32,7 @@ import { PeriodPicker, selectionLabel, selectionRange, type PeriodSelection } fr
 import { TaskListPanel } from "./TaskListPanel";
 import { StalledSection } from "./StalledSection";
 import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
+import { Variation } from "./Variation";
 
 /** O filtro do board que mostra o que cada alerta descreve (a pessoa entra à parte). */
 const ALERT_FILTER: Record<AttentionAlert["kind"], Partial<BoardFilters>> = {
@@ -43,58 +42,6 @@ const ALERT_FILTER: Record<AttentionAlert["kind"], Partial<BoardFilters>> = {
   dueSoon: { due: "soon" },
 };
 const LOAD_FILTER: Record<LoadList, Partial<BoardFilters>> = { inProgress: {}, overdue: { due: "overdue" }, stalled: { stalled: STALLED_DAYS } };
-
-const VS = "vs. período anterior";
-
-/** Até meio ponto percentual a variação aparece como 0%: texto e cor tratam como estável. */
-const FLAT = 0.005;
-
-/** `words` diz o que a seta significa quando "subir" não é óbvio (ex.: tempo maior = mais lento). */
-function relative(cur: number | null, prev: number | null, words?: { up: string; down: string }): string | null {
-  const c = compare(cur, prev);
-  if (c == null) return null;
-  const dir = c > FLAT ? "up" : c < -FLAT ? "down" : null;
-  const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "■";
-  const meaning = dir && words ? ` ${words[dir]}` : "";
-  return `${arrow} ${num(Math.abs(c * 100))}%${meaning} ${VS}`;
-}
-
-/** Variação em palavras para leitores de tela: "alta de 18%", "queda de 5%", "estável". */
-function trendWords(cur: number | null, prev: number | null): string | null {
-  const c = compare(cur, prev);
-  if (c == null) return null;
-  if (Math.abs(c) <= FLAT) return "estável";
-  return `${c > 0 ? "alta" : "queda"} de ${num(Math.abs(c * 100))}%`;
-}
-
-/** Tom de uma variação relativa: estável quando o texto mostra 0%. */
-function relativeTone(cur: number | null, prev: number | null, better: "up" | "down"): Tone {
-  const c = compare(cur, prev);
-  return c != null && Math.abs(c) <= FLAT ? "neutral" : tone(cur, prev, better);
-}
-
-/** Diferença de taxas em pontos percentuais inteiros, como aparece no texto. */
-function pointsDiff(cur: number | null, prev: number | null): number | null {
-  return cur == null || prev == null ? null : Math.round((cur - prev) * 100);
-}
-
-/** "+2 p.p. vs. período anterior". */
-function points(cur: number | null, prev: number | null): string | null {
-  const d = pointsDiff(cur, prev);
-  if (d == null) return null;
-  return `${d > 0 ? "+" : d < 0 ? "−" : ""}${num(Math.abs(d))} p.p. ${VS}`;
-}
-
-/** Tom de uma taxa: estável quando o texto mostra 0 p.p. */
-function pointsTone(cur: number | null, prev: number | null): Tone {
-  return pointsDiff(cur, prev) === 0 ? "neutral" : tone(cur, prev, "up");
-}
-
-/** Variação do backlog no período, sem sinal no número: "▼ 16 no período" (diminuiu). */
-function backlogDelta(change: number): string {
-  if (change === 0) return "■ sem variação no período";
-  return `${change > 0 ? "▲" : "▼"} ${num(Math.abs(change))} no período`;
-}
 
 /**
  * `data` vem de fora: a demonstração é a mesma no board e no dashboard. `onOpenBoard` abre o board
@@ -191,7 +138,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
   const subject = person ? person.name.split(" ")[0] : "Equipe";
   const refName = "Média da equipe";
   const { sum, prev } = view;
-  const deliveredTrend = trendWords(sum.delivered, prev?.delivered ?? null);
+  const deliveredTrend = variation("delivered", sum.delivered, prev?.delivered ?? null);
   const refLegend = view.team ? [{ label: subject, color: "chart-1" as const }, { label: refName, color: "chart-ref" as const, dashed: true }] : undefined;
   const of = person ? ` de ${subject}` : "";
 
@@ -252,8 +199,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         <StatTile
           label="Entregas"
           value={num(sum.delivered)}
-          delta={relative(sum.delivered, prev?.delivered ?? null)}
-          tone={relativeTone(sum.delivered, prev?.delivered ?? null, "up")}
+          delta={<Variation metric="delivered" current={sum.delivered} previous={prev?.delivered ?? null} />}
           spark={view.series.map((p) => p.delivered)}
           onOpen={() => setList({ title: `Entregas${of} · ${periodName}`, tasks: deliveredIn(view.tasks, view.range) })}
         />
@@ -261,8 +207,8 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
           label="Backlog"
           value={num(sum.openAtEnd)}
           note="tarefas abertas no fim do período"
-          delta={backlogDelta(sum.backlogChange)}
-          tone={sum.backlogChange > 0 ? "bad" : sum.backlogChange < 0 ? "good" : "neutral"}
+          // No início do período havia o que há no fim menos o que entrou e mais o que saiu.
+          delta={<Variation metric="backlog" current={sum.openAtEnd} previous={sum.openAtEnd - sum.backlogChange} />}
           spark={view.series.map((p) => p.openAtEnd)}
           onOpen={() => setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })}
         />
@@ -278,8 +224,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
               </>
             )
           }
-          delta={relative(sum.cycleP85, prev?.cycleP85 ?? null, { up: "mais lento", down: "mais rápido" })}
-          tone={relativeTone(sum.cycleP85, prev?.cycleP85 ?? null, "down")}
+          delta={<Variation metric="cycleTime" current={sum.cycleP85} previous={prev?.cycleP85 ?? null} />}
           spark={view.series.map((p) => p.cycleP85)}
         />
         <StatTile
@@ -287,8 +232,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
           value={pct(sum.onTimeRate)}
           meter={sum.onTimeRate}
           note={sum.onTimeRate == null ? undefined : `${num(sum.withDue)} entregas com prazo no período`}
-          delta={points(sum.onTimeRate, prev?.onTimeRate ?? null)}
-          tone={pointsTone(sum.onTimeRate, prev?.onTimeRate ?? null)}
+          delta={<Variation metric="onTime" current={sum.onTimeRate} previous={prev?.onTimeRate ?? null} />}
           spark={view.series.map((p) => p.onTimeRate)}
           onOpen={() => setList({ title: `Entregues fora do prazo${of} · ${periodName}`, tasks: deliveredLateIn(view.tasks, view.range) })}
         />
@@ -335,7 +279,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
             format={(v) => num(v, 1)}
             reference={view.team?.map((p) => p.delivered)}
             referenceName={refName}
-            ariaLabel={`Entregas ${per} de ${subject}, ${periodName}: total ${num(sum.delivered)}${deliveredTrend ? `, ${deliveredTrend} ${VS}` : ""}`}
+            ariaLabel={`Entregas ${per} de ${subject}, ${periodName}: total ${num(sum.delivered)}${deliveredTrend ? `. ${deliveredTrend.tooltip}` : ""}`}
           />
         </ChartFrame>
 

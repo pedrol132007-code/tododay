@@ -1,16 +1,9 @@
 import type { ReactNode } from "react";
-import type { Tone } from "../../../lib/metrics";
 import { Sparkline } from "./Sparkline";
 
-const TONE_CLASS: Record<Tone, string> = {
-  good: "text-success",
-  bad: "text-danger",
-  neutral: "text-text-muted",
-};
-
 /**
- * Número principal do dashboard: valor, variação escrita (nunca só cor) e minigráfico. A cor da
- * variação diz se a mudança é boa ou ruim (`tone`), não para onde a seta aponta.
+ * Número principal do dashboard: valor, variação escrita (nunca só cor) e minigráfico. A variação
+ * vem pronta do componente Variation.
  */
 export function StatTile({
   label,
@@ -18,7 +11,6 @@ export function StatTile({
   unit,
   note,
   delta,
-  tone = "neutral",
   spark,
   meter,
   onOpen,
@@ -29,8 +21,8 @@ export function StatTile({
   unit?: string;
   /** Leitura do número em frase, abaixo dele. */
   note?: ReactNode;
-  delta?: string | null;
-  tone?: Tone;
+  /** A variação (componente Variation). */
+  delta: ReactNode;
   spark?: (number | null)[];
   /** 0–1: barra de medidor sob o número (destaque de uma taxa). */
   meter?: number | null;
@@ -65,7 +57,7 @@ export function StatTile({
         </span>
       )}
       {note && <span className="text-sm text-text-primary">{note}</span>}
-      <span className={`text-xs ${delta ? TONE_CLASS[tone] : "text-text-muted"}`}>{delta ?? "—"}</span>
+      {delta}
     </Tag>
   );
 }

@@ -487,7 +487,7 @@ export function BoardView({
             )}
           </SortableContext>
           {canEdit && (
-            <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-4">
+            <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-3">
               <input
                 value={newListName}
                 onChange={(e) => setNewListName(e.target.value)}

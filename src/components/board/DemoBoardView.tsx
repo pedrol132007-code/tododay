@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask, ListStatus } from "../../types";
-import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
+import { LIST_STATUS_LABEL, showsListStatus } from "../../lib/boardVisuals";
 import { hasFilters, matchesFilters, personSlugs, slugify, sortCards } from "../../lib/boardFilters";
 import { cardRisk } from "../../lib/dashboardRules";
 import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, demoFilterable, enteredDayOf, type DemoAttachment } from "../../lib/demoBoard";
@@ -88,12 +88,14 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
           <section
             key={list.id}
             aria-label={list.name}
-            className={`flex max-h-full w-72 shrink-0 flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"}`}
+            className={`flex max-h-full w-72 shrink-0 flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-1.5 p-2.5" : "gap-2 p-3"}`}
           >
             <div className="flex shrink-0 items-center justify-between gap-2">
               <div className="flex min-w-0 flex-col">
-                <span className="px-2 py-1 text-lg font-semibold">{list.name}</span>
-                <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+                <span className="px-2 py-1 text-base font-semibold">{list.name}</span>
+                {showsListStatus(list.name, list.status) && (
+                  <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+                )}
               </div>
               {/* O contador é da coluna inteira (é ele que o WIP limita), mesmo com filtro. */}
               <ListCounter count={list.tasks.length} wipLimit={list.wipLimit} />

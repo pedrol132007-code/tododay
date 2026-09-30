@@ -13,7 +13,7 @@ import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
 import { IconPlus } from "../ui/icons";
 import { ListMenu } from "./ListMenu";
-import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
+import { LIST_STATUS_LABEL, showsListStatus } from "../../lib/boardVisuals";
 import { ListCounter } from "./ListCounter";
 
 interface ListProps {
@@ -96,7 +96,7 @@ export function List({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
-        className={`flex min-h-0 flex-col rounded-2xl border bg-bg-column ${compact ? "gap-2 p-3" : "gap-3 p-4"} ${
+        className={`flex min-h-0 flex-col rounded-2xl border bg-bg-column ${compact ? "gap-1.5 p-2.5" : "gap-2 p-3"} ${
           sortable.isDragging ? "border-dashed border-primary bg-primary/5 [&>*]:invisible" : "border-border"
         }`}
       >
@@ -110,10 +110,13 @@ export function List({
             <InlineEditableText
               value={list.name}
               onSave={(name) => renameList.mutate({ id: list.id, name })}
-              className="text-lg font-semibold"
+              className="text-base font-semibold"
               readOnly={!canEdit}
             />
-            <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+            {/* O tipo só quando o nome não é ele mesmo ("Em revisão" → Em andamento): as colunas sobem. */}
+            {showsListStatus(list.name, list.status) && (
+              <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <ListCounter count={total} wipLimit={list.wip_limit} />

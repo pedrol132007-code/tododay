@@ -8,6 +8,11 @@ export const LIST_STATUS_LABEL: Record<ListStatus, string> = {
   done: "Concluído",
 };
 
+const fold = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+
+/** O tipo aparece sob o nome da coluna só quando o nome não é o próprio tipo ("Em revisão" → Em andamento). */
+export const showsListStatus = (name: string, status: ListStatus) => fold(name) !== fold(LIST_STATUS_LABEL[status]);
+
 /** Da mais para a menos urgente (ordem dos menus e da ordenação). */
 export const PRIORITIES: CardPriority[] = ["urgent", "high", "medium", "low"];
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes, formatDue, memberColor, MEMBER_COLORS } from "./boardVisuals";
+import { formatBytes, formatDue, memberColor, MEMBER_COLORS, showsListStatus } from "./boardVisuals";
 
 const today = new Date(2026, 8, 25, 15, 30); // 25/09/2026, meio da tarde
 
@@ -38,5 +38,20 @@ describe("formatBytes", () => {
     expect(formatBytes(820 * 1024)).toBe("820 KB");
     expect(formatBytes(1.44 * 1024 * 1024)).toBe("1,4 MB");
     expect(formatBytes(20 * 1024 * 1024)).toBe("20 MB");
+  });
+});
+
+describe("showsListStatus", () => {
+  it("esconde o tipo quando o nome da coluna já é ele (sem ligar para acento e caixa)", () => {
+    expect(showsListStatus("A fazer", "todo")).toBe(false);
+    expect(showsListStatus("EM ANDAMENTO", "doing")).toBe(false);
+    expect(showsListStatus("Concluido", "done")).toBe(false);
+    expect(showsListStatus("  concluído ", "done")).toBe(false);
+  });
+
+  it("mostra o tipo quando o nome diz outra coisa", () => {
+    expect(showsListStatus("Em revisão", "doing")).toBe(true);
+    expect(showsListStatus("Backlog", "todo")).toBe(true);
+    expect(showsListStatus("A fazer", "doing")).toBe(true);
   });
 });

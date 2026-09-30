@@ -127,6 +127,13 @@ export const IconFlag = (p: IconProps) => (
   </Icon>
 );
 
+export const IconTag = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z" />
+    <circle cx="7.5" cy="7.5" r="1.2" />
+  </Icon>
+);
+
 export const IconSearch = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="11" cy="11" r="6.5" />

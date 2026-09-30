@@ -18,7 +18,7 @@ import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { PanelSection } from "./PanelSection";
-import { IconCalendar, IconFlag, IconUsers, IconX } from "../ui/icons";
+import { IconCalendar, IconChevronDown, IconFlag, IconTag, IconUsers, IconX } from "../ui/icons";
 
 interface CardDetailPanelProps {
   card: CardType;
@@ -32,11 +32,11 @@ const fieldClass =
 function DetailRow({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
     <>
-      <span className="inline-flex items-center gap-2 text-sm text-text-muted">
+      <span className="inline-flex min-h-8 items-center gap-2 text-sm text-text-muted">
         {icon}
         {label}
       </span>
-      <div className="flex min-h-8 flex-wrap items-center gap-2">{children}</div>
+      <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-2">{children}</div>
     </>
   );
 }
@@ -57,6 +57,8 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const { uploads, send } = useAttachmentUploads(card.id, canEdit);
   // Arquivos arrastados para qualquer lugar do painel viram anexos.
   const [dragging, setDragging] = useState(false);
+  // Histórico é consulta ocasional: começa recolhido.
+  const [showHistory, setShowHistory] = useState(false);
   const hasFiles = (e: DragEvent) => canEdit && e.dataTransfer.types.includes("Files");
 
   useEffect(() => {
@@ -122,65 +124,65 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
           </div>
         </div>
 
-        <PanelSection title="Detalhes">
-          <div className="grid grid-cols-[8rem_1fr] items-center gap-x-3 gap-y-3">
-            <DetailRow icon={<IconUsers size={16} />} label="Responsável">
-              {assignee && <Avatar userId={assignee.user_id} name={assignee.profile.display_name} />}
-              {canEdit ? (
-                <select
-                  aria-label="Responsável"
-                  value={card.assignee_id ?? ""}
-                  onChange={(e) => updateAssignee.mutate({ id: card.id, assigneeId: e.target.value || null })}
-                  className={fieldClass}
-                >
-                  <option value="">Ninguém</option>
-                  {(members ?? []).map((member) => (
-                    <option key={member.user_id} value={member.user_id}>
-                      {member.profile.display_name}
-                      {member.job_title ? ` — ${member.job_title}` : ""}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-text-primary">{assignee?.profile.display_name ?? "Ninguém"}</span>
-              )}
-            </DetailRow>
-
-            <DetailRow icon={<IconFlag size={16} />} label="Prioridade">
-              {canEdit ? (
-                <select
-                  aria-label="Prioridade"
-                  value={card.priority ?? ""}
-                  onChange={(e) => updatePriority.mutate({ id: card.id, priority: (e.target.value || null) as CardPriority | null })}
-                  className={fieldClass}
-                >
-                  <option value="">Sem prioridade</option>
-                  {PRIORITIES.map((p) => (
-                    <option key={p} value={p}>
-                      {PRIORITY_LABEL[p]}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-sm text-text-primary">{card.priority ? PRIORITY_LABEL[card.priority] : "Sem prioridade"}</span>
-              )}
-            </DetailRow>
-
-            <DetailRow icon={<IconCalendar size={16} />} label="Vencimento">
-              <input
-                type="date"
-                aria-label="Vencimento"
-                value={card.due_date ?? ""}
-                disabled={!canEdit}
-                onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
+        <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3">
+          <DetailRow icon={<IconUsers size={16} />} label="Responsável">
+            {assignee && <Avatar userId={assignee.user_id} name={assignee.profile.display_name} />}
+            {canEdit ? (
+              <select
+                aria-label="Responsável"
+                value={card.assignee_id ?? ""}
+                onChange={(e) => updateAssignee.mutate({ id: card.id, assigneeId: e.target.value || null })}
                 className={fieldClass}
-              />
-              {card.due_date && <DueBadge due={card.due_date} withLabel done={inDoneList} />}
-            </DetailRow>
-          </div>
-        </PanelSection>
+              >
+                <option value="">Ninguém</option>
+                {(members ?? []).map((member) => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {member.profile.display_name}
+                    {member.job_title ? ` — ${member.job_title}` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm text-text-primary">{assignee?.profile.display_name ?? "Ninguém"}</span>
+            )}
+          </DetailRow>
 
-        <LabelPicker boardId={boardId} cardId={card.id} />
+          <DetailRow icon={<IconFlag size={16} />} label="Prioridade">
+            {canEdit ? (
+              <select
+                aria-label="Prioridade"
+                value={card.priority ?? ""}
+                onChange={(e) => updatePriority.mutate({ id: card.id, priority: (e.target.value || null) as CardPriority | null })}
+                className={fieldClass}
+              >
+                <option value="">Sem prioridade</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {PRIORITY_LABEL[p]}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm text-text-primary">{card.priority ? PRIORITY_LABEL[card.priority] : "Sem prioridade"}</span>
+            )}
+          </DetailRow>
+
+          <DetailRow icon={<IconCalendar size={16} />} label="Vencimento">
+            <input
+              type="date"
+              aria-label="Vencimento"
+              value={card.due_date ?? ""}
+              disabled={!canEdit}
+              onChange={(e) => updateDueDate.mutate({ id: card.id, dueDate: e.target.value || null })}
+              className={fieldClass}
+            />
+            {card.due_date && <DueBadge due={card.due_date} withLabel done={inDoneList} />}
+          </DetailRow>
+
+          <DetailRow icon={<IconTag size={16} />} label="Etiquetas">
+            <LabelPicker boardId={boardId} cardId={card.id} />
+          </DetailRow>
+        </div>
 
         <PanelSection title="Descrição">
           <MarkdownEditor
@@ -195,9 +197,19 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
 
         <Checklist cardId={card.id} />
 
-        <PanelSection title="Histórico">
-          <ActivityList activities={activities} where="card" />
-        </PanelSection>
+        <section className="flex flex-col gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => setShowHistory((v) => !v)}
+            aria-expanded={showHistory}
+            className="inline-flex w-fit items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted hover:text-text-primary"
+          >
+            Histórico
+            {activities && activities.length > 0 && <span className="tabular-nums">({activities.length})</span>}
+            <IconChevronDown size={14} className={`transition-transform ${showHistory ? "" : "-rotate-90"}`} />
+          </button>
+          {showHistory && <ActivityList activities={activities} where="card" />}
+        </section>
       </motion.aside>
     </div>
   );

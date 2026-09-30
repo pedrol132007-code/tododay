@@ -50,21 +50,19 @@ export function DemoCardPanel({ task, person, done, attachments, files, onClose 
           </button>
         </div>
 
-        <PanelSection title="Detalhes">
-          <dl className="grid grid-cols-[8rem_1fr] items-center gap-x-3 gap-y-3 text-sm">
-            <dt className="text-text-muted">Responsável</dt>
-            <dd className="flex items-center gap-2 text-text-primary">
-              {person && <Avatar userId={person.id} name={person.name} />}
-              {person?.name ?? "Ninguém"}
-            </dd>
-            <dt className="text-text-muted">Prioridade</dt>
-            <dd className="text-text-primary">{task.priority ? PRIORITY_LABEL[task.priority] : "Sem prioridade"}</dd>
-            <dt className="text-text-muted">Vencimento</dt>
-            <dd>{task.dueDay ? <DueBadge due={task.dueDay} withLabel done={done} /> : <span className="text-text-primary">Sem prazo</span>}</dd>
-            <dt className="text-text-muted">Etiquetas</dt>
-            <dd className="text-text-primary">{task.labels.length > 0 ? task.labels.join(", ") : "Nenhuma"}</dd>
-          </dl>
-        </PanelSection>
+        <dl className="grid grid-cols-[8rem_1fr] items-center gap-x-3 gap-y-3 text-sm">
+          <dt className="text-text-muted">Responsável</dt>
+          <dd className="flex items-center gap-2 text-text-primary">
+            {person && <Avatar userId={person.id} name={person.name} />}
+            {person?.name ?? "Ninguém"}
+          </dd>
+          <dt className="text-text-muted">Prioridade</dt>
+          <dd className="text-text-primary">{task.priority ? PRIORITY_LABEL[task.priority] : "Sem prioridade"}</dd>
+          <dt className="text-text-muted">Vencimento</dt>
+          <dd>{task.dueDay ? <DueBadge due={task.dueDay} withLabel done={done} /> : <span className="text-text-primary">Sem prazo</span>}</dd>
+          <dt className="text-text-muted">Etiquetas</dt>
+          <dd className="text-text-primary">{task.labels.length > 0 ? task.labels.join(", ") : "Nenhuma"}</dd>
+        </dl>
 
         <PanelSection title="Anexos" aside={attachments.length > 0 ? String(attachments.length) : undefined}>
           {attachments.length === 0 ? (

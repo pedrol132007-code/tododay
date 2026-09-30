@@ -1,9 +1,9 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { CardPriority } from "../../types";
 import { EMPTY_FILTERS, hasFilters, type BoardFilters, type BoardSort, type ColumnFilter, type DueFilter } from "../../lib/boardFilters";
 import { PRIORITIES, PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { DUE_SOON_DAYS, STALLED_DAYS } from "../../lib/dashboardRules";
-import { IconSearch, IconX } from "../ui/icons";
+import { IconChevronDown, IconSearch, IconX } from "../ui/icons";
 
 const DUE_LABEL: Record<DueFilter, string> = { overdue: "Atrasadas", soon: `Vencem em até ${DUE_SOON_DAYS} dias` };
 /** Nas opções o texto é curto, para o seletor não esticar; o chip mostra a frase inteira. */
@@ -20,7 +20,13 @@ export interface ToolbarOption {
   name: string;
 }
 
-function FilterSelect({ label, value, onChange, children }: { label: string; value: string; onChange: (value: string) => void; children: ReactNode }) {
+function FilterSelect({ label, value, onChange, className = "", children }: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <select
       aria-label={label}
@@ -28,7 +34,7 @@ function FilterSelect({ label, value, onChange, children }: { label: string; val
       onChange={(e) => onChange(e.target.value)}
       className={`rounded-lg border bg-bg-elevated px-2 py-1.5 text-sm text-text-primary outline-none focus:border-primary ${
         value ? "border-primary" : "border-border"
-      }`}
+      } ${className}`}
     >
       {children}
     </select>
@@ -46,12 +52,80 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
   );
 }
 
+/** Cabeçalho do board numa linha só (filete, título, resumo e ações), para as colunas subirem. */
+export function BoardHeader({ title, meta, actions }: { title: ReactNode; meta?: ReactNode; actions?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+        {/* Filete vermelho ao lado do título, como nos títulos dos gráficos. */}
+        <span className="h-0.5 w-5 shrink-0 bg-danger" aria-hidden="true" />
+        <h1 className="text-2xl font-normal leading-tight tracking-[-0.03em] text-text-primary">{title}</h1>
+        {meta && <span className="text-sm text-text-muted">{meta}</span>}
+      </div>
+      {actions}
+    </div>
+  );
+}
+
 /**
- * Barra abaixo do título do board: resumo, busca, filtros e ordenação. O estado vem de fora (da
- * URL); aqui só se mostra e se troca. Filtro ativo aparece sempre como chip removível. Aberto por um
- * link do dashboard, mostra de onde veio e o "Voltar ao dashboard".
+ * Os filtros menos usados num painel ("Filtros · 2"), para a barra caber numa linha. O que estiver
+ * ligado aparece também como chip, então nada fica escondido.
+ */
+function MoreFilters({ active, children }: { active: number; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={`inline-flex items-center gap-1.5 rounded-lg border bg-bg-elevated px-2.5 py-1.5 text-sm text-text-primary transition-colors hover:border-primary ${
+          active ? "border-primary" : "border-border"
+        }`}
+      >
+        {active ? `Filtros · ${active}` : "Filtros"}
+        <IconChevronDown size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-30 mt-1 flex w-64 flex-col gap-3 rounded-xl border border-border bg-bg-surface p-3 shadow-lg">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Um filtro dentro do painel, com o nome em cima. */
+function PanelField({ name, children }: { name: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">{name}</span>
+      {children}
+    </div>
+  );
+}
+
+/**
+ * O topo do board: cabeçalho, busca, filtros e ordenação. O estado vem de fora (da URL); aqui só se
+ * mostra e se troca. Filtro ativo aparece sempre como chip removível. Aberto por um link do
+ * dashboard, mostra de onde veio e o "Voltar ao dashboard".
  */
 export function BoardToolbar({
+  title,
+  actions,
   filters,
   onChange,
   people,
@@ -63,6 +137,9 @@ export function BoardToolbar({
   origin,
   onBack,
 }: {
+  title: ReactNode;
+  /** Botões à direita do título (ex.: os da demonstração). */
+  actions?: ReactNode;
   filters: BoardFilters;
   onChange: (filters: BoardFilters) => void;
   people: ToolbarOption[];
@@ -82,9 +159,16 @@ export function BoardToolbar({
   const set = (changes: Partial<BoardFilters>) => onChange({ ...filters, ...changes });
   const nameOf = (list: ToolbarOption[], slug: string) => list.find((o) => o.slug === slug)?.name ?? slug;
   const filtered = hasFilters(filters);
+  const inPanel = [filters.priority, filters.label, filters.due, filters.stalled, filters.column].filter((v) => v != null).length;
 
   return (
-    <div className="-mt-2 mb-4 flex flex-col gap-3">
+    <div className="mb-4 flex flex-col gap-3">
+      <BoardHeader
+        title={title}
+        meta={`${filtered ? `${shown} de ${total}` : total} ${total === 1 ? "tarefa" : "tarefas"} · ${peopleCount} ${peopleCount === 1 ? "pessoa" : "pessoas"}`}
+        actions={actions}
+      />
+
       {onBack && (
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -101,9 +185,6 @@ export function BoardToolbar({
           )}
         </div>
       )}
-      <p className="text-sm text-text-muted">
-        {filtered ? `${shown} de ${total}` : total} {total === 1 ? "tarefa" : "tarefas"} · {peopleCount} {peopleCount === 1 ? "pessoa" : "pessoas"}
-      </p>
 
       <div className="flex flex-wrap items-center gap-2">
         <label className="flex w-60 items-center gap-2 rounded-lg border border-border bg-bg-elevated px-2 py-1.5 text-text-muted focus-within:border-primary">
@@ -125,46 +206,58 @@ export function BoardToolbar({
             </option>
           ))}
         </FilterSelect>
-        <FilterSelect label="Prioridade" value={filters.priority ?? ""} onChange={(v) => set({ priority: (v || null) as CardPriority | null })}>
-          <option value="">Prioridade</option>
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {PRIORITY_LABEL[p]}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Etiqueta" value={filters.label ?? ""} onChange={(v) => set({ label: v || null })}>
-          <option value="">Etiqueta</option>
-          {labels.map((l) => (
-            <option key={l.slug} value={l.slug}>
-              {l.name}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Prazo" value={filters.due ?? ""} onChange={(v) => set({ due: (v || null) as DueFilter | null })}>
-          <option value="">Prazo</option>
-          {(Object.keys(DUE_LABEL) as DueFilter[]).map((d) => (
-            <option key={d} value={d}>
-              {DUE_OPTION[d]}
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Paradas" value={filters.stalled == null ? "" : String(filters.stalled)} onChange={(v) => set({ stalled: v ? Number(v) : null })}>
-          <option value="">Paradas</option>
-          {STALLED_OPTIONS.map((n) => (
-            <option key={n} value={n}>
-              Paradas +{n} dias
-            </option>
-          ))}
-        </FilterSelect>
-        <FilterSelect label="Tipo de coluna" value={filters.column ?? ""} onChange={(v) => set({ column: (v || null) as ColumnFilter | null })}>
-          <option value="">Coluna</option>
-          {(Object.keys(COLUMN_OPTION) as ColumnFilter[]).map((c) => (
-            <option key={c} value={c}>
-              {COLUMN_OPTION[c]}
-            </option>
-          ))}
-        </FilterSelect>
+        <MoreFilters active={inPanel}>
+          <PanelField name="Prioridade">
+            <FilterSelect label="Prioridade" value={filters.priority ?? ""} onChange={(v) => set({ priority: (v || null) as CardPriority | null })} className="w-full">
+              <option value="">Qualquer</option>
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {PRIORITY_LABEL[p]}
+                </option>
+              ))}
+            </FilterSelect>
+          </PanelField>
+          <PanelField name="Etiqueta">
+            <FilterSelect label="Etiqueta" value={filters.label ?? ""} onChange={(v) => set({ label: v || null })} className="w-full">
+              <option value="">Qualquer</option>
+              {labels.map((l) => (
+                <option key={l.slug} value={l.slug}>
+                  {l.name}
+                </option>
+              ))}
+            </FilterSelect>
+          </PanelField>
+          <PanelField name="Prazo">
+            <FilterSelect label="Prazo" value={filters.due ?? ""} onChange={(v) => set({ due: (v || null) as DueFilter | null })} className="w-full">
+              <option value="">Qualquer</option>
+              {(Object.keys(DUE_LABEL) as DueFilter[]).map((d) => (
+                <option key={d} value={d}>
+                  {DUE_OPTION[d]}
+                </option>
+              ))}
+            </FilterSelect>
+          </PanelField>
+          <PanelField name="Paradas">
+            <FilterSelect label="Paradas" value={filters.stalled == null ? "" : String(filters.stalled)} onChange={(v) => set({ stalled: v ? Number(v) : null })} className="w-full">
+              <option value="">Qualquer</option>
+              {STALLED_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  Paradas +{n} dias
+                </option>
+              ))}
+            </FilterSelect>
+          </PanelField>
+          <PanelField name="Tipo de coluna">
+            <FilterSelect label="Tipo de coluna" value={filters.column ?? ""} onChange={(v) => set({ column: (v || null) as ColumnFilter | null })} className="w-full">
+              <option value="">Qualquer</option>
+              {(Object.keys(COLUMN_OPTION) as ColumnFilter[]).map((c) => (
+                <option key={c} value={c}>
+                  {COLUMN_OPTION[c]}
+                </option>
+              ))}
+            </FilterSelect>
+          </PanelField>
+        </MoreFilters>
         <span className="ml-auto inline-flex items-center gap-2 text-sm text-text-muted">
           Ordenar
           <select

@@ -9,7 +9,6 @@ import { makeDemoFiles, revokeDemoFiles, type DemoFile } from "../../lib/demoFil
 import { setOpenCard, useBoardFilters, useBoardLink } from "../../hooks/useBoardFilters";
 import { useCompact } from "../../hooks/usePreferences";
 import { DemoActions, DemoBadge } from "../ui/Demo";
-import { PageHeader } from "../ui/PageHeader";
 import { BoardToolbar } from "./BoardToolbar";
 import { CardFace } from "./CardFace";
 import { DemoCardPanel } from "./DemoCardPanel";
@@ -59,21 +58,19 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
   const filtered = hasFilters(filters);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageHeader
-          title={
-            <span className="inline-flex flex-wrap items-center gap-3">
-              {DEMO_BOARD_NAME}
-              <DemoBadge />
-            </span>
-          }
-        />
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          <DemoActions onRegenerate={onRegenerate} onExit={onExit} />
-        </div>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 pt-4">
       <BoardToolbar
+        title={
+          <span className="inline-flex flex-wrap items-center gap-3">
+            {DEMO_BOARD_NAME}
+            <DemoBadge />
+          </span>
+        }
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <DemoActions onRegenerate={onRegenerate} onExit={onExit} />
+          </div>
+        }
         filters={filters}
         onChange={setFilters}
         people={people}

@@ -42,11 +42,10 @@ import { localDay } from "../../lib/dashboardRules";
 import { useCompact } from "../../hooks/usePreferences";
 import type { Card as CardType, List as ListType, ListStatus } from "../../types";
 import { BoardSkeleton } from "./BoardSkeleton";
-import { BoardToolbar } from "./BoardToolbar";
+import { BoardHeader, BoardToolbar } from "./BoardToolbar";
 import { List } from "./List";
 import { IconColumns, IconPlus } from "../ui/icons";
 import { EmptyState } from "../ui/EmptyState";
-import { PageHeader } from "../ui/PageHeader";
 
 // The detail panel pulls in the markdown renderer, so it only loads once a card is opened.
 const CardDetailPanel = lazy(() =>
@@ -412,8 +411,10 @@ export function BoardView({
   // Cards too: otherwise every column flashes "Nenhuma tarefa aqui" before its cards arrive.
   if (isLoading || cardQueries.some((q) => q.isLoading)) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col p-6">
-        <PageHeader title={boardName} />
+      <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 pt-4">
+        <div className="mb-4">
+          <BoardHeader title={boardName} />
+        </div>
         <BoardSkeleton />
       </div>
     );
@@ -428,9 +429,9 @@ export function BoardView({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-6">
-      <PageHeader title={boardName} />
+    <div className="flex min-h-0 flex-1 flex-col px-6 pb-6 pt-4">
       <BoardToolbar
+        title={boardName}
         filters={filters}
         onChange={setFilters}
         people={(members ?? [])

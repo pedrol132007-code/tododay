@@ -263,3 +263,36 @@ test("período personalizado: as datas cabem dentro do seletor", async ({ page }
     expect(r.x + r.width).toBeLessThanOrEqual(box.x + box.width);
   }
 });
+
+test("cabeçalho do board enxuto: barra numa linha só e colunas perto do topo (1100x650)", async ({ page }) => {
+  await page.setViewportSize({ width: 1100, height: 650 });
+  await openLongBoard(page);
+  const tops = await Promise.all(
+    [page.getByLabel("Buscar no board"), page.getByLabel("Responsável"), page.getByRole("button", { name: /^Filtros/ }), page.getByLabel("Ordenar")].map(
+      async (l) => (await l.boundingBox())!.y,
+    ),
+  );
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(8);
+  // O resumo fica na linha do título.
+  const title = (await page.getByRole("heading", { name: "Board E2E" }).boundingBox())!;
+  const summary = (await page.getByText(/^30 tarefas · \d+ pessoas?$/).boundingBox())!;
+  expect(Math.abs(summary.y + summary.height / 2 - (title.y + title.height / 2))).toBeLessThan(8);
+  const column = (await page.locator("div.bg-bg-column").first().boundingBox())!;
+  expect(column.y).toBeLessThan(180);
+});
+
+test("Filtros: os outros filtros num painel, com contador e chip", async ({ page }) => {
+  await openLongBoard(page);
+  const button = page.getByRole("button", { name: /^Filtros/ });
+  await expect(button).toHaveText("Filtros");
+  await button.click();
+  await page.getByLabel("Prioridade", { exact: true }).selectOption({ label: "Alta" });
+  await expect(page.getByRole("button", { name: "Remover filtro Prioridade Alta" })).toBeVisible();
+  await expect(button).toHaveText("Filtros · 1");
+  expect(new URL(page.url()).searchParams.get("prioridade")).toBe("alta");
+  await page.keyboard.press("Escape");
+  await expect(page.getByLabel("Prioridade", { exact: true })).toBeHidden();
+  await button.click();
+  await page.mouse.click(900, 600);
+  await expect(page.getByLabel("Prioridade", { exact: true })).toBeHidden();
+});

@@ -33,6 +33,7 @@ import {
 import { useLabels, useLabelsForCards } from "../../hooks/useLabels";
 import { useAttachmentUrls, useBoardAttachments } from "../../hooks/useAttachments";
 import { useBoardFilters } from "../../hooks/useBoardFilters";
+import { useCollapsedLists } from "../../hooks/useCollapsedLists";
 import { useTeamMembers } from "../../hooks/useTeams";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
@@ -212,6 +213,7 @@ export function BoardView({
   const dragEpochRef = useRef(0);
 
   const [filters, setFilters] = useBoardFilters();
+  const [isCollapsed, toggleCollapsed] = useCollapsedLists(String(boardId));
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const { data: boardLabels } = useLabels(boardId);
   const slugs = personSlugs((members ?? []).map((m) => ({ id: m.user_id, name: m.profile.display_name })));
@@ -482,6 +484,8 @@ export function BoardView({
                   attachmentsByCard={attachmentsByCard ?? new Map()}
                   coverUrls={coverUrls ?? new Map()}
                   registerRef={registerListRef}
+                  collapsed={isCollapsed(list.id)}
+                  onToggleCollapse={() => toggleCollapsed(list.id)}
                 />
               ))
             )}

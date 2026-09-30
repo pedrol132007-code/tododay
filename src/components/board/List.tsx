@@ -15,6 +15,7 @@ import { IconPlus } from "../ui/icons";
 import { ListMenu } from "./ListMenu";
 import { LIST_STATUS_LABEL, showsListStatus } from "../../lib/boardVisuals";
 import { ListCounter } from "./ListCounter";
+import { CollapseButton, CollapsedColumn } from "./CollapsedColumn";
 
 interface ListProps {
   list: ListType;
@@ -31,6 +32,9 @@ interface ListProps {
   /** URL assinada de cada capa, pelo caminho no Storage. */
   coverUrls: Map<string, string>;
   registerRef?: (id: number, node: HTMLDivElement | null) => void;
+  /** Recolhida numa faixa estreita (só nesta tela, por quem está vendo). */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function List({
@@ -44,6 +48,8 @@ export function List({
   attachmentsByCard,
   coverUrls,
   registerRef,
+  collapsed = false,
+  onToggleCollapse,
 }: ListProps) {
   const { data: cardCount } = useCardCount(list.id);
   const createCard = useCreateCard(list.id);
@@ -68,6 +74,8 @@ export function List({
   const droppable = useDroppable({
     id: `cards-of-list-${list.id}`,
     data: { type: "list-container", listId: list.id },
+    // Recolhida não recebe cards: para soltar nela, abre-se antes.
+    disabled: collapsed,
   });
 
   const style = {
@@ -81,6 +89,22 @@ export function List({
     createCard.mutate(title);
     setNewCardTitle("");
     justAdded.current = true;
+  }
+
+  if (collapsed) {
+    // Continua no lugar entre as colunas (as outras se movem em volta), mas sem alça: não se arrasta.
+    return (
+      <div
+        ref={(node) => {
+          sortable.setNodeRef(node);
+          registerRef?.(list.id, node);
+        }}
+        style={style}
+        className="flex max-h-full shrink-0"
+      >
+        <CollapsedColumn name={list.name} count={total} wipLimit={list.wip_limit} onExpand={() => onToggleCollapse?.()} />
+      </div>
+    );
   }
 
   return (
@@ -120,6 +144,7 @@ export function List({
           </div>
           <div className="flex shrink-0 items-center gap-1">
             <ListCounter count={total} wipLimit={list.wip_limit} />
+            {onToggleCollapse && <CollapseButton name={list.name} onCollapse={onToggleCollapse} />}
             {canEdit && <ListMenu list={list} canDelete={canDelete} onDelete={() => deleteList.mutate(list.id)} />}
           </div>
         </div>

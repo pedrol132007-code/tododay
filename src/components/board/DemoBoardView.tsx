@@ -13,6 +13,8 @@ import { BoardToolbar } from "./BoardToolbar";
 import { CardFace } from "./CardFace";
 import { DemoCardPanel } from "./DemoCardPanel";
 import { ListCounter } from "./ListCounter";
+import { CollapseButton, CollapsedColumn } from "./CollapsedColumn";
+import { useCollapsedLists } from "../../hooks/useCollapsedLists";
 
 const LABEL_OPTIONS = DEMO_LABELS.map((l) => ({ slug: slugify(l.name), name: l.name }));
 
@@ -30,6 +32,7 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
 }) {
   const [filters, setFilters] = useBoardFilters();
   const link = useBoardLink();
+  const [isCollapsed, toggleCollapsed] = useCollapsedLists("demo");
   const compact = useCompact();
   const slugs = useMemo(() => personSlugs(data.people), [data.people]);
   const people = useMemo(
@@ -84,44 +87,51 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
       />
       {/* Mesma rolagem do board real: a linha rola na horizontal e cada coluna rola os próprios cards. */}
       <div className="flex min-h-0 flex-1 items-start gap-4 overflow-x-auto overflow-y-hidden">
-        {shownLists.map((list) => (
-          <section
-            key={list.id}
-            aria-label={list.name}
-            className={`flex max-h-full w-72 shrink-0 flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-1.5 p-2.5" : "gap-2 p-3"}`}
-          >
-            <div className="flex shrink-0 items-center justify-between gap-2">
-              <div className="flex min-w-0 flex-col">
-                <span className="px-2 py-1 text-base font-semibold">{list.name}</span>
-                {showsListStatus(list.name, list.status) && (
-                  <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+        {shownLists.map((list) =>
+          isCollapsed(list.id) ? (
+            <CollapsedColumn key={list.id} name={list.name} count={list.tasks.length} wipLimit={list.wipLimit} onExpand={() => toggleCollapsed(list.id)} />
+          ) : (
+            <section
+              key={list.id}
+              aria-label={list.name}
+              className={`flex max-h-full w-72 shrink-0 flex-col rounded-2xl border border-border bg-bg-column ${compact ? "gap-1.5 p-2.5" : "gap-2 p-3"}`}
+            >
+              <div className="flex shrink-0 items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-col">
+                  <span className="px-2 py-1 text-base font-semibold">{list.name}</span>
+                  {showsListStatus(list.name, list.status) && (
+                    <span className="px-2 text-[11px] uppercase tracking-wider text-text-muted">{LIST_STATUS_LABEL[list.status]}</span>
+                  )}
+                </div>
+                {/* O contador é da coluna inteira (é ele que o WIP limita), mesmo com filtro. */}
+                <div className="flex shrink-0 items-center gap-1">
+                  <ListCounter count={list.tasks.length} wipLimit={list.wipLimit} />
+                  <CollapseButton name={list.name} onCollapse={() => toggleCollapsed(list.id)} />
+                </div>
+              </div>
+              <div className={`-mx-1 flex min-h-0 flex-col overflow-y-auto px-1 ${compact ? "gap-1.5" : "gap-2"}`}>
+                {list.shown.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
+                    {filtered && list.tasks.length > 0 ? "Nenhuma tarefa com esses filtros" : "Nenhuma tarefa aqui"}
+                  </div>
+                ) : (
+                  list.shown.map((task) => (
+                    <DemoCard
+                      key={task.id}
+                      task={task}
+                      listStatus={list.status}
+                      data={data}
+                      compact={compact}
+                      attachments={attachments.get(task.id) ?? []}
+                      files={files}
+                      onOpen={() => setOpenCard(task.id)}
+                    />
+                  ))
                 )}
               </div>
-              {/* O contador é da coluna inteira (é ele que o WIP limita), mesmo com filtro. */}
-              <ListCounter count={list.tasks.length} wipLimit={list.wipLimit} />
-            </div>
-            <div className={`-mx-1 flex min-h-0 flex-col overflow-y-auto px-1 ${compact ? "gap-1.5" : "gap-2"}`}>
-              {list.shown.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border p-3 text-center text-sm text-text-muted">
-                  {filtered && list.tasks.length > 0 ? "Nenhuma tarefa com esses filtros" : "Nenhuma tarefa aqui"}
-                </div>
-              ) : (
-                list.shown.map((task) => (
-                  <DemoCard
-                    key={task.id}
-                    task={task}
-                    listStatus={list.status}
-                    data={data}
-                    compact={compact}
-                    attachments={attachments.get(task.id) ?? []}
-                    files={files}
-                    onOpen={() => setOpenCard(task.id)}
-                  />
-                ))
-              )}
-            </div>
-          </section>
-        ))}
+            </section>
+          ),
+        )}
       </div>
       <AnimatePresence>
         {opened && (

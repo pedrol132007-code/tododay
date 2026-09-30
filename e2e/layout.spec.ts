@@ -354,3 +354,21 @@ test('atalho "/" leva à busca do board, sem atrapalhar quem está digitando', a
   await page.keyboard.press("/");
   await expect(search).not.toBeFocused();
 });
+
+test("recolher coluna: vira faixa com a contagem, lembra depois de recarregar e abre de novo", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Recolher coluna Coluna longa", exact: true }).click();
+  await expect(page.getByText("Card 1", { exact: true })).toBeHidden();
+  const strip = page.getByRole("button", { name: "Abrir coluna Coluna longa (30 cards)" });
+  await expect(strip).toBeVisible();
+  expect((await strip.boundingBox())!.width).toBeLessThan(60);
+  // A outra coluna continua aberta.
+  await expect(page.getByRole("button", { name: "Recolher coluna Coluna curta", exact: true })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Abrir coluna Coluna longa (30 cards)" })).toBeVisible();
+  await expect(page.getByText("Card 1", { exact: true })).toBeHidden();
+
+  await page.getByRole("button", { name: "Abrir coluna Coluna longa (30 cards)" }).click();
+  await expect(page.getByText("Card 1", { exact: true })).toBeVisible();
+});

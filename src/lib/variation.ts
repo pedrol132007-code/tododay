@@ -17,10 +17,13 @@ export interface Variation {
 const num = (v: number, digits = 0) => v.toLocaleString("pt-BR", { maximumFractionDigits: digits });
 const oneDecimal = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-/** Diferença como o texto mostra (p.p. inteiros, dias com uma casa): a decisão usa este número. */
+/**
+ * Diferença entre os dois valores como aparecem na tela (% inteiros, dias com uma casa): o texto,
+ * a cor e o tooltip ("era 96%, agora 88%" → −8 p.p.) nunca discordam por arredondamento.
+ */
 function roundedDiff(unit: VariationUnit, current: number, previous: number): number {
-  if (unit === "points") return Math.round((current - previous) * 100);
-  if (unit === "days") return Math.round((current - previous) * 10) / 10;
+  if (unit === "points") return Math.round(current * 100) - Math.round(previous * 100);
+  if (unit === "days") return (Math.round(current * 10) - Math.round(previous * 10)) / 10;
   return current - previous;
 }
 

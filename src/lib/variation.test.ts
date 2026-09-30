@@ -34,6 +34,13 @@ describe("variação: seta pela direção do número, cor pelo que é bom", () =
     expect(v).toMatchObject({ direction: "up", tone: "good", text: "▲ +2 p.p. vs. período anterior" });
   });
 
+  it("p.p. é a diferença das porcentagens como aparecem (arredondadas), não das taxas cruas", () => {
+    // 95,6% e 88,4% aparecem como 96% e 88%: a variação tem de ser −8, não −7.
+    expect(variation("onTime", 0.884, 0.956)!.text).toBe("▼ −8 p.p. vs. período anterior");
+    // 83,49% e 82,51% aparecem os dois como 83%: sem diferença visível, estável.
+    expect(variation("onTime", 0.8349, 0.8251)).toMatchObject({ direction: "flat", text: "estável vs. período anterior" });
+  });
+
   it("singular com uma tarefa", () => {
     expect(variation("delivered", 11, 10)!.text).toBe("▲ +1 tarefa vs. período anterior");
   });

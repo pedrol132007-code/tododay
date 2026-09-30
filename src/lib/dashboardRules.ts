@@ -49,6 +49,14 @@ export const METRICS: Record<MetricId, MetricConfig> = {
 /** Abaixo disto (depois de arredondar como no texto) a variação é "estável": sem seta, sem cor. */
 export const MIN_CHANGE: Record<VariationUnit, number> = { tasks: 1, points: 1, days: 0.1 };
 
+// ─── Resumos dos gráficos ─────────────────────────────────────────────────────
+
+/** Abaixo desta base, a frase usa a diferença em tarefas em vez de %. */
+export const SUMMARY_SMALL_BASE = 10;
+
+/** Queda da última semana, em relação à média das outras, que vale uma frase (0.3 = 30%). */
+export const SUMMARY_DROP = 0.3;
+
 // ─── Regras básicas (board e dashboard) ───────────────────────────────────────
 
 /** "AAAA-MM-DD" do dia local de `date` (o "hoje" de quem está olhando). */

@@ -8,6 +8,7 @@ import { useLists } from "../../hooks/useLists";
 import { useCardActivity } from "../../hooks/useActivity";
 import { useAttachments, useAttachmentUploads } from "../../hooks/useAttachments";
 import { ActivityList } from "../ui/ActivityList";
+import { MoveCard } from "./MoveCard";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Avatar } from "../ui/Avatar";
@@ -108,14 +109,17 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             className="text-2xl font-normal leading-tight tracking-tight"
             readOnly={!canEdit}
           />
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary"
-            aria-label="Fechar painel"
-          >
-            <IconX size={18} />
-          </button>
+          <div className="flex shrink-0 items-center gap-1">
+            {canEdit && <MoveCard card={card} />}
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg p-1.5 text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+              aria-label="Fechar painel"
+            >
+              <IconX size={18} />
+            </button>
+          </div>
         </div>
 
         <PanelSection title="Detalhes">

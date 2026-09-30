@@ -382,3 +382,20 @@ test('Responsável "Eu": filtra pelas tarefas de quem está logado', async ({ pa
   await expect(page.getByText("Card 3", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Remover filtro E2E" })).toBeVisible();
 });
+
+test("Mover para…: escolhe coluna e posição no painel do card", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Card 5 Arquivar card" }).click({ position: { x: 200, y: 30 } });
+  const panel = page.getByRole("dialog", { name: "Card 5" });
+  await panel.getByRole("button", { name: "Mover", exact: true }).click();
+
+  const column = panel.getByLabel("Coluna de destino");
+  await expect(column.locator("option:checked")).toHaveText("Coluna longa (atual)");
+  await column.selectOption({ label: "Coluna curta" });
+  await panel.getByLabel("No fim").check();
+  const moved = page.waitForRequest((r) => r.method() === "PATCH" && r.url().includes("/rest/v1/card?id=eq.5"));
+  await panel.getByRole("button", { name: "Mover card" }).click();
+  // Coluna curta está vazia: o card entra na posição 1.
+  expect((await moved).postDataJSON()).toEqual({ list_id: 2, position: 1 });
+  await expect(page.getByText("Movido para “Coluna curta”")).toBeVisible();
+});

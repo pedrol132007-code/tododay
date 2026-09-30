@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { needsRebalance, positionBetween, rebalance, resolveInsertPosition } from "./position";
+import { edgePosition, needsRebalance, positionBetween, rebalance, resolveInsertPosition } from "./position";
 
 describe("positionBetween", () => {
   it("returns the midpoint between two positions", () => {
@@ -71,5 +71,24 @@ describe("resolveInsertPosition", () => {
       { id: 3, position: 3 },
     ]);
     expect(result.position).toBe(1.5);
+  });
+});
+
+describe("edgePosition (Mover para… no topo ou no fim)", () => {
+  const cards = [{ id: 1, position: 2 }, { id: 2, position: 5 }, { id: 3, position: 9 }];
+
+  it("topo: antes do primeiro; fim: depois do último", () => {
+    expect(edgePosition(cards, "top", 99)).toBe(1);
+    expect(edgePosition(cards, "end", 99)).toBe(10);
+  });
+
+  it("ignora o próprio card (mover dentro da mesma coluna)", () => {
+    expect(edgePosition(cards, "end", 3)).toBe(6);
+    expect(edgePosition(cards, "top", 1)).toBe(4);
+  });
+
+  it("coluna vazia (ou só com o próprio card)", () => {
+    expect(edgePosition([], "top", 1)).toBe(1);
+    expect(edgePosition([{ id: 7, position: 4 }], "end", 7)).toBe(1);
   });
 });

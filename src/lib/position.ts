@@ -30,3 +30,10 @@ export function resolveInsertPosition(
   }
   return { position: positionBetween(prev?.position ?? null, next?.position ?? null) };
 }
+
+/** Posição no topo ou no fim de uma coluna, sem contar o próprio card (o "Mover para…" do painel). */
+export function edgePosition<T extends { id: number; position: number }>(cards: T[], edge: "top" | "end", selfId: number): number {
+  const others = cards.filter((c) => c.id !== selfId).map((c) => c.position);
+  if (others.length === 0) return 1;
+  return edge === "top" ? positionBetween(null, Math.min(...others)) : positionBetween(Math.max(...others), null);
+}

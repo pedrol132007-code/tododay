@@ -55,6 +55,7 @@ npm install
 npm run dev        # http://localhost:1420
 npm test           # Vitest (só src/**/*.test.ts, funções puras)
 npm run test:e2e   # Playwright (app.spec.ts usa o Supabase de DEV; layout e anexos simulam o Supabase com e2e/mockSession.ts)
+npm run test:e2e:mock  # só os simulados (layout e anexos): sem banco, sem SUPABASE_DB_URL
 ```
 
 Testes de ponta a ponta (`e2e/`): o `e2e/seed.ts` roda antes de cada execução e, conectando direto no Postgres de dev (`SUPABASE_DB_URL`), garante a conta `E2E_EMAIL`/`E2E_PASSWORD` confirmada, a "Equipe E2E" e um "Board E2E" vazio. Recusa rodar se `SUPABASE_DB_URL` e `VITE_SUPABASE_URL` forem projetos diferentes. Nunca aponte essas variáveis para produção.

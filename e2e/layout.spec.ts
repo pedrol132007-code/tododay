@@ -372,3 +372,13 @@ test("recolher coluna: vira faixa com a contagem, lembra depois de recarregar e 
   await page.getByRole("button", { name: "Abrir coluna Coluna longa (30 cards)" }).click();
   await expect(page.getByText("Card 1", { exact: true })).toBeVisible();
 });
+
+test('Responsável "Eu": filtra pelas tarefas de quem está logado', async ({ page }) => {
+  await openLongBoard(page, "/", { card: cards.map((c) => ({ ...c, assignee_id: c.id === 3 ? USER_ID : null })) });
+  const select = page.getByLabel("Responsável", { exact: true });
+  await expect(select.locator("option").nth(1)).toHaveText("Eu (E2E)");
+  await select.selectOption({ label: "Eu (E2E)" });
+  await expect(page.getByText(/^1 de 30 tarefas/)).toBeVisible();
+  await expect(page.getByText("Card 3", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Remover filtro E2E" })).toBeVisible();
+});

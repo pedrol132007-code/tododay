@@ -129,6 +129,7 @@ export function BoardToolbar({
   filters,
   onChange,
   people,
+  me,
   labels,
   shown,
   total,
@@ -143,6 +144,8 @@ export function BoardToolbar({
   filters: BoardFilters;
   onChange: (filters: BoardFilters) => void;
   people: ToolbarOption[];
+  /** Quem está logado, para o atalho "Eu" no Responsável (o "minhas tarefas" do Trello). */
+  me?: ToolbarOption | null;
   labels: ToolbarOption[];
   /** Tarefas que passam nos filtros. */
   shown: number;
@@ -222,6 +225,7 @@ export function BoardToolbar({
         </label>
         <FilterSelect label="Responsável" value={filters.assignee ?? ""} onChange={(v) => set({ assignee: v || null })}>
           <option value="">Responsável</option>
+          {me && <option value={me.slug}>Eu ({me.name})</option>}
           {people.map((p) => (
             <option key={p.slug} value={p.slug}>
               {p.name}

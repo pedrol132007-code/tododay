@@ -35,6 +35,7 @@ import { useAttachmentUrls, useBoardAttachments } from "../../hooks/useAttachmen
 import { useBoardFilters } from "../../hooks/useBoardFilters";
 import { useCollapsedLists } from "../../hooks/useCollapsedLists";
 import { useTeamMembers } from "../../hooks/useTeams";
+import { useSession } from "../../hooks/useAuth";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
@@ -217,6 +218,8 @@ export function BoardView({
   const { data: members } = useTeamMembers(useCurrentTeamId());
   const { data: boardLabels } = useLabels(boardId);
   const slugs = personSlugs((members ?? []).map((m) => ({ id: m.user_id, name: m.profile.display_name })));
+  const myId = useSession()?.user.id;
+  const myMember = members?.find((m) => m.user_id === myId);
   // Com filtro ou ordenação a coluna mostra só parte dos cards, fora da ordem: arrastar calcularia a
   // posição pelos vizinhos errados, então fica desligado até limpar.
   const narrowed = hasFilters(filters) || filters.sort !== "manual";
@@ -439,6 +442,7 @@ export function BoardView({
         people={(members ?? [])
           .map((m) => ({ slug: slugs.get(m.user_id)!, name: m.profile.display_name }))
           .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))}
+        me={myMember ? { slug: slugs.get(myMember.user_id)!, name: myMember.profile.display_name } : null}
         labels={(boardLabels ?? []).map((l) => ({ slug: slugify(l.name), name: l.name }))}
         shown={computedBoard.reduce((n, l) => n + shownCards(l).length, 0)}
         total={allCards.length}

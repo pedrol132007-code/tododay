@@ -78,6 +78,13 @@ export function stalledSince(sinceDay: string, day: string): number | null {
   return days > STALLED_DAYS ? days : null;
 }
 
+/** "Arquivar concluídos": os que estão numa coluna Concluído há mais de N dias. */
+export const ARCHIVE_DONE_AFTER_DAYS = 7;
+
+/** Cards que entraram na coluna há mais de ARCHIVE_DONE_AFTER_DAYS dias (pelo dia local). */
+export const staleDone = <T extends { list_entered_at: string }>(cards: T[], day: string): T[] =>
+  cards.filter((c) => daysBetween(localDay(new Date(c.list_entered_at)), day) > ARCHIVE_DONE_AFTER_DAYS);
+
 /** Coluna acima do limite de WIP (só avisa; não bloqueia). Sem limite, nunca passa. */
 export const isOverWip = (count: number, limit: number | null) => limit != null && count > limit;
 

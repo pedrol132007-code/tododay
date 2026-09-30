@@ -3,14 +3,17 @@ import { createPortal } from "react-dom";
 import type { List, ListStatus } from "../../types";
 import { useUpdateListSettings } from "../../hooks/useLists";
 import { useListAttachmentTotals } from "../../hooks/useAttachments";
+import { useArchiveCards, useCards, useRestoreCards } from "../../hooks/useCards";
 import { formatBytes, LIST_STATUS_LABEL } from "../../lib/boardVisuals";
-import { IconDots, IconTrash } from "../ui/icons";
+import { ARCHIVE_DONE_AFTER_DAYS, localDay, staleDone } from "../../lib/dashboardRules";
+import { IconArchive, IconDots, IconTrash } from "../ui/icons";
+import { useToast } from "../ui/Toast";
 
 const STATUSES: ListStatus[] = ["todo", "doing", "done"];
 
 const MENU_WIDTH = 240; // w-60
 /** Altura do menu inteiro; com menos espaço embaixo do que isso (e mais em cima), abre para cima. */
-const MENU_HEIGHT = 340;
+const MENU_HEIGHT = 380;
 const GAP = 4;
 const EDGE = 8;
 
@@ -40,6 +43,24 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
   const menuRef = useRef<HTMLDivElement>(null);
   // Cards arquivados da coluna somem junto com ela, e os anexos deles também.
   const { data: attachments } = useListAttachmentTotals(list.id, open && canDelete);
+  // Coluna Concluído: arquivar de uma vez o que já está lá há dias. Da coluna inteira, com ou sem filtro.
+  const { data: listCards } = useCards(list.id);
+  const stale = list.status === "done" ? staleDone(listCards ?? [], localDay(new Date())) : [];
+  const archiveCards = useArchiveCards(list.id);
+  const restoreCards = useRestoreCards(list.board_id);
+  const toast = useToast();
+
+  function archiveStale() {
+    const ids = stale.map((c) => c.id);
+    setOpen(false);
+    archiveCards.mutate(ids, {
+      onSuccess: () =>
+        toast({
+          message: `${ids.length} ${ids.length === 1 ? "card arquivado · está" : "cards arquivados · estão"} em Arquivados`,
+          action: { label: "Desfazer", onClick: () => restoreCards.mutate(ids) },
+        }),
+    });
+  }
 
   useEffect(() => {
     if (!open) return setConfirming(false);
@@ -146,6 +167,17 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
             </div>
 
             <div className="mt-3 shrink-0 border-t border-border pt-2">
+              {list.status === "done" && (
+                <button
+                  type="button"
+                  disabled={stale.length === 0}
+                  onClick={archiveStale}
+                  title={stale.length === 0 ? `Nada aqui há mais de ${ARCHIVE_DONE_AFTER_DAYS} dias` : "Continuam em Arquivados e nas métricas"}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm text-text-primary hover:bg-bg-elevated disabled:text-text-muted disabled:opacity-60 disabled:hover:bg-transparent"
+                >
+                  <IconArchive size={14} /> Arquivar concluídos há mais de {ARCHIVE_DONE_AFTER_DAYS} dias ({stale.length})
+                </button>
+              )}
               {confirming && attachments && (
                 <p role="alert" className="px-2 pb-2 text-xs text-danger">
                   Excluir a coluna apaga também {attachments.count === 1 ? "1 anexo" : `${attachments.count} anexos`} ({formatBytes(attachments.bytes)}) de cards

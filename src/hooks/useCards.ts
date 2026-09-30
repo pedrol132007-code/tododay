@@ -1,6 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveCard,
+  archiveCards,
   countCards,
   createCard,
   deleteCardPermanently,
@@ -9,6 +10,7 @@ import {
   moveCardToList,
   renameCard,
   restoreCard,
+  restoreCards,
   updateCardAssignee,
   updateCardDescription,
   updateCardDueDate,
@@ -105,6 +107,18 @@ export function useArchiveCard(listId: number) {
   });
 }
 
+export function useArchiveCards(listId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: number[]) => archiveCards(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cards", listId] });
+      queryClient.invalidateQueries({ queryKey: ["cardCount", listId] });
+      queryClient.invalidateQueries({ queryKey: ["archivedCards"] });
+    },
+  });
+}
+
 export function useUpdateCardPosition() {
   const queryClient = useQueryClient();
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["cards"] });
@@ -135,6 +149,18 @@ export function useRestoreCard(boardId: number) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => restoreCard(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
+      queryClient.invalidateQueries({ queryKey: ["cards"] });
+      queryClient.invalidateQueries({ queryKey: ["cardCount"] });
+    },
+  });
+}
+
+export function useRestoreCards(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: number[]) => restoreCards(ids),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["archivedCards", boardId] });
       queryClient.invalidateQueries({ queryKey: ["cards"] });

@@ -33,7 +33,10 @@ const tables: Record<string, unknown> = {
   card: cards,
 };
 
-async function fulfillRest(route: Route) {
+/** Tabelas trocadas num teste (ex.: uma coluna Concluído com cards antigos). */
+type Overrides = Partial<Record<string, unknown>>;
+
+async function fulfillRest(route: Route, overrides: Overrides = {}) {
   const request = route.request();
   const url = new URL(request.url());
   const table = url.pathname.split("/").pop()!;
@@ -48,12 +51,13 @@ async function fulfillRest(route: Route) {
   if (request.method() === "HEAD") {
     return route.fulfill({ status: 200, headers: { "content-range": `0-0/${ofList ? 0 : cards.length}` }, body: "" });
   }
-  return route.fulfill({ json: ofList ?? tables[table] ?? [] });
+  if (request.method() === "PATCH") return route.fulfill({ status: 204, body: "" });
+  return route.fulfill({ json: ofList ?? overrides[table] ?? tables[table] ?? [] });
 }
 
-async function openLongBoard(page: Page, path = "/") {
+async function openLongBoard(page: Page, path = "/", overrides: Overrides = {}) {
   await mockSession(page);
-  await page.route("**/rest/v1/**", fulfillRest);
+  await page.route("**/rest/v1/**", (route) => fulfillRest(route, overrides));
   await page.goto(path);
   await expect(page.getByText("Card 30")).toBeAttached();
 }
@@ -295,4 +299,35 @@ test("Filtros: os outros filtros num painel, com contador e chip", async ({ page
   await button.click();
   await page.mouse.click(900, 600);
   await expect(page.getByLabel("Prioridade", { exact: true })).toBeHidden();
+});
+
+test("coluna Concluído: arquivar de uma vez os que estão lá há mais de 7 dias, com Desfazer", async ({ page }) => {
+  // Relógio fixo: "há mais de 7 dias" não pode depender do dia em que o teste roda.
+  await page.clock.setFixedTime(new Date("2026-09-30T12:00:00"));
+  const old = new Set(Array.from({ length: 12 }, (_, i) => i + 1));
+  await openLongBoard(page, "/", {
+    list: [
+      { id: 1, board_id: 1, name: "Coluna longa", position: 1, wip_limit: null, status: "done" },
+      { id: 2, board_id: 1, name: "Coluna curta", position: 2, wip_limit: null, status: "todo" },
+    ],
+    card: cards.map((c) => ({ ...c, list_entered_at: old.has(c.id) ? "2026-09-10T12:00:00Z" : "2026-09-28T12:00:00Z" })),
+  });
+
+  // Só colunas do tipo Concluído têm a opção.
+  await page.getByRole("button", { name: "Configurações da coluna Coluna curta", exact: true }).click();
+  await expect(page.getByRole("button", { name: /Arquivar concluídos/ })).toHaveCount(0);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "Configurações da coluna Coluna longa", exact: true }).click();
+  const archive = page.getByRole("button", { name: "Arquivar concluídos há mais de 7 dias (12)" });
+  const archived = page.waitForRequest((r) => r.method() === "PATCH" && r.url().includes("/rest/v1/card"));
+  await archive.click();
+  const request = await archived;
+  expect(new URL(request.url()).searchParams.get("id")).toBe(`in.(${[...old].join(",")})`);
+  expect(request.postDataJSON().archived_at).toBeTruthy();
+
+  const restored = page.waitForRequest((r) => r.method() === "PATCH" && r.postDataJSON()?.archived_at === null);
+  await page.getByText("12 cards arquivados · estão em Arquivados").waitFor();
+  await page.getByRole("button", { name: "Desfazer" }).click();
+  expect(new URL((await restored).url()).searchParams.get("id")).toBe(`in.(${[...old].join(",")})`);
 });

@@ -15,6 +15,8 @@ import {
   stalledDays,
   stalledList,
   stalledSince,
+  staleDone,
+  ARCHIVE_DONE_AFTER_DAYS,
 } from "./dashboardRules";
 
 const TODAY = "2026-09-28";
@@ -187,5 +189,20 @@ describe("regras compartilhadas com o board", () => {
 
   it("dia local no formato AAAA-MM-DD", () => {
     expect(localDay(new Date(2026, 0, 5, 23, 30))).toBe("2026-01-05");
+  });
+});
+
+describe("arquivar concluídos de uma vez", () => {
+  const entered = (iso: string) => ({ id: iso, list_entered_at: iso });
+
+  it("só os que entraram na coluna há mais de ARCHIVE_DONE_AFTER_DAYS dias", () => {
+    expect(ARCHIVE_DONE_AFTER_DAYS).toBe(7);
+    const cards = [entered("2026-09-20T15:00:00Z"), entered("2026-09-21T15:00:00Z"), entered("2026-09-27T15:00:00Z")];
+    // 28/09: 20/09 foi há 8 dias (sai); 21/09 há 7 (fica); 27/09 há 1 (fica).
+    expect(staleDone(cards, TODAY).map((c) => c.id)).toEqual(["2026-09-20T15:00:00Z"]);
+  });
+
+  it("nenhum card antigo: lista vazia", () => {
+    expect(staleDone([entered("2026-09-27T15:00:00Z")], TODAY)).toEqual([]);
   });
 });

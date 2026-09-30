@@ -44,6 +44,11 @@ export async function archiveCard(id: number): Promise<void> {
   must(await supabase.from("card").update({ archived_at: new Date().toISOString() }).eq("id", id));
 }
 
+/** Vários de uma vez (o "Arquivar concluídos" da coluna). */
+export async function archiveCards(ids: number[]): Promise<void> {
+  must(await supabase.from("card").update({ archived_at: new Date().toISOString() }).in("id", ids));
+}
+
 export async function updateCardPosition(id: number, position: number): Promise<void> {
   must(await supabase.from("card").update({ position }).eq("id", id));
 }
@@ -69,6 +74,10 @@ export async function listArchivedCards(boardId: number): Promise<Card[]> {
 
 export async function restoreCard(id: number): Promise<void> {
   must(await supabase.from("card").update({ archived_at: null }).eq("id", id));
+}
+
+export async function restoreCards(ids: number[]): Promise<void> {
+  must(await supabase.from("card").update({ archived_at: null }).in("id", ids));
 }
 
 export async function deleteCardPermanently(id: number): Promise<void> {

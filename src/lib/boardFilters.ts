@@ -7,6 +7,8 @@ import { dueRisk } from "./dashboardRules";
 import { daysBetween } from "./metrics";
 
 export type DueFilter = "overdue" | "soon";
+/** Tipo da coluna: "doing" = Em andamento (inclui Em revisão); "open" = tudo fora de Concluído. */
+export type ColumnFilter = "doing" | "open";
 export type BoardSort = "manual" | "priority" | "due" | "stalled";
 
 export interface BoardFilters {
@@ -20,15 +22,17 @@ export interface BoardFilters {
   due: DueFilter | null;
   /** Paradas há mais de N dias (em coluna "Em andamento"). */
   stalled: number | null;
+  column: ColumnFilter | null;
   sort: BoardSort;
 }
 
-export const EMPTY_FILTERS: BoardFilters = { q: "", assignee: null, priority: null, label: null, due: null, stalled: null, sort: "manual" };
+export const EMPTY_FILTERS: BoardFilters = { q: "", assignee: null, priority: null, label: null, due: null, stalled: null, column: null, sort: "manual" };
 
 /** Nomes na URL, em português como o resto da interface. */
 const PRIORITY_PARAM: Record<CardPriority, string> = { urgent: "urgente", high: "alta", medium: "media", low: "baixa" };
+const COLUMN_PARAM: Record<ColumnFilter, string> = { doing: "andamento", open: "abertas" };
 const SORT_PARAM: Record<Exclude<BoardSort, "manual">, string> = { priority: "prioridade", due: "prazo", stalled: "parada" };
-const PARAMS = ["busca", "responsavel", "prioridade", "etiqueta", "atrasadas", "vencendo", "paradas", "ordem"];
+const PARAMS = ["busca", "responsavel", "prioridade", "etiqueta", "atrasadas", "vencendo", "paradas", "coluna", "ordem"];
 
 /** "Ana Souza" → "ana-souza": sem acento, minúsculo, hífen no lugar do resto. */
 export function slugify(text: string): string {
@@ -61,6 +65,7 @@ export function parseFilters(search: string): BoardFilters {
     label: p.get("etiqueta") || null,
     due: p.get("atrasadas") === "1" ? "overdue" : p.get("vencendo") === "1" ? "soon" : null,
     stalled: Number.isInteger(stalled) && stalled > 0 ? stalled : null,
+    column: findKey(COLUMN_PARAM, p.get("coluna")),
     sort: findKey(SORT_PARAM, p.get("ordem")) ?? "manual",
   };
 }
@@ -76,6 +81,7 @@ export function filtersToSearch(f: BoardFilters, current = ""): string {
   if (f.due === "overdue") p.set("atrasadas", "1");
   if (f.due === "soon") p.set("vencendo", "1");
   if (f.stalled != null) p.set("paradas", String(f.stalled));
+  if (f.column) p.set("coluna", COLUMN_PARAM[f.column]);
   if (f.sort !== "manual") p.set("ordem", SORT_PARAM[f.sort]);
   const s = p.toString();
   return s ? `?${s}` : "";
@@ -83,7 +89,7 @@ export function filtersToSearch(f: BoardFilters, current = ""): string {
 
 /** Algum filtro ligado (a ordenação não conta: ela não esconde nada). */
 export const hasFilters = (f: BoardFilters) =>
-  f.q.trim() !== "" || f.assignee != null || f.priority != null || f.label != null || f.due != null || f.stalled != null;
+  f.q.trim() !== "" || f.assignee != null || f.priority != null || f.label != null || f.due != null || f.stalled != null || f.column != null;
 
 /** O que os filtros precisam saber de um card, do board real ou da demonstração. */
 export interface FilterableCard {
@@ -112,6 +118,8 @@ export function matchesFilters(c: FilterableCard, f: BoardFilters, day: string):
   if (f.label && !c.labelSlugs.includes(f.label)) return false;
   if (f.due && dueOf(c, day) !== f.due) return false;
   if (f.stalled != null && !((stalledFor(c, day) ?? 0) > f.stalled)) return false;
+  if (f.column === "doing" && c.listStatus !== "doing") return false;
+  if (f.column === "open" && c.listStatus === "done") return false;
   return true;
 }
 

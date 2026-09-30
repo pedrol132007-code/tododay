@@ -43,8 +43,29 @@ describe("URL", () => {
     expect(filtersToSearch(f({ assignee: "ana" }), "?x=1&responsavel=bruno")).toBe("?x=1&responsavel=ana");
   });
 
+  it("tipo de coluna na URL", () => {
+    expect(parseFilters("?coluna=andamento")).toEqual(f({ column: "doing" }));
+    expect(parseFilters("?coluna=abertas")).toEqual(f({ column: "open" }));
+    expect(filtersToSearch(f({ column: "doing", assignee: "ana" }))).toBe("?responsavel=ana&coluna=andamento");
+    expect(hasFilters(f({ column: "open" }))).toBe(true);
+  });
+
   it("ignora valores que não existem", () => {
     expect(parseFilters("?prioridade=altissima&paradas=abc&ordem=nada&atrasadas=sim")).toEqual(EMPTY_FILTERS);
+  });
+});
+
+describe("filtro por tipo de coluna", () => {
+  it("em andamento: só colunas do tipo Em andamento (inclui Em revisão)", () => {
+    expect(matchesFilters(card({ listStatus: "doing" }), f({ column: "doing" }), DAY)).toBe(true);
+    expect(matchesFilters(card({ listStatus: "todo" }), f({ column: "doing" }), DAY)).toBe(false);
+    expect(matchesFilters(card({ listStatus: "done" }), f({ column: "doing" }), DAY)).toBe(false);
+  });
+
+  it("abertas: tudo que não está numa coluna Concluído", () => {
+    expect(matchesFilters(card({ listStatus: "todo" }), f({ column: "open" }), DAY)).toBe(true);
+    expect(matchesFilters(card({ listStatus: "doing" }), f({ column: "open" }), DAY)).toBe(true);
+    expect(matchesFilters(card({ listStatus: "done" }), f({ column: "open" }), DAY)).toBe(false);
   });
 });
 

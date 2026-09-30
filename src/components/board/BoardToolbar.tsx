@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { CardPriority } from "../../types";
-import { EMPTY_FILTERS, hasFilters, type BoardFilters, type BoardSort, type DueFilter } from "../../lib/boardFilters";
+import { EMPTY_FILTERS, hasFilters, type BoardFilters, type BoardSort, type ColumnFilter, type DueFilter } from "../../lib/boardFilters";
 import { PRIORITIES, PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { DUE_SOON_DAYS, STALLED_DAYS } from "../../lib/dashboardRules";
 import { IconSearch, IconX } from "../ui/icons";
@@ -8,6 +8,9 @@ import { IconSearch, IconX } from "../ui/icons";
 const DUE_LABEL: Record<DueFilter, string> = { overdue: "Atrasadas", soon: `Vencem em até ${DUE_SOON_DAYS} dias` };
 /** Nas opções o texto é curto, para o seletor não esticar; o chip mostra a frase inteira. */
 const DUE_OPTION: Record<DueFilter, string> = { overdue: "Atrasadas", soon: `Vencem em ${DUE_SOON_DAYS} dias` };
+/** Tipo da coluna (o mesmo que o dashboard conta como "em andamento" e "abertas"). */
+const COLUMN_OPTION: Record<ColumnFilter, string> = { doing: "Em andamento", open: "Abertas" };
+const COLUMN_LABEL: Record<ColumnFilter, string> = { doing: "Colunas em andamento", open: "Abertas (fora de Concluído)" };
 const SORT_LABEL: Record<BoardSort, string> = { manual: "Ordem do board", priority: "Prioridade", due: "Prazo mais próximo", stalled: "Parada há mais tempo" };
 /** Opções de "paradas há mais de N dias"; a do meio é o limite do Atenção. */
 const STALLED_OPTIONS = [3, STALLED_DAYS, 14];
@@ -131,6 +134,14 @@ export function BoardToolbar({
             </option>
           ))}
         </FilterSelect>
+        <FilterSelect label="Tipo de coluna" value={filters.column ?? ""} onChange={(v) => set({ column: (v || null) as ColumnFilter | null })}>
+          <option value="">Coluna</option>
+          {(Object.keys(COLUMN_OPTION) as ColumnFilter[]).map((c) => (
+            <option key={c} value={c}>
+              {COLUMN_OPTION[c]}
+            </option>
+          ))}
+        </FilterSelect>
         <span className="ml-auto inline-flex items-center gap-2 text-sm text-text-muted">
           Ordenar
           <select
@@ -156,6 +167,7 @@ export function BoardToolbar({
           {filters.label && <Chip onRemove={() => set({ label: null })} label={nameOf(labels, filters.label)} />}
           {filters.due && <Chip onRemove={() => set({ due: null })} label={DUE_LABEL[filters.due]} />}
           {filters.stalled != null && <Chip onRemove={() => set({ stalled: null })} label={`Paradas há mais de ${filters.stalled} dias`} />}
+          {filters.column && <Chip onRemove={() => set({ column: null })} label={COLUMN_LABEL[filters.column]} />}
           {filtered && (
             <button type="button" onClick={() => onChange({ ...EMPTY_FILTERS, sort: filters.sort })} className="rounded-lg px-2 py-0.5 text-xs text-primary hover:underline">
               Limpar filtros

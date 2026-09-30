@@ -48,7 +48,8 @@ function Chip({ label, onRemove }: { label: string; onRemove: () => void }) {
 
 /**
  * Barra abaixo do título do board: resumo, busca, filtros e ordenação. O estado vem de fora (da
- * URL); aqui só se mostra e se troca. Filtro ativo aparece sempre como chip removível.
+ * URL); aqui só se mostra e se troca. Filtro ativo aparece sempre como chip removível. Aberto por um
+ * link do dashboard, mostra de onde veio e o "Voltar ao dashboard".
  */
 export function BoardToolbar({
   filters,
@@ -59,6 +60,8 @@ export function BoardToolbar({
   total,
   peopleCount,
   dragOff,
+  origin,
+  onBack,
 }: {
   filters: BoardFilters;
   onChange: (filters: BoardFilters) => void;
@@ -71,6 +74,10 @@ export function BoardToolbar({
   peopleCount: number;
   /** Mostra o aviso de que, com filtro ou ordenação, não dá para arrastar. */
   dragOff: boolean;
+  /** De onde no dashboard veio o filtro (ex.: "Atenção · Ana tem 2 tarefas atrasadas"). */
+  origin?: string | null;
+  /** Volta ao dashboard como estava; só existe quando o board veio de um link dele. */
+  onBack?: () => void;
 }) {
   const set = (changes: Partial<BoardFilters>) => onChange({ ...filters, ...changes });
   const nameOf = (list: ToolbarOption[], slug: string) => list.find((o) => o.slug === slug)?.name ?? slug;
@@ -78,6 +85,22 @@ export function BoardToolbar({
 
   return (
     <div className="-mt-2 mb-4 flex flex-col gap-3">
+      {onBack && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="rounded-lg border border-border px-2.5 py-1 text-sm text-text-primary transition-colors hover:border-primary hover:text-primary"
+          >
+            ← Voltar ao dashboard
+          </button>
+          {origin && (
+            <span className="text-sm text-text-muted">
+              Aberto pelo dashboard: <span className="text-text-primary">{origin}</span>
+            </span>
+          )}
+        </div>
+      )}
       <p className="text-sm text-text-muted">
         {filtered ? `${shown} de ${total}` : total} {total === 1 ? "tarefa" : "tarefas"} · {peopleCount} {peopleCount === 1 ? "pessoa" : "pessoas"}
       </p>
@@ -161,6 +184,7 @@ export function BoardToolbar({
 
       {(filtered || dragOff) && (
         <div className="flex flex-wrap items-center gap-2">
+          {origin && filtered && <span className="text-xs text-text-muted">Filtros do dashboard:</span>}
           {filters.q.trim() && <Chip onRemove={() => set({ q: "" })} label={`Busca: “${filters.q.trim()}”`} />}
           {filters.assignee && <Chip onRemove={() => set({ assignee: null })} label={nameOf(people, filters.assignee)} />}
           {filters.priority && <Chip onRemove={() => set({ priority: null })} label={`Prioridade ${PRIORITY_LABEL[filters.priority]}`} />}

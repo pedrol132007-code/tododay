@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { formatDue } from "../../lib/boardVisuals";
-import { PERIOD_PRESETS, presetRange, type DayRange, type PeriodPreset } from "../../lib/metrics";
+import { PERIOD_PRESETS, presetRange, type DayRange, type PeriodSelection } from "../../lib/metrics";
 import { IconCalendar, IconChevronDown } from "../ui/icons";
 
-export type PeriodSelection = { kind: "preset"; preset: PeriodPreset } | { kind: "custom"; range: DayRange };
+export type { PeriodSelection };
 
 export function selectionRange(selection: PeriodSelection, today: string): DayRange {
   return selection.kind === "preset" ? presetRange(selection.preset, today) : selection.range;

@@ -125,6 +125,9 @@ export const isOverloaded = (inProgress: number) => inProgress > OVERLOAD_IN_PRO
 /** Quantos alertas o bloco mostra, no máximo. */
 export const MAX_ALERTS = 5;
 
+/** Alerta com até N tarefas mostra cada uma, para abrir direto no board. */
+export const ATTENTION_DIRECT_MAX = 3;
+
 export type AlertKind = "overdue" | "overload" | "stalled" | "dueSoon";
 export type AlertMatch = "overdue" | "inProgress" | "stalled" | "dueSoon";
 

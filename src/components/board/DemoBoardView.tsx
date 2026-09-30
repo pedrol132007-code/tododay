@@ -6,7 +6,7 @@ import { hasFilters, matchesFilters, personSlugs, slugify, sortCards } from "../
 import { cardRisk } from "../../lib/dashboardRules";
 import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, demoFilterable, enteredDayOf, type DemoAttachment } from "../../lib/demoBoard";
 import { makeDemoFiles, revokeDemoFiles, type DemoFile } from "../../lib/demoFiles";
-import { useBoardFilters } from "../../hooks/useBoardFilters";
+import { setOpenCard, useBoardFilters, useBoardLink } from "../../hooks/useBoardFilters";
 import { useCompact } from "../../hooks/usePreferences";
 import { DemoActions, DemoBadge } from "../ui/Demo";
 import { PageHeader } from "../ui/PageHeader";
@@ -22,8 +22,15 @@ const LABEL_OPTIONS = DEMO_LABELS.map((l) => ({ slug: slugify(l.name), name: l.n
  * O board da demonstração: as tarefas fictícias do dashboard, hoje, com o mesmo visual e os mesmos
  * filtros do board real. Só leitura: não arrasta nem edita, e nada vai para o banco.
  */
-export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardData; onRegenerate: () => void; onExit: () => void }) {
+export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }: {
+  data: DashboardData;
+  onRegenerate: () => void;
+  onExit: () => void;
+  /** Volta ao dashboard como estava (período e pessoa), quando o board veio de um link dele. */
+  onBackToDashboard: () => void;
+}) {
   const [filters, setFilters] = useBoardFilters();
+  const link = useBoardLink();
   const compact = useCompact();
   const slugs = useMemo(() => personSlugs(data.people), [data.people]);
   const people = useMemo(
@@ -33,7 +40,6 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
   const lists = useMemo(() => demoBoard(data), [data]);
   const attachments = useMemo(() => demoAttachments(data), [data]);
   const files = useDemoFiles(attachments, data);
-  const [opened, setOpened] = useState<{ task: DashboardTask; listStatus: ListStatus } | null>(null);
 
   const filterable = (task: DashboardTask, listStatus: ListStatus) => demoFilterable(task, listStatus, slugs, data.today);
   const shownLists = lists.map((list) => ({
@@ -46,6 +52,10 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
     ),
   }));
   const all = lists.flatMap((l) => l.tasks);
+  // O card aberto vem da URL (?card=), para o dashboard abrir uma tarefa direto. Entregue há mais
+  // tempo já saiu da coluna Concluído, mas ainda abre (como concluída).
+  const openedTask = link.card ? data.tasks.find((t) => t.id === link.card) : undefined;
+  const opened = openedTask && { task: openedTask, listStatus: lists.find((l) => l.tasks.includes(openedTask))?.status ?? ("done" as ListStatus) };
   const filtered = hasFilters(filters);
 
   return (
@@ -72,6 +82,8 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
         total={all.length}
         peopleCount={new Set(all.map((t) => t.assigneeId)).size}
         dragOff={false}
+        origin={link.origin}
+        onBack={link.origin ? onBackToDashboard : undefined}
       />
       {/* Mesma rolagem do board real: a linha rola na horizontal e cada coluna rola os próprios cards. */}
       <div className="flex min-h-0 flex-1 items-start gap-4 overflow-x-auto overflow-y-hidden">
@@ -104,7 +116,7 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
                     compact={compact}
                     attachments={attachments.get(task.id) ?? []}
                     files={files}
-                    onOpen={() => setOpened({ task, listStatus: list.status })}
+                    onOpen={() => setOpenCard(task.id)}
                   />
                 ))
               )}
@@ -120,7 +132,7 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
             done={opened.listStatus === "done"}
             attachments={attachments.get(opened.task.id) ?? []}
             files={files}
-            onClose={() => setOpened(null)}
+            onClose={() => setOpenCard(null)}
           />
         )}
       </AnimatePresence>

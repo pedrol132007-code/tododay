@@ -4,9 +4,9 @@ import type { PersonLoad } from "../../lib/teamLoad";
 import { Avatar } from "../ui/Avatar";
 import { num, pct } from "./format";
 
-export type LoadList = "inProgress" | "overdue" | "stalled";
+export type LoadList = "inProgress" | "overdue" | "stalled" | "delivered";
 
-/** Número que abre a lista das tarefas que ele conta (zero não abre nada). */
+/** Número que abre as tarefas que ele conta (zero não abre nada). Clicável pelo hover, sem sublinhado. */
 function Count({ value, risk, label, onOpen }: { value: number; risk?: boolean; label: string; onOpen: () => void }) {
   const tone = risk ? (value > 0 ? "font-semibold text-danger" : "text-text-muted") : "text-text-primary";
   if (value === 0) return <span className={tone}>{num(value)}</span>;
@@ -19,7 +19,7 @@ function Count({ value, risk, label, onOpen }: { value: number; risk?: boolean; 
         e.stopPropagation(); // a linha abre a pessoa; o número abre as tarefas
         onOpen();
       }}
-      className={`rounded px-1 tabular-nums underline decoration-dotted underline-offset-4 hover:bg-bg-surface hover:text-primary ${tone}`}
+      className={`-mx-1 rounded px-1.5 py-0.5 tabular-nums transition-colors hover:bg-primary/10 hover:text-primary ${tone}`}
     >
       {num(value)}
     </button>
@@ -99,7 +99,9 @@ export function TeamLoadTable({
                   <Count value={r.stalled} risk label={`Ver as ${r.stalled} paradas de ${r.person.name}`} onOpen={() => onOpenList(r, "stalled")} />
                 </td>
                 <td className="py-2 pl-3 text-right tabular-nums text-text-primary">{pct(r.onTimeRate)}</td>
-                <td className="py-2 pl-3 text-right tabular-nums text-text-primary">{num(r.delivered)}</td>
+                <td className="py-2 pl-3 text-right tabular-nums">
+                  <Count value={r.delivered} label={`Ver as ${r.delivered} entregas de ${r.person.name} no período`} onOpen={() => onOpenList(r, "delivered")} />
+                </td>
               </tr>
             ))}
           </tbody>

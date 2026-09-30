@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
-import { personSlugs, type BoardFilters } from "../../lib/boardFilters";
-import { alertFilters, linkFilters } from "../../lib/dashboardLinks";
+import { EMPTY_FILTERS, personSlugs, type BoardFilters } from "../../lib/boardFilters";
+import { alertFilters, linkFilters, type BoardLinkTarget } from "../../lib/dashboardLinks";
+import { useDashboardView } from "../../hooks/useBoardFilters";
 import { alertTasks, attentionAlerts, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
 import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
@@ -36,19 +37,25 @@ import { StalledSection } from "./StalledSection";
 import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
 import { Variation } from "./Variation";
 
+const LOAD_LABEL: Record<LoadList, string> = { inProgress: "Em andamento", overdue: "Atrasadas", stalled: "Paradas", delivered: "Entregas" };
+
 /**
  * `data` vem de fora: a demonstração é a mesma no board e no dashboard. `onOpenBoard` abre o board
- * com filtros (os links dos alertas e da carga da equipe).
+ * filtrado (ou com um card aberto). Período e pessoa ficam na URL, para o "Voltar ao dashboard".
  */
 export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard }: {
   teamName: string;
   data: DashboardData | null;
   onGenerate: () => void;
   onExit: () => void;
-  onOpenBoard: (filters: BoardFilters) => void;
+  onOpenBoard: (link: BoardLinkTarget) => void;
 }) {
-  const [period, setPeriod] = useState<PeriodSelection>({ kind: "preset", preset: "12w" });
-  const [personId, setPersonId] = useState<string | null>(null);
+  const [state, setState] = useDashboardView();
+  const slugs = useMemo(() => personSlugs(data?.people ?? []), [data]);
+  const period = state.period;
+  const personId = data?.people.find((p) => slugs.get(p.id) === state.person)?.id ?? null;
+  const setPeriod = (next: PeriodSelection) => setState({ ...state, period: next });
+  const setPersonId = (id: string | null) => setState({ ...state, person: id ? (slugs.get(id) ?? null) : null });
 
   function exitDemo() {
     onExit();
@@ -103,7 +110,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
   period: PeriodSelection;
   personId: string | null;
   onSelectPerson: (id: string | null) => void;
-  onOpenBoard: (filters: BoardFilters) => void;
+  onOpenBoard: (link: BoardLinkTarget) => void;
 }) {
   const person = data.people.find((p) => p.id === personId) ?? null;
   const [list, setList] = useState<{ title: string; tasks: DashboardTask[] } | null>(null);
@@ -143,13 +150,18 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
   const toBoard = view.range.end === data.today;
   const slugs = personSlugs(data.people);
   const personSlug = person ? slugs.get(person.id)! : null;
+  const openFiltered = (filters: BoardFilters, origin: string) => onOpenBoard({ filters, origin, card: null });
+  /** Uma tarefa abre direto no board (o card como está hoje), de qualquer período. */
+  const openTask = (task: DashboardTask, origin: string) => onOpenBoard({ filters: EMPTY_FILTERS, origin, card: task.id });
 
   function openLoadList(row: PersonLoad, kind: LoadList) {
-    if (toBoard) return onOpenBoard(linkFilters(kind, slugs.get(row.person.id)!));
     const first = row.person.name.split(" ")[0];
     const own = data.tasks.filter((t) => t.assigneeId === row.person.id);
+    // Entregas são do período inteiro (já saíram do board): sempre a lista aqui.
+    if (toBoard && kind !== "delivered") return openFiltered(linkFilters(kind, slugs.get(row.person.id)!), `Carga da equipe · ${first} · ${LOAD_LABEL[kind]}`);
     const day = view.range.end;
     const lists: Record<LoadList, { title: string; tasks: DashboardTask[] }> = {
+      delivered: { title: `${first}: ${row.delivered} ${row.delivered === 1 ? "entrega" : "entregas"} · ${periodName}`, tasks: deliveredIn(own, view.range) },
       inProgress: { title: `${first}: ${row.inProgress} em andamento`, tasks: own.filter((t) => isInProgress(t, day)) },
       overdue: { title: `${first}: ${row.overdue} ${row.overdue === 1 ? "atrasada" : "atrasadas"}`, tasks: own.filter((t) => isOverdue(t, day)) },
       stalled: {
@@ -205,7 +217,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
           spark={view.series.map((p) => p.openAtEnd)}
           onOpen={() =>
             toBoard
-              ? onOpenBoard(linkFilters("open", personSlug))
+              ? openFiltered(linkFilters("open", personSlug), person ? `Backlog de ${subject}` : "Backlog da equipe")
               : setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })
           }
         />
@@ -237,9 +249,11 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
 
       <AttentionCard
         alerts={view.alerts}
+        tasksOf={(alert) => alertTasks(view.tasks, alert, view.range.end)}
+        onOpenTask={(task, alert) => openTask(task, `Atenção · ${alert.text}`)}
         onOpen={(alert) =>
           toBoard
-            ? onOpenBoard(alertFilters(alert, slugs))
+            ? openFiltered(alertFilters(alert, slugs), `Atenção · ${alert.text}`)
             : setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })
         }
         openLabel={toBoard ? "Ver no board" : "Ver tarefas"}
@@ -250,6 +264,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         <StalledSection
           items={view.stalled}
           day={view.range.end}
+          onOpenTask={(task) => openTask(task, `Parado há mais de ${STALLED_DAYS} dias · ${subject}`)}
           onOpenAll={() =>
             setList({ title: `${subject}: paradas há mais de ${STALLED_DAYS} dias`, tasks: view.stalled.map((x) => x.task) })
           }
@@ -351,6 +366,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
             people={data.people}
             day={view.range.end}
             isDemo={data.isDemo}
+            onOpenTask={(task) => openTask(task, list.title)}
             onClose={() => setList(null)}
           />
         )}

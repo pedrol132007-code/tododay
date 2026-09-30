@@ -28,6 +28,9 @@ export const PERIOD_PRESETS: { id: PeriodPreset; label: string; days: number }[]
   { id: "6m", label: "Últimos 6 meses", days: 182 },
 ];
 
+/** O filtro de período do dashboard: um atalho ou um intervalo escolhido. */
+export type PeriodSelection = { kind: "preset"; preset: PeriodPreset } | { kind: "custom"; range: DayRange };
+
 /** Atalho de período terminando em `today`. */
 export function presetRange(preset: PeriodPreset, today: string): DayRange {
   const { days } = PERIOD_PRESETS.find((p) => p.id === preset)!;

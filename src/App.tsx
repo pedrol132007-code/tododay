@@ -17,7 +17,7 @@ import { ViewTabs } from "./components/ui/ViewTabs";
 import { SettingsView } from "./components/settings/SettingsView";
 import { clearPendingInvite, getPendingInvite } from "./lib/pendingInvite";
 import { CurrentTeamContext } from "./hooks/useCurrentTeam";
-import { setBoardFilters } from "./hooks/useBoardFilters";
+import { dropBoardLinkOrigin, leaveBoardLink, openBoardLink } from "./hooks/useBoardFilters";
 import type { DashboardData, MyTeam, SearchResult } from "./types";
 import { IconColumns } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
@@ -150,6 +150,12 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
     setPendingListId(null);
   }
 
+  // Trocar de aba à mão: o "Voltar ao dashboard" de um link anterior deixa de valer.
+  function navigate(next: AppView) {
+    dropBoardLinkOrigin();
+    setView(next);
+  }
+
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
   useRealtimeSync(team.id, activeBoard?.id ?? null);
 
@@ -164,8 +170,8 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <TeamSwitcher userId={userId} teams={teams} activeTeamId={team.id} onSelect={onSelectTeam} />
         <div className="h-5 w-px shrink-0 bg-border" />
         <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} onOpenArchive={() => setView("archive")} />
-        <ViewTabs view={view} onNavigate={setView} />
-        <AppMenu userId={userId} view={view} onNavigate={setView} />
+        <ViewTabs view={view} onNavigate={navigate} />
+        <AppMenu userId={userId} view={view} onNavigate={navigate} />
       </div>
       {view === "dashboard" ? (
         <DashboardErrorBoundary>
@@ -175,8 +181,8 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
               data={demo}
               onGenerate={newDemo}
               onExit={() => setDemo(null)}
-              onOpenBoard={(filters) => {
-                setBoardFilters(filters);
+              onOpenBoard={(link) => {
+                openBoardLink(link);
                 setView("board");
               }}
             />
@@ -188,7 +194,15 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />
       ) : demo && view === "board" ? (
         <Suspense fallback={null}>
-          <DemoBoardView data={demo} onRegenerate={newDemo} onExit={() => setDemo(null)} />
+          <DemoBoardView
+            data={demo}
+            onRegenerate={newDemo}
+            onExit={() => setDemo(null)}
+            onBackToDashboard={() => {
+              leaveBoardLink();
+              setView("dashboard");
+            }}
+          />
         </Suspense>
       ) : activeBoard ? (
         view === "archive" ? (

@@ -9,15 +9,17 @@ const daysText = (n: number) => `${n} ${n === 1 ? "dia" : "dias"}`;
 
 /**
  * O que está parado e há quanto tempo, na visão de uma pessoa: pensado para preparar a conversa
- * individual (fatos, o mais antigo primeiro).
+ * individual (fatos, o mais antigo primeiro). Cada item abre a tarefa no board.
  */
 export function StalledSection({
   items,
   day,
+  onOpenTask,
   onOpenAll,
 }: {
   items: { task: DashboardTask; days: number }[];
   day: string;
+  onOpenTask: (task: DashboardTask) => void;
   onOpenAll: () => void;
 }) {
   return (
@@ -38,18 +40,24 @@ export function StalledSection({
           {items.slice(0, VISIBLE).map(({ task, days }) => {
             const late = task.dueDay != null && task.dueDay < day;
             return (
-              <li key={task.id} className="flex items-center gap-4 border-t border-border py-2 first:border-t-0">
-                <span className="w-24 shrink-0 text-sm font-semibold tabular-nums text-text-primary">há {daysText(days)}</span>
-                <span className="flex-1 text-sm text-text-primary">{task.title}</span>
-                <span className={`shrink-0 text-xs ${late ? "font-semibold text-danger" : "text-text-muted"}`}>
-                  {task.dueDay == null
-                    ? "sem prazo"
-                    : late
-                      ? `prazo vencido há ${daysText(daysBetween(task.dueDay, day))}`
-                      : task.dueDay === day
-                        ? "prazo hoje"
-                        : `prazo em ${daysText(daysBetween(day, task.dueDay))}`}
-                </span>
+              <li key={task.id} className="border-t border-border first:border-t-0">
+                <button
+                  type="button"
+                  onClick={() => onOpenTask(task)}
+                  className="group flex w-full items-center gap-4 rounded-lg px-2 py-2 text-left transition-colors hover:bg-bg-elevated"
+                >
+                  <span className="w-24 shrink-0 text-sm font-semibold tabular-nums text-text-primary">há {daysText(days)}</span>
+                  <span className="flex-1 text-sm text-text-primary group-hover:text-primary">{task.title}</span>
+                  <span className={`shrink-0 text-xs ${late ? "font-semibold text-danger" : "text-text-muted"}`}>
+                    {task.dueDay == null
+                      ? "sem prazo"
+                      : late
+                        ? `prazo vencido há ${daysText(daysBetween(task.dueDay, day))}`
+                        : task.dueDay === day
+                          ? "prazo hoje"
+                          : `prazo em ${daysText(daysBetween(day, task.dueDay))}`}
+                  </span>
+                </button>
               </li>
             );
           })}

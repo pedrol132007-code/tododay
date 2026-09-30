@@ -2,8 +2,9 @@ import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask } from "../../types";
 import { formatDue } from "../../lib/boardVisuals";
-import { EMPTY_FILTERS, personSlugs, type BoardFilters } from "../../lib/boardFilters";
-import { alertTasks, attentionAlerts, type AttentionAlert, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
+import { personSlugs, type BoardFilters } from "../../lib/boardFilters";
+import { alertFilters, linkFilters } from "../../lib/dashboardLinks";
+import { alertTasks, attentionAlerts, isInProgress, isOverdue, STALLED_DAYS, stalledDays, stalledList } from "../../lib/dashboardRules";
 import { teamLoad, type PersonLoad } from "../../lib/teamLoad";
 import {
   deliveredIn,
@@ -34,15 +35,6 @@ import { TaskListPanel } from "./TaskListPanel";
 import { StalledSection } from "./StalledSection";
 import { TeamLoadTable, type LoadList } from "./TeamLoadTable";
 import { Variation } from "./Variation";
-
-/** O filtro do board que mostra o que cada alerta descreve (a pessoa entra à parte). */
-const ALERT_FILTER: Record<AttentionAlert["kind"], Partial<BoardFilters>> = {
-  overdue: { due: "overdue" },
-  overload: {},
-  stalled: { stalled: STALLED_DAYS },
-  dueSoon: { due: "soon" },
-};
-const LOAD_FILTER: Record<LoadList, Partial<BoardFilters>> = { inProgress: {}, overdue: { due: "overdue" }, stalled: { stalled: STALLED_DAYS } };
 
 /**
  * `data` vem de fora: a demonstração é a mesma no board e no dashboard. `onOpenBoard` abre o board
@@ -150,14 +142,10 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
   // que termina antes, a lista continua aqui mesmo.
   const toBoard = view.range.end === data.today;
   const slugs = personSlugs(data.people);
-  const boardFilters = (id: string | undefined, changes: Partial<BoardFilters>): BoardFilters => ({
-    ...EMPTY_FILTERS,
-    assignee: id ? (slugs.get(id) ?? null) : null,
-    ...changes,
-  });
+  const personSlug = person ? slugs.get(person.id)! : null;
 
   function openLoadList(row: PersonLoad, kind: LoadList) {
-    if (toBoard) return onOpenBoard(boardFilters(row.person.id, LOAD_FILTER[kind]));
+    if (toBoard) return onOpenBoard(linkFilters(kind, slugs.get(row.person.id)!));
     const first = row.person.name.split(" ")[0];
     const own = data.tasks.filter((t) => t.assigneeId === row.person.id);
     const day = view.range.end;
@@ -211,10 +199,15 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
           label="Backlog"
           value={num(sum.openAtEnd)}
           note="tarefas abertas no fim do período"
+          openLabel={toBoard ? "Ver no board" : "Ver tarefas"}
           // No início do período havia o que há no fim menos o que entrou e mais o que saiu.
           delta={<Variation metric="backlog" current={sum.openAtEnd} previous={sum.openAtEnd - sum.backlogChange} />}
           spark={view.series.map((p) => p.openAtEnd)}
-          onOpen={() => setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })}
+          onOpen={() =>
+            toBoard
+              ? onOpenBoard(linkFilters("open", personSlug))
+              : setList({ title: `Abertas${of} no fim do período`, tasks: openAt(view.tasks, view.range.end) })
+          }
         />
         <StatTile
           label="Tempo de conclusão"
@@ -246,7 +239,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         alerts={view.alerts}
         onOpen={(alert) =>
           toBoard
-            ? onOpenBoard(boardFilters(alert.personId, ALERT_FILTER[alert.kind]))
+            ? onOpenBoard(alertFilters(alert, slugs))
             : setList({ title: alert.text, tasks: alertTasks(view.tasks, alert, view.range.end) })
         }
         openLabel={toBoard ? "Ver no board" : "Ver tarefas"}

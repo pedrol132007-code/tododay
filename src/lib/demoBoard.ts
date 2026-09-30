@@ -1,6 +1,7 @@
 // Board de demonstração: as mesmas tarefas fictícias do dashboard, vistas como colunas no dia de
 // hoje. Sai dos dados da demonstração (nada é sorteado aqui), então board e dashboard contam igual.
 import type { DashboardData, DashboardTask, ListStatus } from "../types";
+import { slugify, type FilterableCard } from "./boardFilters";
 import { PRIORITIES } from "./boardVisuals";
 import { completedDay, daysBetween, statusOn } from "./metrics";
 import { stalledDays } from "./dashboardRules";
@@ -72,6 +73,22 @@ export function demoBoard(d: DashboardData): DemoList[] {
       tasks: done.sort((a, b) => completedDay(b)!.localeCompare(completedDay(a)!) || a.id.localeCompare(b.id)),
     },
   ];
+}
+
+/** Entrou na coluna na última mudança de status: é o mesmo "parada há X dias" do dashboard. */
+export const enteredDayOf = (task: DashboardTask, today: string) => [...task.history].reverse().find((h) => h.day <= today)!.day;
+
+/** O que os filtros do board veem de um card da demonstração (o mesmo usado na tela e nos testes). */
+export function demoFilterable(task: DashboardTask, listStatus: ListStatus, slugs: Map<string, string>, today: string): FilterableCard {
+  return {
+    title: task.title,
+    assigneeSlug: slugs.get(task.assigneeId) ?? null,
+    priority: task.priority,
+    labelSlugs: task.labels.map(slugify),
+    dueDay: task.dueDay,
+    listStatus,
+    enteredDay: enteredDayOf(task, today),
+  };
 }
 
 // ─── Anexos de exemplo ────────────────────────────────────────────────────────

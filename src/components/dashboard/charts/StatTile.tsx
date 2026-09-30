@@ -14,6 +14,7 @@ export function StatTile({
   spark,
   meter,
   onOpen,
+  openLabel = "Ver tarefas",
 }: {
   label: string;
   value: string;
@@ -28,6 +29,8 @@ export function StatTile({
   meter?: number | null;
   /** Abre a lista das tarefas por trás do número. */
   onOpen?: () => void;
+  /** O que o clique faz: "Ver tarefas" (lista aqui) ou "Ver no board". */
+  openLabel?: string;
 }) {
   const Tag = onOpen ? "button" : "div";
   return (
@@ -41,7 +44,7 @@ export function StatTile({
       <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-chart-1 to-chart-2" aria-hidden="true" />
       <span className="flex items-center justify-between gap-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
         {label}
-        {onOpen && <span className="font-normal normal-case tracking-normal opacity-0 group-hover:opacity-100 group-hover:text-primary">Ver tarefas →</span>}
+        {onOpen && <span className="font-normal normal-case tracking-normal opacity-0 group-hover:opacity-100 group-hover:text-primary">{openLabel} →</span>}
       </span>
       {/* Só span aqui dentro: o bloco pode ser um <button>. */}
       <span className="flex items-end justify-between gap-3">

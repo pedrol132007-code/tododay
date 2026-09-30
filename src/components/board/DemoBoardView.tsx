@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask, ListStatus } from "../../types";
 import { LIST_STATUS_LABEL } from "../../lib/boardVisuals";
-import { hasFilters, matchesFilters, personSlugs, slugify, sortCards, type FilterableCard } from "../../lib/boardFilters";
+import { hasFilters, matchesFilters, personSlugs, slugify, sortCards } from "../../lib/boardFilters";
 import { cardRisk } from "../../lib/dashboardRules";
-import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, type DemoAttachment } from "../../lib/demoBoard";
+import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, demoFilterable, enteredDayOf, type DemoAttachment } from "../../lib/demoBoard";
 import { makeDemoFiles, revokeDemoFiles, type DemoFile } from "../../lib/demoFiles";
 import { useBoardFilters } from "../../hooks/useBoardFilters";
 import { useCompact } from "../../hooks/usePreferences";
@@ -17,8 +17,6 @@ import { ListCounter } from "./ListCounter";
 
 const LABEL_OPTIONS = DEMO_LABELS.map((l) => ({ slug: slugify(l.name), name: l.name }));
 
-/** Entrou na coluna na última mudança de status: é o mesmo "parada há X dias" do dashboard. */
-const enteredDayOf = (task: DashboardTask, today: string) => [...task.history].reverse().find((h) => h.day <= today)!.day;
 
 /**
  * O board da demonstração: as tarefas fictícias do dashboard, hoje, com o mesmo visual e os mesmos
@@ -37,15 +35,7 @@ export function DemoBoardView({ data, onRegenerate, onExit }: { data: DashboardD
   const files = useDemoFiles(attachments, data);
   const [opened, setOpened] = useState<{ task: DashboardTask; listStatus: ListStatus } | null>(null);
 
-  const filterable = (task: DashboardTask, listStatus: ListStatus): FilterableCard => ({
-    title: task.title,
-    assigneeSlug: slugs.get(task.assigneeId) ?? null,
-    priority: task.priority,
-    labelSlugs: task.labels.map(slugify),
-    dueDay: task.dueDay,
-    listStatus,
-    enteredDay: enteredDayOf(task, data.today),
-  });
+  const filterable = (task: DashboardTask, listStatus: ListStatus) => demoFilterable(task, listStatus, slugs, data.today);
   const shownLists = lists.map((list) => ({
     ...list,
     shown: sortCards(

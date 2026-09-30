@@ -44,6 +44,7 @@ Fonte autoritativa: `supabase/migrations/`. Resumo:
 
 - Dois projetos Supabase: `tododay-dev` (usado no `.env` local) e `tododay-prod` (variáveis na Vercel).
 - `.env` precisa de `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (ver `.env.example`). Sem elas o app lança erro ao abrir.
+- Antes de publicar, `npm run check:prod`: lê o Supabase que o site publicado usa (do JavaScript dele, só a chave pública) e confere se tem as tabelas, colunas e buckets das migrations e as Edge Functions de `supabase/functions/`. Já aconteceu de uma migration e uma função ficarem só no dev.
 - Web: `vercel.json` (SPA, tudo reescreve para `index.html`). Templates de e-mail em PT em `supabase/templates/`, colados no painel do Supabase.
 
 ## Como rodar em dev

@@ -12,7 +12,8 @@
     "desktop:build": "tauri build --config src-tauri/tauri.desktop.conf.json",
     "test:e2e": "playwright test",
     "test:e2e:mock": "playwright test -c playwright.mock.config.ts",
-    "gen:function": "node scripts/gen-attachments-function.mjs"
+    "gen:function": "node scripts/gen-attachments-function.mjs",
+    "check:prod": "node scripts/check-prod.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

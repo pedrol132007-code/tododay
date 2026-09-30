@@ -331,3 +331,26 @@ test("coluna Concluído: arquivar de uma vez os que estão lá há mais de 7 dia
   await page.getByRole("button", { name: "Desfazer" }).click();
   expect(new URL((await restored).url()).searchParams.get("id")).toBe(`in.(${[...old].join(",")})`);
 });
+
+test('atalho "/" leva à busca do board, sem atrapalhar quem está digitando', async ({ page }) => {
+  await openLongBoard(page);
+  const search = page.getByLabel("Buscar no board");
+  await page.locator("body").click({ position: { x: 1300, y: 800 } });
+  await page.keyboard.press("/");
+  await expect(search).toBeFocused();
+  await expect(search).toHaveValue("");
+
+  // Dentro de outro campo, "/" é só um caractere.
+  const newCard = page.getByPlaceholder("Novo card...").first();
+  await newCard.click();
+  await page.keyboard.type("a/b");
+  await expect(newCard).toHaveValue("a/b");
+  await expect(search).not.toBeFocused();
+
+  // Com um card aberto (painel por cima do board), o atalho não rouba o foco.
+  await page.getByRole("button", { name: "Card 1 Arquivar card" }).click({ position: { x: 200, y: 30 } });
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await page.getByRole("dialog").click({ position: { x: 10, y: 200 } });
+  await page.keyboard.press("/");
+  await expect(search).not.toBeFocused();
+});

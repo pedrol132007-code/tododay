@@ -161,6 +161,21 @@ export function BoardToolbar({
   const filtered = hasFilters(filters);
   const inPanel = [filters.priority, filters.label, filters.due, filters.stalled, filters.column].filter((v) => v != null).length;
 
+  // Atalho "/" leva à busca, como no GitHub e no Gmail. Não vale enquanto se digita em outro campo
+  // nem com um painel ou diálogo aberto por cima do board.
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.target as HTMLElement | null)?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      e.preventDefault();
+      searchRef.current?.focus();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
     <div className="mb-4 flex flex-col gap-3">
       <BoardHeader
@@ -190,13 +205,20 @@ export function BoardToolbar({
         <label className="flex w-60 items-center gap-2 rounded-lg border border-border bg-bg-elevated px-2 py-1.5 text-text-muted focus-within:border-primary">
           <IconSearch size={14} />
           <input
+            ref={searchRef}
             type="search"
             value={filters.q}
             onChange={(e) => set({ q: e.target.value })}
             placeholder="Buscar no board…"
             aria-label="Buscar no board"
+            aria-keyshortcuts="/"
             className="min-w-0 flex-1 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted"
           />
+          {!filters.q && (
+            <kbd title="Atalho: aperte / para buscar" className="rounded border border-border px-1.5 font-sans text-[11px] leading-4 text-text-muted">
+              /
+            </kbd>
+          )}
         </label>
         <FilterSelect label="Responsável" value={filters.assignee ?? ""} onChange={(v) => set({ assignee: v || null })}>
           <option value="">Responsável</option>

@@ -16,6 +16,7 @@ import {
   teamAverageSeries,
   type PeriodMetrics,
 } from "../../lib/metrics";
+import { backlogSummary, deliveriesSummary, flowSummary, loadSummary } from "../../lib/chartSummaries";
 import { variation } from "../../lib/variation";
 import { Avatar } from "../ui/Avatar";
 import { DemoActions, DemoBadge } from "../ui/Demo";
@@ -141,6 +142,9 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
   const deliveredTrend = variation("delivered", sum.delivered, prev?.delivered ?? null);
   const refLegend = view.team ? [{ label: subject, color: "chart-1" as const }, { label: refName, color: "chart-ref" as const, dashed: true }] : undefined;
   const of = person ? ` de ${subject}` : "";
+  // Os pontos dos resumos são os mesmos do gráfico: nunca falam de outro período.
+  const grain = byDay ? "day" : "week";
+  const points = view.series.map((p, i) => ({ ...p, label: labels[i] }));
 
   // O board mostra hoje: só dá para abrir nele o que o período olha no dia de hoje. Num período
   // que termina antes, a lista continua aqui mesmo.
@@ -267,6 +271,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         <ChartFrame
           title={`Entregas ${per}`}
           legend={refLegend}
+          summary={deliveriesSummary(points, grain)}
           table={{
             columns: view.team ? ["Início", subject, refName] : ["Início", "Entregas"],
             rows: view.series.map((p, i) => (view.team ? [labels[i], p.delivered, num(view.team[i].delivered, 1)] : [labels[i], p.delivered])),
@@ -285,6 +290,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
 
         <ChartFrame
           title="Criados x concluídos"
+          summary={flowSummary(points, grain)}
           legend={[{ label: "Concluídos", color: "chart-1" }, { label: "Criados", color: "chart-2" }]}
           table={{ columns: ["Início", "Criados", "Concluídos"], rows: view.series.map((p, i) => [labels[i], p.created, p.delivered]) }}
         >
@@ -304,6 +310,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         <ChartFrame
           title="Backlog ao longo do tempo (tarefas abertas)"
           legend={refLegend}
+          summary={backlogSummary(sum.backlogChange)}
           table={{
             columns: view.team ? ["Fim", subject, refName] : ["Fim", "Abertas"],
             rows: view.series.map((p, i) => {
@@ -326,6 +333,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
         {person && (
           <ChartFrame
             title="Carga ao longo do tempo"
+            summary={loadSummary(points)}
             legend={[{ label: "Entregues", color: "chart-1" }, { label: "Em andamento", color: "chart-2" }]}
             table={{ columns: ["Início", "Entregues", "Em andamento"], rows: view.series.map((p, i) => [labels[i], p.delivered, p.inProgressAtEnd]) }}
           >

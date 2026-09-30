@@ -63,8 +63,14 @@ describe("resumo de criados x concluídos", () => {
     expect(flowSummary(flow([3, 1], [2, 1], [1, 1]), "day")).toBe("Criados superaram concluídos em 2 dos 3 dias do período (6 criados, 3 concluídos).");
   });
 
-  it("sem maioria: fluxo estável", () => {
+  it("sem maioria e totais iguais: fluxo estável", () => {
     expect(flowSummary(flow([10, 12], [10, 8], [10, 10], [10, 10]), "week")).toBe("Fluxo estável no período: 40 criados, 40 concluídos.");
+  });
+
+  it("sem maioria mas totais diferentes: não diz estável (o backlog mudou)", () => {
+    expect(flowSummary(flow([8, 2], [0, 0], [0, 0], [3, 4]), "day")).toBe(
+      "Criados e concluídos se alternaram no período: 11 criados, 6 concluídos.",
+    );
   });
 
   it("nada criado nem concluído: nenhuma frase", () => {

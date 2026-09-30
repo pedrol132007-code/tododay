@@ -59,7 +59,10 @@ export function flowSummary(points: SummaryPoint[], grain: Grain): string | null
   const of = `${g.of} ${num(points.length)} ${points.length === 1 ? g.one : g.many} do período`;
   if (out > points.length / 2) return `Concluídos superaram criados em ${num(out)} ${of} (${num(delivered)} concluídos, ${num(created)} criados).`;
   if (into > points.length / 2) return `Criados superaram concluídos em ${num(into)} ${of} (${num(created)} criados, ${num(delivered)} concluídos).`;
-  return `Fluxo estável no período: ${num(created)} criados, ${num(delivered)} concluídos.`;
+  // "Estável" só quando entrou o mesmo que saiu; senão contradiria o resumo do backlog.
+  const totals = `${num(created)} criados, ${num(delivered)} concluídos`;
+  if (Math.abs(created - delivered) < MIN_CHANGE.tasks) return `Fluxo estável no período: ${totals}.`;
+  return `Criados e concluídos se alternaram no período: ${totals}.`;
 }
 
 /** Backlog: quanto cresceu ou diminuiu no período (criadas − entregues), sempre em tarefas. */

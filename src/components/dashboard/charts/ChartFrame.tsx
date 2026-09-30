@@ -12,10 +12,13 @@ export function ChartFrame({
   title,
   legend,
   table,
+  summary,
   children,
 }: {
   title: string;
   legend?: LegendItem[];
+  /** A leitura do gráfico em uma frase (src/lib/chartSummaries.ts), acima dele. */
+  summary?: string | null;
   /** Sem `table` não há alternância (ex.: o conteúdo já é uma tabela). */
   table?: { columns: string[]; rows: (string | number)[][] };
   children: ReactNode;
@@ -49,6 +52,7 @@ export function ChartFrame({
           </ul>
         )}
       </div>
+      {summary && <p className="text-sm text-text-primary">{summary}</p>}
       {asTable && table ? (
         <div className="max-h-64 overflow-auto">
           <table className="w-full text-left text-xs">

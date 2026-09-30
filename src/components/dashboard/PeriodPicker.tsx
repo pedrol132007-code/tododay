@@ -81,7 +81,7 @@ export function PeriodPicker({
         <div
           role="dialog"
           aria-label="Período"
-          className="absolute right-0 z-20 mt-2 flex w-72 flex-col gap-1 rounded-xl border border-border bg-bg-surface p-2 shadow-lg"
+          className="absolute right-0 z-20 mt-2 flex w-80 flex-col gap-1 rounded-xl border border-border bg-bg-surface p-2 shadow-lg"
         >
           <div role="radiogroup" aria-label="Atalhos de período" className="flex flex-col">
             {PERIOD_PRESETS.map((p) => {
@@ -109,7 +109,7 @@ export function PeriodPicker({
           >
             <span className="px-2 text-xs font-semibold uppercase tracking-wider text-text-muted">Personalizado</span>
             <div className="flex items-center gap-2 px-2">
-              <label className="flex flex-1 flex-col gap-1 text-xs text-text-muted">
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-text-muted">
                 De
                 <input
                   type="date"
@@ -117,10 +117,10 @@ export function PeriodPicker({
                   min={min}
                   max={end}
                   onChange={(e) => setStart(e.target.value)}
-                  className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
+                  className="w-full min-w-0 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
                 />
               </label>
-              <label className="flex flex-1 flex-col gap-1 text-xs text-text-muted">
+              <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs text-text-muted">
                 Até
                 <input
                   type="date"
@@ -128,7 +128,7 @@ export function PeriodPicker({
                   min={start}
                   max={today}
                   onChange={(e) => setEnd(e.target.value)}
-                  className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
+                  className="w-full min-w-0 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
                 />
               </label>
             </div>

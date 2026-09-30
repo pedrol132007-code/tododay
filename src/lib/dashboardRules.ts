@@ -12,6 +12,43 @@ export const STALLED_DAYS = 7;
 /** "Sobrecarga": mais de N tarefas em andamento (limite fixo, não relativo à média). */
 export const OVERLOAD_IN_PROGRESS = 8;
 
+// ─── Variação das métricas ────────────────────────────────────────────────────
+
+export type MetricId = "backlog" | "delivered" | "cycleTime" | "onTime" | "overdue" | "stalled";
+export type VariationUnit = "tasks" | "points" | "days";
+
+export interface MetricConfig {
+  /** Para onde é bom o número ir: decide a cor da variação (a seta só mostra a direção). */
+  better: "up" | "down";
+  unit: VariationUnit;
+  /** "period": mudança dentro do período (estoque no início x no fim); "previous": contra o período anterior. */
+  scope: "period" | "previous";
+  /** Sujeito da frase do tooltip, com artigo. */
+  subject: string;
+  plural: boolean;
+  /** O que a mudança quer dizer, quando "aumentou" não basta. */
+  meaning?: { up: string; down: string };
+}
+
+export const METRICS: Record<MetricId, MetricConfig> = {
+  backlog: { better: "down", unit: "tasks", scope: "period", subject: "o backlog", plural: false },
+  delivered: { better: "up", unit: "tasks", scope: "previous", subject: "as entregas", plural: true },
+  cycleTime: {
+    better: "down",
+    unit: "days",
+    scope: "previous",
+    subject: "o tempo de conclusão",
+    plural: false,
+    meaning: { up: "as tarefas estão levando mais tempo para fechar", down: "as tarefas estão fechando mais rápido" },
+  },
+  onTime: { better: "up", unit: "points", scope: "previous", subject: "a taxa de entregas no prazo", plural: false },
+  overdue: { better: "down", unit: "tasks", scope: "period", subject: "as atrasadas", plural: true },
+  stalled: { better: "down", unit: "tasks", scope: "period", subject: "as paradas", plural: true },
+};
+
+/** Abaixo disto (depois de arredondar como no texto) a variação é "estável": sem seta, sem cor. */
+export const MIN_CHANGE: Record<VariationUnit, number> = { tasks: 1, points: 1, days: 0.1 };
+
 // ─── Regras básicas (board e dashboard) ───────────────────────────────────────
 
 /** "AAAA-MM-DD" do dia local de `date` (o "hoje" de quem está olhando). */

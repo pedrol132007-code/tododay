@@ -31,10 +31,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Função de anexos gerada está em dia
+      - name: Arquivos gerados estão em dia
         run: |
           npm run gen:function
-          git diff --exit-code -- supabase/functions/attachments/index.ts
+          npm run gen:setup
+          git diff --exit-code -- supabase/functions/attachments/index.ts supabase/setup_producao.sql
 
       - name: Testes
         run: npm test

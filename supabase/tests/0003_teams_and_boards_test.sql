@@ -109,6 +109,9 @@ begin
   perform pg_temp.assert_that((select role from public.team_member where team_id = t and user_id = auth.uid()) = 'admin',
     'create_team deixa quem criou como admin');
   insert into public.board (team_id, name, position) values (t, 'Board', 1) returning id into b;
+  -- Colunas são do admin desde a 0013 (o membro não cria: ver 0013_admin_lists_and_deactivation_test).
+  insert into public.list (board_id, name, position) values (b, 'A fazer', 1) returning id into l;
+  insert into public.list (board_id, name, position) values (b, 'Feito', 2) returning id into l2;
   perform pg_temp.logout();
 
   -- ── membro
@@ -116,8 +119,6 @@ begin
   perform pg_temp.assert_that(pg_temp.row_count('select * from public.board') = 1, 'membro vê o board da equipe');
   perform pg_temp.assert_that(pg_temp.row_count('select * from public.team_member') = 3, 'membro vê os 3 membros');
   perform pg_temp.assert_that(pg_temp.row_count('select * from public.profile') = 3, 'membro vê perfis dos colegas (e só deles)');
-  insert into public.list (board_id, name, position) values (b, 'A fazer', 1) returning id into l;
-  insert into public.list (board_id, name, position) values (b, 'Feito', 2) returning id into l2;
   insert into public.card (list_id, title, position) values (l, 'Card', 1) returning id into c;
   perform pg_temp.assert_that((select board_id from public.card where id = c) = b, 'card.board_id preenchido pelo trigger');
   update public.card set list_id = l2 where id = c;

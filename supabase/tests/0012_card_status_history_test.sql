@@ -103,8 +103,14 @@ begin
   perform public.set_card_positions(jsonb_build_array(jsonb_build_object('id', c, 'position', 5)));
   perform pg_temp.assert_that(pg_temp.trail(c) = 'todo,doing,done', 'concluir grava done; reordenar não grava nada');
 
+  -- Mexer na coluna é do admin desde a 0013.
+  perform pg_temp.logout();
+  perform pg_temp.login('admin');
   update public.list set name = 'Entregue' where id = l_done;
+  perform pg_temp.assert_that((select name from public.list where id = l_done) = 'Entregue', 'admin renomeia a coluna');
   perform pg_temp.assert_that(pg_temp.trail(c) = 'todo,doing,done', 'renomear a coluna não grava nada');
+  perform pg_temp.logout();
+  perform pg_temp.login('membro');
 
   -- Um card arquivado na coluna que vai mudar de tipo: fica de fora até voltar.
   insert into public.card (list_id, title, position) values (l_todo2, 'Outro', 2) returning id into c2;
@@ -112,7 +118,11 @@ begin
   update public.card set archived_at = now() where id = c_arch;
   perform pg_temp.assert_that(pg_temp.trail(c_arch) = 'todo', 'arquivar não grava status');
 
+  perform pg_temp.logout();
+  perform pg_temp.login('admin');
   update public.list set status = 'doing' where id = l_todo2;
+  perform pg_temp.logout();
+  perform pg_temp.login('membro');
   perform pg_temp.assert_that(pg_temp.trail(c2) = 'todo,doing', 'coluna que muda de tipo grava o novo status dos cards nela');
   perform pg_temp.assert_that(pg_temp.trail(c_arch) = 'todo', 'mas não o dos arquivados');
   perform pg_temp.assert_that(pg_temp.trail(c) = 'todo,doing,done', 'e não mexe nos cards de outras colunas');

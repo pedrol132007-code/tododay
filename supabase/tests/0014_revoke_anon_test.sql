@@ -18,6 +18,8 @@ begin
   select 'anon executa public.' || p.proname into v_problem
   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
   where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
+    -- Função de trigger não dá para chamar direto (mesma regra da auditoria).
+    and p.prorettype <> 'trigger'::regtype
   limit 1;
   if v_problem is not null then
     raise exception 'FALHOU: %', v_problem;

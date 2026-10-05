@@ -1,0 +1,17 @@
+# Configuração da Supabase CLI. Só o CI usa: sobe um Postgres descartável para testar as migrations
+# (supabase db start) e publica migrations e Edge Functions no dev e no prod. Nada daqui vale para
+# os projetos na nuvem: Auth, e-mail e afins continuam no painel.
+project_id = "tododay"
+
+[db]
+port = 54322
+major_version = 17
+
+[db.seed]
+enabled = false
+
+[functions.attachments]
+verify_jwt = true
+
+[functions.members]
+verify_jwt = true

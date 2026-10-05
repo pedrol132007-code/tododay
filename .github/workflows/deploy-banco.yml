@@ -1,0 +1,125 @@
+# Aplica no dev e depois no prod as migrations que faltam e publica as Edge Functions, a cada merge no
+# master que mexa em supabase/. O CI (job Banco) já testou tudo num banco descartável antes do merge.
+#
+# Secrets (Settings → Environments):
+#   ambiente "dev":  SUPABASE_DB_URL  (Session pooler do tododay-dev, com a senha)
+#   ambiente "prod": SUPABASE_DB_URL  (Session pooler do tododay-prod, com a senha)
+#   no repositório:  SUPABASE_ACCESS_TOKEN (token pessoal do Supabase, para publicar as funções)
+#
+# Rodar à mão (Actions → Deploy do banco → Run workflow) também serve para, uma única vez, registrar
+# em cada banco as migrations que já tinham sido coladas no SQL Editor (campo "registrar").
+name: Deploy do banco
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "supabase/migrations/**"
+      - "supabase/functions/**"
+      - ".github/workflows/deploy-banco.yml"
+  workflow_dispatch:
+    inputs:
+      registrar:
+        description: "Só na primeira vez: versões já aplicadas à mão, a registrar sem rodar (ex.: 0001 0002 0003). Vazio = deploy normal."
+        required: false
+        default: ""
+      registrar_em:
+        description: "Em qual banco registrar"
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+permissions:
+  contents: read
+
+# Um deploy de banco por vez, sem cancelar o que está no meio.
+concurrency:
+  group: deploy-banco
+  cancel-in-progress: false
+
+jobs:
+  registrar:
+    name: Registrar migrations já aplicadas
+    if: github.event_name == 'workflow_dispatch' && inputs.registrar != ''
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.registrar_em }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Marca como aplicadas (sem rodar o SQL)
+        run: supabase migration repair --status applied ${{ inputs.registrar }} --db-url "$SUPABASE_DB_URL"
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - name: Como ficou
+        run: supabase migration list --db-url "$SUPABASE_DB_URL"
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+  dev:
+    name: Dev (tododay-dev)
+    if: github.event_name == 'push' || inputs.registrar == ''
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      PROJECT_REF: aakskemifuzzgkbwuiup
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: O banco já tem o registro das migrations?
+        run: |
+          n=$(psql "$SUPABASE_DB_URL" -tAc "select count(*) from supabase_migrations.schema_migrations" 2>/dev/null || echo 0)
+          if [ "$n" = "0" ]; then
+            echo "::error::Este banco ainda não tem o registro das migrations coladas à mão. Rode este workflow à mão com o campo 'registrar' (ver o topo do arquivo) antes do primeiro deploy."
+            exit 1
+          fi
+      - name: Migrations que faltam
+        run: |
+          supabase migration list --db-url "$SUPABASE_DB_URL"
+          supabase db push --include-all --yes --db-url "$SUPABASE_DB_URL"
+      - name: Edge Functions
+        run: |
+          for dir in supabase/functions/*/; do
+            supabase functions deploy "$(basename "$dir")" --project-ref "$PROJECT_REF"
+          done
+
+  prod:
+    name: Prod (tododay-prod)
+    needs: dev
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      PROJECT_REF: fgrdscdymgsvmvjqibyn
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: O banco já tem o registro das migrations?
+        run: |
+          n=$(psql "$SUPABASE_DB_URL" -tAc "select count(*) from supabase_migrations.schema_migrations" 2>/dev/null || echo 0)
+          if [ "$n" = "0" ]; then
+            echo "::error::Este banco ainda não tem o registro das migrations coladas à mão. Rode este workflow à mão com o campo 'registrar' (ver o topo do arquivo) antes do primeiro deploy."
+            exit 1
+          fi
+      - name: Migrations que faltam
+        run: |
+          supabase migration list --db-url "$SUPABASE_DB_URL"
+          supabase db push --include-all --yes --db-url "$SUPABASE_DB_URL"
+      - name: Edge Functions
+        run: |
+          for dir in supabase/functions/*/; do
+            supabase functions deploy "$(basename "$dir")" --project-ref "$PROJECT_REF"
+          done
+      - name: Produção tem tudo o que o repositório espera
+        run: node scripts/check-prod.mjs

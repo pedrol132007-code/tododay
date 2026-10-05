@@ -1,0 +1,18 @@
+<!-- Supabase: Authentication → Emails → Templates → "Invite user"
+     Assunto: Você recebeu um convite para o Tododay -->
+<div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1f1d2b;">
+  <div style="height: 4px; background: linear-gradient(90deg, #2538FF, #E51E47); border-radius: 2px;"></div>
+  <h2 style="color: #1f1d2b; font-weight: normal;">Você recebeu um convite para o Tododay</h2>
+  <p>Alguém da sua equipe convidou você para o Tododay, o kanban da equipe.</p>
+  <p>Clique no botão para criar sua senha e entrar:</p>
+  <p>
+    <a href="{{ .ConfirmationURL }}"
+       style="display: inline-block; background: #2538FF; color: #ffffff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 13px;">
+      Criar minha senha
+    </a>
+  </p>
+  <p style="color: #6b6880; font-size: 13px;">
+    O link vale por 24 horas e funciona uma vez. Se expirar, peça ao admin da equipe um link novo.
+  </p>
+  <p style="color: #6b6880; font-size: 13px;">Se você não esperava este convite, pode ignorar este e-mail.</p>
+</div>

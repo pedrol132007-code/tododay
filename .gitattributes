@@ -1,0 +1,3 @@
+# O hash do script inline do index.html está na CSP (vercel.json): o arquivo precisa ser igual
+# em todo lugar, então sempre com LF, também no Windows.
+index.html text eol=lf

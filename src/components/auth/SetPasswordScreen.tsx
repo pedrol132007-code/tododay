@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { AuthFailure, updatePassword } from "../../db/auth";
+import { AuthFailure, openedFromInvite, updatePassword } from "../../db/auth";
 import { AuthLayout, Field, FormError, SubmitButton } from "./AuthLayout";
 
 export function SetPasswordScreen({ onDone }: { onDone: () => void }) {
@@ -26,7 +26,8 @@ export function SetPasswordScreen({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <AuthLayout title="Definir senha">
+    <AuthLayout title={openedFromInvite ? "Boas-vindas ao Tododay" : "Definir senha"}>
+      {openedFromInvite && <p className="mb-4 text-sm text-text-muted">Você recebeu um convite para uma equipe. Crie sua senha para entrar.</p>}
       <form onSubmit={handleSubmit}>
         <FormError message={error} />
         <Field label="Nova senha" type="password" value={password} onChange={setPassword} autoComplete="new-password" autoFocus />

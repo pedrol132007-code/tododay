@@ -31,6 +31,8 @@ function fail(error: AuthError): never {
 
 /** Link de recuperação (ou convite, a partir da E6) abriu o app: o usuário precisa definir uma senha. */
 export const openedFromPasswordLink = ["recovery", "invite"].includes(initialAuthHash.get("type") ?? "");
+/** Chegou pelo e-mail de convite: a tela de senha dá as boas-vindas. */
+export const openedFromInvite = initialAuthHash.get("type") === "invite";
 
 /** Erro vindo de um link de e-mail inválido/expirado, para mostrar na tela de login. */
 export const initialLinkError: string | null = initialAuthHash.get("error_code")

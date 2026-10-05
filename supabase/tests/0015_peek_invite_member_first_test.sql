@@ -66,8 +66,8 @@ do $$
 declare
   t bigint; v_token uuid;
 begin
-  insert into auth.users (id, email, raw_user_meta_data, aud, role)
-  select gen_random_uuid(), n || '@rls-test.local', json_build_object('display_name', n)::jsonb, 'authenticated', 'authenticated'
+  insert into auth.users (id, email, raw_user_meta_data, aud, role, email_confirmed_at)
+  select gen_random_uuid(), n || '@rls-test.local', json_build_object('display_name', n)::jsonb, 'authenticated', 'authenticated', now()
   from unnest(array['admin', 'convidado', 'outro']) n;
 
   perform pg_temp.login('admin');

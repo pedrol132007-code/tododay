@@ -74,6 +74,10 @@ export function describeActivity(activity: Activity, where: "card" | "team"): st
       return `removeu ${p.name} da equipe`;
     case "member.role_changed":
       return `mudou ${p.name} de ${role(p.from)} para ${role(p.to)}`;
+    case "member.deactivated":
+      return `desativou ${p.name}`;
+    case "member.reactivated":
+      return `reativou ${p.name}`;
     case "member.job_title_changed":
       return p.to ? `definiu o cargo de ${p.name} como ${p.to}` : `tirou o cargo de ${p.name}`;
     case "team.renamed":

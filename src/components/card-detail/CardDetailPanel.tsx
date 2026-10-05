@@ -135,12 +135,15 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
                 className={fieldClass}
               >
                 <option value="">Ninguém</option>
-                {(members ?? []).map((member) => (
-                  <option key={member.user_id} value={member.user_id}>
-                    {member.profile.display_name}
-                    {member.job_title ? ` — ${member.job_title}` : ""}
-                  </option>
-                ))}
+                {/* Quem está desativado não recebe cards novos, mas continua aparecendo nos que já são dele. */}
+                {(members ?? [])
+                  .filter((member) => !member.deactivated_at || member.user_id === card.assignee_id)
+                  .map((member) => (
+                    <option key={member.user_id} value={member.user_id} disabled={!!member.deactivated_at}>
+                      {member.profile.display_name}
+                      {member.deactivated_at ? " (desativado)" : member.job_title ? ` — ${member.job_title}` : ""}
+                    </option>
+                  ))}
               </select>
             ) : (
               <span className="text-sm text-text-primary">{assignee?.profile.display_name ?? "Ninguém"}</span>

@@ -12,7 +12,8 @@ import { InlineEditableText } from "../ui/InlineEditableText";
 import { ActivityList } from "../ui/ActivityList";
 import { useTeamActivity } from "../../hooks/useActivity";
 import { inviteUrl } from "../../lib/pendingInvite";
-import type { MemberRole, MyTeam, TeamInvite } from "../../types";
+import type { MemberRole, MyTeam, TeamInvite } from "../../types";
+
 import { PageHeader } from "../ui/PageHeader";
 
 const roleOptions: { value: MemberRole; label: string; hint: string }[] = [
@@ -47,6 +48,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
   const revokeInvite = useRevokeInvite(team.id);
   const { data: activities } = useTeamActivity(team.id);
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
+  const [confirmingDeactivation, setConfirmingDeactivation] = useState<string | null>(null);
 
   const actionError = updateMember.error ?? removeMember.error ?? revokeInvite.error ?? renameTeam.error;
 
@@ -57,6 +59,20 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
     }
     setConfirmingRemoval(null);
     removeMember.mutate(memberId);
+  }
+
+  // Desativar tira o acesso sem apagar nada: os cards continuam com a pessoa e o histórico fica.
+  function handleToggleActive(memberId: string, active: boolean) {
+    if (active) {
+      updateMember.mutate({ userId: memberId, changes: { deactivated_at: null } });
+      return;
+    }
+    if (confirmingDeactivation !== memberId) {
+      setConfirmingDeactivation(memberId);
+      return;
+    }
+    setConfirmingDeactivation(null);
+    updateMember.mutate({ userId: memberId, changes: { deactivated_at: new Date().toISOString() } });
   }
 
   return (
@@ -83,15 +99,19 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
           <h2 className="text-sm font-semibold text-text-muted">Membros</h2>
           {(members ?? []).map((member) => {
             const isSelf = member.user_id === userId;
+            const deactivated = member.deactivated_at !== null;
             return (
               <div
                 key={member.user_id}
-                className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-bg-elevated px-3 py-2"
+                className={`flex flex-wrap items-center gap-3 rounded-xl border px-3 py-2 ${
+                  deactivated ? "border-dashed border-border" : "border-border bg-bg-elevated"
+                }`}
               >
                 <div className="flex min-w-[12rem] flex-1 flex-col">
-                  <span className="text-text-primary">
+                  <span className={deactivated ? "text-text-muted" : "text-text-primary"}>
                     {member.profile.display_name}
                     {isSelf && <span className="text-text-muted"> (você)</span>}
+                    {deactivated && <span className="text-text-muted"> · desativado</span>}
                   </span>
                   <span className="text-xs text-text-muted">{member.profile.email}</span>
                 </div>
@@ -129,9 +149,25 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                 ) : (
                   <span className="text-sm text-text-muted">{roleLabel(member.role)}</span>
                 )}
+                {isAdmin && !isSelf && (
+                  <button
+                    type="button"
+                    onBlur={() => setConfirmingDeactivation(null)}
+                    onClick={() => handleToggleActive(member.user_id, deactivated)}
+                    title={deactivated ? "Devolve o acesso à equipe" : "Tira o acesso, mas os cards e o histórico continuam"}
+                    className={`rounded-lg px-3 py-1 text-sm ${
+                      confirmingDeactivation === member.user_id
+                        ? "bg-danger text-on-accent"
+                        : "text-text-muted hover:bg-bg-surface hover:text-text-primary"
+                    }`}
+                  >
+                    {deactivated ? "Reativar" : confirmingDeactivation === member.user_id ? "Confirmar?" : "Desativar"}
+                  </button>
+                )}
                 {(isAdmin || isSelf) && (
                   <button
                     type="button"
+                    title={isSelf ? undefined : "Remove da equipe e tira a pessoa de responsável dos cards"}
                     onBlur={() => setConfirmingRemoval(null)}
                     onClick={() => handleRemove(member.user_id)}
                     className={`rounded-lg px-3 py-1 text-sm hover:bg-danger hover:text-on-accent ${

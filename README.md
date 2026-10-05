@@ -1,62 +1,78 @@
 # Tododay 🍃
 
-Kanban para equipes. Boards compartilhados, atualização em tempo real e convite por link — no navegador ou como app desktop.
+Kanban para equipes pequenas. Os boards são compartilhados e se atualizam em tempo real, e o dashboard mostra como a equipe está: entregas, prazos, tarefas paradas e carga de cada pessoa. Funciona no navegador ou como app desktop no Windows.
 
-Construído com React 18 + TypeScript e [Supabase](https://supabase.com/) (Postgres + Auth + Realtime). A versão desktop usa [Tauri v2](https://v2.tauri.app/) em volta do mesmo frontend.
+Está em **beta**, sendo usado por uma equipe piloto. As mudanças de cada versão ficam no [CHANGELOG](CHANGELOG.md).
 
 ## Como usar
 
-- **Navegador:** abra o link da versão web, crie sua conta (confirmando o e-mail) e crie uma equipe — ou abra um link de convite que alguém da equipe te mandou.
-- **Desktop (Windows):** baixe o instalador na [página de Releases](https://github.com/pedrol132007-code/tododay/releases/latest) — `Tododay_x.x.x_x64-setup.exe` (ou o `.msi`). A conta e os boards são os mesmos da versão web.
+- **Navegador:** o acesso é por convite. Um admin da equipe manda o convite, e você entra pelo link recebido.
+- **Desktop (Windows):** baixe o instalador na [página de Releases](https://github.com/pedrol132007-code/tododay/releases/latest). A conta e os boards são os mesmos da versão web.
 
-Não precisa clonar o repositório para usar o app. A seção **"Como rodar em dev"** abaixo é só para quem vai desenvolver.
+Para usar o app não é preciso clonar o repositório. O resto deste arquivo é para quem vai desenvolver.
 
 ## Funcionalidades
 
-- **Equipes** com papéis (`admin` / `member` / `viewer`) e cargo por membro
-- **Convite por link** — uso único, válido por 7 dias, cancelável
-- **Boards e colunas** com CRUD completo e reordenação
-- **Drag and drop** de cards entre colunas e de colunas entre si
-- **Tempo real** — mudanças dos colegas aparecem sem recarregar
-- **Painel de detalhe do card** — descrição em Markdown, data de vencimento, responsável
-- **Labels** coloridas por board e **checklists** por card
-- **Busca global** (`Ctrl+K`) nos boards da equipe
-- **Arquivamento** de cards, com restauração/exclusão definitiva
-- **Histórico de atividade** por card e por equipe
-- **Dashboard** de desempenho da equipe e de cada membro (entregas, criados x concluídos, carga, prazo), com modo demonstração
+- **Board**: colunas com tipo e limite de WIP; cards com responsável, prazo, prioridade, etiquetas, checklist e anexos. Também tem drag and drop, filtros na URL, busca global (`Ctrl+K`), arquivamento e tempo real.
+- **Dashboard**: entregas, lead time, backlog, no prazo, bloco **Atenção** e **Carga da equipe**. Nesta versão mostra apenas dados de demonstração.
+- **Equipes**: papéis `admin` / `member` / `viewer` garantidos no banco (RLS), convite por link e histórico de atividade.
 
 ## Stack
 
-| Camada        | Tecnologia                                                     |
-| ------------- | -------------------------------------------------------------- |
-| Frontend      | React 18 + TypeScript + Vite                                   |
-| Estilo        | Tailwind CSS, identidade visual Benner, tema claro e escuro     |
-| Backend       | [Supabase](https://supabase.com/) — Postgres, Auth, Realtime, RLS |
-| Web           | [Vercel](https://vercel.com/)                                  |
-| Desktop shell | [Tauri v2](https://v2.tauri.app/) (Rust)                       |
-| Drag & drop   | [`@dnd-kit`](https://dndkit.com/)                               |
-| Server state  | TanStack Query                                                 |
-| Testes        | Vitest (frontend) + scripts SQL em `supabase/tests/` (RLS)     |
+| Camada        | Tecnologia                                                         |
+| ------------- | ------------------------------------------------------------------ |
+| Frontend      | React 18 + TypeScript + Vite, Tailwind CSS, TanStack Query          |
+| Backend       | [Supabase](https://supabase.com/): Postgres com RLS, Auth, Realtime, Storage e Edge Functions |
+| Web           | [Vercel](https://vercel.com/)                                       |
+| Desktop       | [Tauri v2](https://v2.tauri.app/), só uma casca em volta do mesmo frontend |
+| Testes        | Vitest, Playwright e scripts SQL em `supabase/tests/`               |
 
-## Como rodar em dev (só para quem for desenvolver)
+## Ambientes
 
-1. Crie um projeto no Supabase e rode as migrations de `supabase/migrations/` em ordem no SQL Editor (ou `supabase/setup_producao.sql`, que junta todas).
-2. Copie `.env.example` para `.env` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (Project Settings → API; use a chave anon/publishable, nunca a `service_role`).
-3. Rode:
+| Ambiente           | Supabase       | Onde roda                                       | Dados                                   |
+| ------------------ | -------------- | ----------------------------------------------- | --------------------------------------- |
+| **Desenvolvimento** | `tododay-dev`  | `npm run dev` (localhost:1420) e previews da Vercel | de teste; a demonstração fica disponível |
+| **Produção**        | `tododay-prod` | Vercel, a partir do branch `master`             | reais, da equipe piloto                 |
+
+As variáveis de cada ambiente ficam fora do repositório. Localmente vão no `.env`, a partir do [`.env.example`](.env.example). Em produção ficam nas variáveis da Vercel. O frontend recebe apenas a chave pública (anon/publishable). A `service_role` nunca entra no app nem no repositório.
+
+## Como rodar localmente
+
+Precisa só do [Node.js](https://nodejs.org) LTS.
+
+1. Copie `.env.example` para `.env` e preencha com o projeto de **desenvolvimento** (Supabase → Project Settings → API).
+2. Rode:
 
 ```bash
 npm install
-npm run dev            # versão web em http://localhost:1420
+npm run dev            # http://localhost:1420
+npm run lint           # ESLint
+npm test               # testes unitários (Vitest)
+npm run test:e2e:mock  # ponta a ponta simulados, sem banco
+npm run test:e2e       # ponta a ponta no Supabase de dev (precisa de SUPABASE_DB_URL)
+npm run build          # build de produção (dist/)
 ```
 
-### Desktop
+Num projeto Supabase novo, rode as migrations de `supabase/migrations/` em ordem no SQL Editor, ou cole `supabase/setup_producao.sql`, que junta todas.
+
+## Fluxo de branches
+
+- O **`master` é produção**: cada push nele publica o site na Vercel.
+- Ninguém faz push direto no `master`. Toda mudança entra por **pull request**, e o merge só acontece com o [CI](.github/workflows/ci.yml) passando (lint, testes e build).
+- O pull request ganha um preview da Vercel, apontado para o ambiente de desenvolvimento.
+- Mudança de banco é uma migration nova em `supabase/migrations/`, com o teste em `supabase/tests/`. Ela é aplicada no dev antes do merge e no prod antes do deploy. `npm run check:prod` confere se o prod está em dia.
+- As dependências são atualizadas pelo Dependabot, toda semana.
+
+Os passos de deploy, primeiro admin, convites, backup e como reverter ficam em [LANCAMENTO.md](LANCAMENTO.md).
+
+## Desktop
 
 Pré-requisitos (uma vez só):
 
 1. Rust via [rustup](https://rustup.rs)
-2. Windows: WebView2 Runtime (já vem no Windows 11) + um linker C. Duas opções:
+2. Windows: WebView2 Runtime (já vem no Windows 11) e um linker C. Duas opções:
    - Microsoft C++ Build Tools (workload "Desktop development with C++", via Visual Studio Installer).
-   - **Sem admin/Visual Studio:** `scoop install mingw` e depois `rustup toolchain install stable-x86_64-pc-windows-gnu` + `rustup override set stable-x86_64-pc-windows-gnu` dentro de `src-tauri/`.
+   - **Sem admin nem Visual Studio:** `scoop install mingw`, depois `rustup toolchain install stable-x86_64-pc-windows-gnu` e `rustup override set stable-x86_64-pc-windows-gnu` dentro de `src-tauri/`.
 
 ```bash
 npm run tauri dev      # janela desktop com hot-reload
@@ -64,44 +80,25 @@ npm run tauri build    # instalador de teste (chaves do .env)
 npm run desktop:build  # instalador para distribuir (chaves do .env.desktop)
 ```
 
-> Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git pode sombrear o linker correto no PATH. Use PowerShell/cmd nesse caso.
+> Se rodar `npm run tauri dev` de dentro do Git Bash, o `link.exe` do próprio Git pode tomar o lugar do linker certo no PATH. Nesse caso, use o PowerShell ou o cmd.
 
-As chaves são embutidas no instalador na hora do build. Para distribuir, copie `.env.desktop.example` para `.env.desktop`, preencha com o projeto de produção e o endereço da versão web (`VITE_PUBLIC_URL`, usado nos links de convite) e rode `npm run desktop:build`. Sem esse arquivo o build falha, para nunca sair um instalador apontando para o banco de dev.
-
-### Outros comandos
-
-```bash
-npm test               # testes (Vitest)
-npm run build          # build de produção do frontend (dist/)
-```
+As chaves entram no instalador na hora do build. Para distribuir, copie `.env.desktop.example` para `.env.desktop` e preencha com o projeto de produção e o endereço da versão web. Sem esse arquivo o build falha, para nunca sair um instalador apontando para o banco de dev.
 
 ## Estrutura do projeto
 
 ```
 src/
-  components/   # UI React, por área (auth, team, board, card-detail, search, archive)
-  db/           # todo acesso ao Supabase vive aqui — nunca em componentes
+  components/   # UI React, por área (auth, team, board, card-detail, dashboard, ...)
+  db/           # todo acesso ao Supabase vive aqui, nunca em componentes
   hooks/        # hooks de dados (React Query) por entidade
-  lib/          # utilitários puros (posição, atividade, convite pendente)
+  lib/          # funções puras (filtros, métricas, regras do dashboard, posição)
   types/        # fonte única de verdade dos tipos, espelha as migrations
 supabase/
-  migrations/   # schema Postgres + RLS, numerado sequencialmente
-  tests/        # testes de RLS/regras, rodados no SQL Editor
-  templates/    # e-mails de confirmação e recuperação de senha, em PT
+  migrations/   # schema Postgres + RLS, numerado em sequência
+  tests/        # testes de RLS e regras, rodados no SQL Editor
+  functions/    # Edge Functions (anexos)
+  templates/    # e-mails em PT
 src-tauri/      # casca desktop (Tauri), sem lógica própria
 ```
 
-## Modelo de dados
-
-Fonte autoritativa: [`supabase/migrations/`](supabase/migrations/). Resumo:
-
-- `team` → `board` → `list` → `card` (hierarquia principal)
-- `profile`, `team_member` (papel + cargo) e `team_invite` (links de convite)
-- `label` e `card_label`, `checklist_item`
-- `activity` — histórico, preenchido por triggers
-
-Todo acesso é controlado por Row Level Security: cada usuário só enxerga as equipes de que é membro.
-
-## Status
-
-As 5 fases do app original (local, SQLite) e a migração para Supabase estão concluídas. Detalhes em [`docs/superpowers/plans/`](docs/superpowers/plans/) — a migração em [`2026-09-23-migracao-supabase.md`](docs/superpowers/plans/2026-09-23-migracao-supabase.md).
+O modelo de dados e as convenções do código estão em [CLAUDE.md](CLAUDE.md).

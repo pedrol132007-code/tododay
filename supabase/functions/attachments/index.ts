@@ -103,6 +103,7 @@ export const extensionOf = (name: string) => {
 /** Nome original limpo para guardar como metadado: sem pastas, sem caracteres de controle, até 255. */
 export function cleanFileName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? "";
+  // eslint-disable-next-line no-control-regex -- tirar caracteres de controle é o objetivo
   const clean = base.replace(/[\u0000-\u001f\u007f]/g, "").trim();
   if (clean.length <= 255) return clean;
   const ext = extensionOf(clean);

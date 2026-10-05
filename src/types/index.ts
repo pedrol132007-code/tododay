@@ -70,6 +70,15 @@ export interface CardAttachment {
   is_cover: boolean;
 }
 
+/** "A partir de changed_at o card estava neste status"; só o banco grava (0012_card_status_history.sql). */
+export interface CardStatusHistory {
+  id: number;
+  card_id: number;
+  board_id: number;
+  status: ListStatus;
+  changed_at: string;
+}
+
 export interface ChecklistItem {
   id: number;
   card_id: number;

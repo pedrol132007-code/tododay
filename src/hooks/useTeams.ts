@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptInvite,
-  createInvite,
   createTeam,
   listMyTeams,
   listOpenInvites,
@@ -12,7 +11,8 @@ import {
   revokeInvite,
   updateTeamMember,
 } from "../db/teams";
-import type { TeamInvite, TeamMember } from "../types";
+import { inviteMember, listPendingMembers, passwordLinkFor, type MemberInvite } from "../db/members";
+import type { TeamMember } from "../types";
 
 export function useMyTeams(userId: string) {
   return useQuery({
@@ -78,12 +78,28 @@ export function useOpenInvites(teamId: number, enabled: boolean) {
   });
 }
 
-export function useCreateInvite(teamId: number) {
+export function useInviteMember(teamId: number) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (invite: Pick<TeamInvite, "label" | "role" | "job_title">) => createInvite(teamId, invite),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invites", teamId] }),
+    mutationFn: (invite: MemberInvite) => inviteMember(teamId, invite),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teamMembers", teamId] });
+      queryClient.invalidateQueries({ queryKey: ["pendingMembers", teamId] });
+    },
   });
+}
+
+/** Quem ainda não aceitou o convite (só o admin consulta). */
+export function usePendingMembers(teamId: number, enabled: boolean) {
+  return useQuery({
+    queryKey: ["pendingMembers", teamId],
+    queryFn: () => listPendingMembers(teamId),
+    enabled,
+  });
+}
+
+export function usePasswordLink(teamId: number) {
+  return useMutation({ mutationFn: (userId: string) => passwordLinkFor(teamId, userId) });
 }
 
 export function useRevokeInvite(teamId: number) {

@@ -415,3 +415,42 @@ test("membro usa o board, mas não vê os controles da estrutura (colunas e boar
   await expect(page.getByRole("button", { name: "Novo board" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Configurações da coluna/ })).toHaveCount(0);
 });
+
+test("convite por e-mail: admin convida, vê o convite pendente e gera um link de acesso", async ({ page }) => {
+  const PENDING_ID = "00000000-0000-0000-0000-000000000002";
+  const calls: Record<string, unknown>[] = [];
+  await page.route("**/functions/v1/members", async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    calls.push(body);
+    if (body.action === "invite") return route.fulfill({ json: { status: "invited", userId: PENDING_ID } });
+    if (body.action === "pending") return route.fulfill({ json: { userIds: [PENDING_ID] } });
+    return route.fulfill({ json: { link: "https://exemplo.supabase.co/auth/v1/verify?token=abc&type=recovery" } });
+  });
+  await mockSession(page);
+  await page.route("**/rest/v1/**", (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname.endsWith("team_member") && url.searchParams.get("select")?.includes("profile")) {
+      return route.fulfill({
+        json: [
+          { team_id: 1, user_id: USER_ID, role: "admin", job_title: "", joined_at: NOW, deactivated_at: null, profile: { email: env.E2E_EMAIL, display_name: "E2E" } },
+          { team_id: 1, user_id: PENDING_ID, role: "member", job_title: "", joined_at: NOW, deactivated_at: null, profile: { email: "carla@exemplo.com", display_name: "Carla" } },
+        ],
+      });
+    }
+    return fulfillRest(route);
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Equipe" }).click();
+
+  await page.getByLabel("E-mail").fill("carla@exemplo.com");
+  await page.getByLabel("Nome").fill("Carla");
+  await page.getByRole("button", { name: "Convidar" }).click();
+  await expect(page.getByText(/Convite enviado para carla@exemplo.com/)).toBeVisible();
+  expect(calls.find((c) => c.action === "invite")).toMatchObject({ teamId: 1, email: "carla@exemplo.com", name: "Carla", role: "member" });
+
+  await expect(page.getByText("· convite pendente")).toBeVisible();
+  await page.getByRole("button", { name: "Gerar link de acesso" }).click();
+  await expect(page.getByText(/auth\/v1\/verify\?token=abc/)).toBeVisible();
+  expect(calls.find((c) => c.action === "link")).toMatchObject({ teamId: 1, userId: PENDING_ID });
+});

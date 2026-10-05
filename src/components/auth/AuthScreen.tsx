@@ -2,6 +2,11 @@ import { useState, type FormEvent } from "react";
 import { AuthFailure, requestPasswordReset, signIn, signUp } from "../../db/auth";
 import { AuthLayout, Field, FormError, LinkButton, Notice, SubmitButton } from "./AuthLayout";
 import { getPendingInvite } from "../../lib/pendingInvite";
+import { isProduction } from "../../db/supabase";
+
+// Em produção o cadastro é fechado (Authentication → Sign In / Providers → "Allow new users to sign
+// up" desligado): só entra quem foi convidado. Em dev continua aberto para testar.
+const canSignUp = !isProduction;
 
 type Mode = "login" | "signup" | "forgot";
 
@@ -14,7 +19,7 @@ const titles: Record<Mode, string> = {
 export function AuthScreen({ initialError }: { initialError: string | null }) {
   // Quem chega por link de convite quase sempre ainda não tem conta.
   const hasInvite = getPendingInvite() !== null;
-  const [mode, setMode] = useState<Mode>(hasInvite ? "signup" : "login");
+  const [mode, setMode] = useState<Mode>(hasInvite && canSignUp ? "signup" : "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -105,7 +110,11 @@ export function AuthScreen({ initialError }: { initialError: string | null }) {
       <div className="mt-6 flex flex-col items-start gap-2">
         {mode === "login" ? (
           <>
-            <LinkButton onClick={() => switchMode("signup")}>Não tem conta? Criar conta</LinkButton>
+            {canSignUp ? (
+              <LinkButton onClick={() => switchMode("signup")}>Não tem conta? Criar conta</LinkButton>
+            ) : (
+              <p className="text-sm text-text-muted">O acesso é por convite do admin da sua equipe.</p>
+            )}
             <LinkButton onClick={() => switchMode("forgot")}>Esqueci minha senha</LinkButton>
           </>
         ) : (

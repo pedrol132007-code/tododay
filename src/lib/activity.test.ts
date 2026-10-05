@@ -65,6 +65,7 @@ describe("describeActivity", () => {
     );
     expect(describeActivity(activity("member.left", { name: "Ana" }), "team")).toBe("saiu da equipe");
     expect(describeActivity(activity("member.deactivated", { name: "Ana" }), "team")).toBe("desativou Ana");
+    expect(describeActivity(activity("member.invited", { name: "Ana", role: "member" }), "team")).toBe("convidou Ana como membro");
     expect(describeActivity(activity("member.reactivated", { name: "Ana" }), "team")).toBe("reativou Ana");
     expect(describeActivity(activity("invite.created", { label: "Carla", role: "viewer" }), "team")).toBe(
       "gerou um convite para Carla (leitor)",

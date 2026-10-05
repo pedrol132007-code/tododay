@@ -399,3 +399,9 @@ test("Mover para…: escolhe coluna e posição no painel do card", async ({ pag
   expect((await moved).postDataJSON()).toEqual({ list_id: 2, position: 1 });
   await expect(page.getByText("Movido para “Coluna curta”")).toBeVisible();
 });
+
+test("fora de produção: selo Dev ao lado do nome e (dev) no título da aba", async ({ page }) => {
+  await openLongBoard(page);
+  await expect(page.getByTitle(/Ambiente de desenvolvimento/)).toHaveText("Dev");
+  await expect(page).toHaveTitle("Tododay (dev)");
+});

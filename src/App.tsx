@@ -22,6 +22,7 @@ import type { DashboardData, MyTeam, SearchResult } from "./types";
 import { IconColumns } from "./components/ui/icons";
 import { EmptyState } from "./components/ui/EmptyState";
 import { DashboardErrorBoundary } from "./components/dashboard/DashboardErrorBoundary";
+import { isProduction } from "./db/supabase";
 
 // Carregado só ao abrir o Dashboard: os gráficos não pesam para quem usa só o board.
 const DashboardView = lazy(() => import("./components/dashboard/DashboardView").then((m) => ({ default: m.DashboardView })));
@@ -106,8 +107,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
   // Demonstração em memória: enquanto existe, o Board e o Dashboard mostram as mesmas tarefas fictícias.
+  // Só em desenvolvimento: em produção não há como gerá-la.
   const [demo, setDemo] = useState<DashboardData | null>(null);
-  const newDemo = () => import("./lib/demoData").then((m) => setDemo(m.generateDemo(Math.floor(Math.random() * 2 ** 31))));
+  const newDemo = isProduction
+    ? undefined
+    : () => import("./lib/demoData").then((m) => setDemo(m.generateDemo(Math.floor(Math.random() * 2 ** 31))));
 
   // Sem board escolhido, ou o escolhido foi excluído (aqui ou por outra pessoa): abre o primeiro.
   useEffect(() => {
@@ -192,7 +196,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <SettingsView onBack={() => setView("board")} />
       ) : view === "team" ? (
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />
-      ) : demo && view === "board" ? (
+      ) : demo && newDemo && view === "board" ? (
         <Suspense fallback={null}>
           <DemoBoardView
             data={demo}

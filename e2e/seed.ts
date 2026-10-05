@@ -3,9 +3,11 @@
 // e apaga o conteúdo do board, então cada execução começa do zero.
 //
 // Lê do .env: SUPABASE_DB_URL (conexão Postgres do projeto de dev), VITE_SUPABASE_URL,
-// E2E_EMAIL e E2E_PASSWORD. Recusa rodar se o banco não for o mesmo projeto do app.
+// E2E_EMAIL e E2E_PASSWORD. Recusa rodar se o banco não for o mesmo projeto do app, e nunca roda
+// no projeto de produção.
 import fs from "node:fs";
 import pg from "pg";
+import { environmentOf, projectRef } from "../src/lib/environment";
 
 export const TEAM_NAME = "Equipe E2E";
 export const BOARD_NAME = "Board E2E";
@@ -22,13 +24,14 @@ export function readEnv(): Record<string, string> {
   return env;
 }
 
-const projectRef = (url: string) => url.match(/(?:postgres\.|db\.|https:\/\/)([a-z0-9]{20})/)?.[1];
-
 export default async function seed() {
   const env = readEnv();
   const appRef = projectRef(env.VITE_SUPABASE_URL);
   if (!appRef || appRef !== projectRef(env.SUPABASE_DB_URL)) {
     throw new Error("SUPABASE_DB_URL e VITE_SUPABASE_URL apontam para projetos diferentes; seed cancelado.");
+  }
+  if (environmentOf(env.VITE_SUPABASE_URL) === "production") {
+    throw new Error("O .env aponta para o projeto de PRODUÇÃO; o seed só roda no de desenvolvimento. Seed cancelado.");
   }
 
   const client = new pg.Client({ connectionString: env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false } });

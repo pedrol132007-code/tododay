@@ -46,7 +46,8 @@ const LOAD_LABEL: Record<LoadList, string> = { inProgress: "Em andamento", overd
 export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard }: {
   teamName: string;
   data: DashboardData | null;
-  onGenerate: () => void;
+  /** Gera a demonstração; não existe em produção. */
+  onGenerate?: () => void;
   onExit: () => void;
   onOpenBoard: (link: BoardLinkTarget) => void;
 }) {
@@ -80,7 +81,7 @@ export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard 
         {data && (
           <div className="mb-6 flex flex-wrap items-center gap-2">
             <PeriodPicker value={period} onChange={setPeriod} today={data.today} min={data.since} />
-            <DemoActions onRegenerate={onGenerate} onExit={exitDemo} />
+            {data.isDemo && onGenerate && <DemoActions onRegenerate={onGenerate} onExit={exitDemo} />}
           </div>
         )}
       </div>
@@ -92,11 +93,17 @@ export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard 
           <EmptyState
             icon={<IconColumns size={22} />}
             title="O dashboard ainda não tem dados"
-            description="As métricas reais chegam com o status do card. Enquanto isso, veja como fica com dados de exemplo."
+            description={
+              onGenerate
+                ? "As métricas reais chegam com o status do card. Enquanto isso, veja como fica com dados de exemplo."
+                : "As métricas aparecem depois de algumas semanas de uso do board."
+            }
             action={
-              <button type="button" onClick={onGenerate} className="btn-primary px-4 py-2">
-                Gerar demonstração
-              </button>
+              onGenerate && (
+                <button type="button" onClick={onGenerate} className="btn-primary px-4 py-2">
+                  Gerar demonstração
+                </button>
+              )
             }
           />
         </div>

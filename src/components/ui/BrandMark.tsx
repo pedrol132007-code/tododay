@@ -1,3 +1,5 @@
+import { isProduction } from "../../db/supabase";
+
 /** Símbolo "b" da Benner + nome do app. `light` para usar sobre o degradê da marca. */
 export function BrandMark({ light = false }: { light?: boolean }) {
   return (
@@ -12,6 +14,19 @@ export function BrandMark({ light = false }: { light?: boolean }) {
       <span className={`text-base font-semibold tracking-tight ${light ? "text-white" : "text-text-primary"}`}>
         Tododay
       </span>
+      {!isProduction && <DevBadge />}
+    </span>
+  );
+}
+
+/** Fora de produção, para nunca confundir o banco de teste com o da equipe. */
+function DevBadge() {
+  return (
+    <span
+      title="Ambiente de desenvolvimento: banco de teste, com a demonstração disponível"
+      className="rounded bg-highlight px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wider text-black"
+    >
+      Dev
     </span>
   );
 }

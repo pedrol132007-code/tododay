@@ -405,3 +405,13 @@ test("fora de produção: selo Dev ao lado do nome e (dev) no título da aba", a
   await expect(page.getByTitle(/Ambiente de desenvolvimento/)).toHaveText("Dev");
   await expect(page).toHaveTitle("Tododay (dev)");
 });
+
+test("membro usa o board, mas não vê os controles da estrutura (colunas e boards são do admin)", async ({ page }) => {
+  await openLongBoard(page, "/", {
+    team_member: [{ role: "member", team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }],
+  });
+  await expect(page.getByPlaceholder("Novo card...").first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Adicionar coluna" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Novo board" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /Configurações da coluna/ })).toHaveCount(0);
+});

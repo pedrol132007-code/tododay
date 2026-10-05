@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useBoards, useCreateBoard, useRenameBoard } from "../../hooks/useBoards";
-import { useCanEdit, useIsAdmin } from "../../hooks/useCurrentTeam";
+import { useIsAdmin } from "../../hooks/useCurrentTeam";
 import { IconArchive, IconDots, IconPencil, IconPlus, IconTrash } from "../ui/icons";
 import { DeleteBoardDialog } from "./DeleteBoardDialog";
 import type { Board } from "../../types";
@@ -18,7 +18,6 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
   const createBoard = useCreateBoard(teamId);
   const renameBoard = useRenameBoard(teamId);
   const [creating, setCreating] = useState(false);
-  const canEdit = useCanEdit();
   const isAdmin = useIsAdmin();
   const [newBoardName, setNewBoardName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -109,7 +108,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
             <button
               type="button"
               onClick={() => onSelect(board.id)}
-              onDoubleClick={() => active && canEdit && startRename(board)}
+              onDoubleClick={() => active && isAdmin && startRename(board)}
               className={`py-1 ${active ? "pl-3 pr-1" : "px-3"}`}
             >
               {board.name}
@@ -128,7 +127,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
             )}
             {active && menuOpen && (
               <div className="absolute left-0 top-full z-40 mt-1 w-48 rounded-xl border border-border bg-bg-surface p-1 font-normal shadow-lg">
-                {canEdit && (
+                {isAdmin && (
                   <button
                     type="button"
                     onClick={() => startRename(board)}
@@ -164,7 +163,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
           </div>
         );
       })}
-      {!canEdit ? null : creating ? (
+      {!isAdmin ? null : creating ? (
         <input
           autoFocus
           value={newBoardName}

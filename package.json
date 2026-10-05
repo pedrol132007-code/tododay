@@ -15,7 +15,8 @@
     "gen:function": "node scripts/gen-attachments-function.mjs",
     "check:prod": "node scripts/check-prod.mjs",
     "lint": "eslint .",
-    "gen:setup": "node scripts/gen-setup.mjs"
+    "gen:setup": "node scripts/gen-setup.mjs",
+    "admin:primeiro": "node --use-system-ca scripts/primeiro-admin.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

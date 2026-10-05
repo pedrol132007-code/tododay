@@ -38,7 +38,7 @@ export async function listTeamMembers(teamId: number): Promise<TeamMemberWithPro
 export async function updateTeamMember(
   teamId: number,
   userId: string,
-  changes: Partial<Pick<TeamMember, "role" | "job_title">>,
+  changes: Partial<Pick<TeamMember, "role" | "job_title" | "deactivated_at">>,
 ): Promise<void> {
   must(await supabase.from("team_member").update(changes).eq("team_id", teamId).eq("user_id", userId));
 }

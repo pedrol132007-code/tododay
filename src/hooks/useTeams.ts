@@ -52,7 +52,7 @@ export function useUpdateTeamMember(teamId: number) {
     queryClient.invalidateQueries({ queryKey: ["teams"] });
   };
   return useMutation({
-    mutationFn: ({ userId, changes }: { userId: string; changes: Partial<Pick<TeamMember, "role" | "job_title">> }) =>
+    mutationFn: ({ userId, changes }: { userId: string; changes: Partial<Pick<TeamMember, "role" | "job_title" | "deactivated_at">> }) =>
       updateTeamMember(teamId, userId, changes),
     onSuccess: invalidate,
     onError: invalidate,

@@ -115,6 +115,8 @@ export interface TeamMember {
   role: MemberRole;
   job_title: string;
   joined_at: string;
+  /** Desativado: sem acesso à equipe, mas continua nos cards e no histórico (0013). */
+  deactivated_at: string | null;
 }
 
 export interface TeamInvite {

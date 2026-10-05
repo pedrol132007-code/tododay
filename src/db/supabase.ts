@@ -1,4 +1,5 @@
 import { createClient, type PostgrestError } from "@supabase/supabase-js";
+import { environmentOf } from "../lib/environment";
 
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -12,6 +13,10 @@ if (!url || !anonKey) {
 export const initialAuthHash = new URLSearchParams(window.location.hash.slice(1));
 
 export const supabase = createClient(url, anonKey);
+
+/** Produção ou desenvolvimento, pelo projeto em VITE_SUPABASE_URL (ver lib/environment.ts). */
+export const environment = environmentOf(url);
+export const isProduction = environment === "production";
 
 /**
  * Desembrulha a resposta do Supabase: devolve os dados ou lança o erro.

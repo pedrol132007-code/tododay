@@ -99,7 +99,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
           <h2 className="text-sm font-semibold text-text-muted">Membros</h2>
           {(members ?? []).map((member) => {
             const isSelf = member.user_id === userId;
-            const deactivated = member.deactivated_at !== null;
+            const deactivated = Boolean(member.deactivated_at);
             return (
               <div
                 key={member.user_id}

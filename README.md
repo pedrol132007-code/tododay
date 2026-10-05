@@ -60,7 +60,7 @@ Num projeto Supabase novo, rode as migrations de `supabase/migrations/` em ordem
 - O **`master` é produção**: cada push nele publica o site na Vercel.
 - Ninguém faz push direto no `master`. Toda mudança entra por **pull request**, e o merge só acontece com o [CI](.github/workflows/ci.yml) passando (lint, testes e build).
 - O pull request ganha um preview da Vercel, apontado para o ambiente de desenvolvimento.
-- Mudança de banco é uma migration nova em `supabase/migrations/`, com o teste em `supabase/tests/`. Ela é aplicada no dev antes do merge e no prod antes do deploy. `npm run check:prod` confere se o prod está em dia.
+- Mudança de banco é uma migration nova em `supabase/migrations/`, com o teste em `supabase/tests/`. O CI aplica todas do zero num banco descartável e roda os testes SQL. No merge, o workflow **Deploy do banco** aplica no dev e no prod só o que falta e publica as Edge Functions; no fim, `npm run check:prod` confere o prod.
 - As dependências são atualizadas pelo Dependabot, toda semana.
 
 Os passos de deploy, primeiro admin, convites, backup e como reverter ficam em [LANCAMENTO.md](LANCAMENTO.md).

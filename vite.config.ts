@@ -20,6 +20,15 @@ function assertDesktopEnv() {
   if (missing.length > 0) throw new Error(`${file} sem valor para: ${missing.join(", ")}`);
 }
 
+// Os cabeçalhos de segurança do site (CSP, HSTS...) ficam só no vercel.json; o `vite preview` usa
+// os mesmos, para testar o build com eles (npm run test:e2e:csp).
+const vercelHeaders: Record<string, string> = Object.fromEntries(
+  (JSON.parse(fs.readFileSync("vercel.json", "utf8")).headers as { headers: { key: string; value: string }[] }[])
+    .flatMap((h) => h.headers)
+    .filter((h) => h.key !== "Strict-Transport-Security")
+    .map((h) => [h.key, h.value]),
+);
+
 export default defineConfig(({ mode }) => {
   if (mode === "desktop") assertDesktopEnv();
   return {
@@ -43,6 +52,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    preview: { headers: vercelHeaders },
     clearScreen: false,
     server: {
       port: 1420,

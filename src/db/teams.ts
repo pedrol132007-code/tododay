@@ -62,13 +62,6 @@ export async function listOpenInvites(teamId: number): Promise<TeamInvite[]> {
   );
 }
 
-export async function createInvite(
-  teamId: number,
-  invite: Pick<TeamInvite, "label" | "role" | "job_title">,
-): Promise<TeamInvite> {
-  return must(await supabase.from("team_invite").insert({ team_id: teamId, ...invite }).select("*").single());
-}
-
 export async function revokeInvite(id: number): Promise<void> {
   must(await supabase.from("team_invite").update({ revoked_at: new Date().toISOString() }).eq("id", id));
 }

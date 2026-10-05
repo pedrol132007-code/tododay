@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import {
-  useCreateInvite,
+  useInviteMember,
   useOpenInvites,
+  usePasswordLink,
+  usePendingMembers,
   useRemoveTeamMember,
   useRenameTeam,
   useRevokeInvite,
@@ -17,8 +19,8 @@ import type { MemberRole, MyTeam, TeamInvite } from "../../types";
 import { PageHeader } from "../ui/PageHeader";
 
 const roleOptions: { value: MemberRole; label: string; hint: string }[] = [
-  { value: "admin", label: "Admin", hint: "edita tudo e gerencia a equipe" },
-  { value: "member", label: "Membro", hint: "edita boards e cards" },
+  { value: "admin", label: "Admin", hint: "gerencia a equipe, boards e colunas" },
+  { value: "member", label: "Membro", hint: "trabalha nos cards" },
   { value: "viewer", label: "Leitor", hint: "só visualiza" },
 ];
 
@@ -42,6 +44,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
   const isAdmin = team.role === "admin";
   const { data: members } = useTeamMembers(team.id);
   const { data: invites } = useOpenInvites(team.id, isAdmin);
+  const { data: pending } = usePendingMembers(team.id, isAdmin);
   const renameTeam = useRenameTeam(team.id);
   const updateMember = useUpdateTeamMember(team.id);
   const removeMember = useRemoveTeamMember(team.id);
@@ -112,9 +115,13 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                     {member.profile.display_name}
                     {isSelf && <span className="text-text-muted"> (você)</span>}
                     {deactivated && <span className="text-text-muted"> · desativado</span>}
+                    {pending?.includes(member.user_id) && <span className="text-text-muted"> · convite pendente</span>}
                   </span>
                   <span className="text-xs text-text-muted">{member.profile.email}</span>
                 </div>
+                {isAdmin && !deactivated && pending?.includes(member.user_id) && (
+                  <PasswordLinkButton teamId={team.id} userId={member.user_id} />
+                )}
                 {isAdmin ? (
                   <input
                     key={member.job_title}
@@ -244,73 +251,109 @@ function CopyLinkButton({ invite }: { invite: TeamInvite }) {
   );
 }
 
+/** Para quem não achou o e-mail do convite: um link para definir a senha, para mandar por outro canal. */
+function PasswordLinkButton({ teamId, userId }: { teamId: number; userId: string }) {
+  const passwordLink = usePasswordLink(teamId);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy(link: string) {
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (passwordLink.data) {
+    return (
+      <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-primary bg-bg-surface px-3 py-2">
+        <code className="min-w-0 flex-1 truncate text-xs text-text-primary">{passwordLink.data}</code>
+        <button type="button" onClick={() => handleCopy(passwordLink.data)} className="rounded-lg px-3 py-1 text-sm text-primary hover:bg-bg-elevated">
+          {copied ? "Copiado!" : "Copiar link"}
+        </button>
+        <span className="w-full text-xs text-text-muted">Mande por Teams ou WhatsApp. Vale por pouco tempo e só uma vez.</span>
+      </div>
+    );
+  }
+  return (
+    <>
+      <button
+        type="button"
+        disabled={passwordLink.isPending}
+        onClick={() => passwordLink.mutate(userId)}
+        title="Para quando o e-mail do convite não chegou"
+        className="rounded-lg px-3 py-1 text-sm text-primary hover:bg-bg-surface disabled:opacity-50"
+      >
+        {passwordLink.isPending ? "Gerando..." : "Gerar link de acesso"}
+      </button>
+      {passwordLink.isError && <p className="w-full text-sm text-danger">{errorMessage(passwordLink.error)}</p>}
+    </>
+  );
+}
+
 function InviteForm({ teamId }: { teamId: number }) {
-  const createInvite = useCreateInvite(teamId);
-  const [label, setLabel] = useState("");
+  const inviteMember = useInviteMember(teamId);
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [role, setRole] = useState<MemberRole>("member");
   const [jobTitle, setJobTitle] = useState("");
-  const [created, setCreated] = useState<TeamInvite | null>(null);
+  const [done, setDone] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setCreated(null);
-    createInvite.mutate(
-      { label: label.trim(), role, job_title: jobTitle.trim() },
+    setDone(null);
+    const invited = email.trim();
+    inviteMember.mutate(
+      { email: invited, name: name.trim(), role, jobTitle: jobTitle.trim() },
       {
-        onSuccess: (invite) => {
-          setCreated(invite);
-          setLabel("");
+        onSuccess: (status) => {
+          setDone(
+            status === "invited"
+              ? `Convite enviado para ${invited}. Se não chegar (veja o lixo eletrônico), use "Gerar link de acesso" ao lado do nome.`
+              : `${invited} já tinha conta no Tododay e entrou na equipe.`,
+          );
+          setEmail("");
+          setName("");
           setJobTitle("");
         },
       },
     );
   }
 
+  const field = "rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary";
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-sm font-semibold text-text-muted">Convidar</h2>
-      <p className="text-sm text-text-muted">
-        Gere um link e mande para a pessoa (WhatsApp, e-mail...). Ele vale para uma pessoa só, por 7 dias.
-      </p>
+      <p className="text-sm text-text-muted">A pessoa recebe um e-mail com um link para definir a própria senha e entrar na equipe.</p>
       <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
         <input
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          placeholder="Para quem? (ex.: Carla)"
-          className="min-w-[12rem] flex-1 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-mail"
+          aria-label="E-mail"
+          className={`min-w-[14rem] flex-1 ${field}`}
         />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome" aria-label="Nome" className={`w-40 ${field}`} />
         <input
           value={jobTitle}
           onChange={(e) => setJobTitle(e.target.value)}
           placeholder="Cargo (opcional)"
-          className="w-40 rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
+          aria-label="Cargo"
+          className={`w-40 ${field}`}
         />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value as MemberRole)}
-          className="rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
-        >
+        <select value={role} onChange={(e) => setRole(e.target.value as MemberRole)} aria-label="Papel" className={field}>
           {roleOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label} — {option.hint}
             </option>
           ))}
         </select>
-        <button
-          type="submit"
-          disabled={createInvite.isPending}
-          className="btn-primary px-3 py-1.5 disabled:opacity-50"
-        >
-          {createInvite.isPending ? "Gerando..." : "Gerar link"}
+        <button type="submit" disabled={inviteMember.isPending} className="btn-primary px-3 py-1.5 disabled:opacity-50">
+          {inviteMember.isPending ? "Enviando..." : "Convidar"}
         </button>
       </form>
-      {createInvite.isError && <p className="text-sm text-danger">Não foi possível gerar o link. Tente de novo.</p>}
-      {created && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary bg-bg-elevated px-3 py-2">
-          <code className="min-w-0 flex-1 truncate text-sm text-text-primary">{inviteUrl(created.token)}</code>
-          <CopyLinkButton invite={created} />
-        </div>
-      )}
+      {inviteMember.isError && <p className="text-sm text-danger">{errorMessage(inviteMember.error)}</p>}
+      {done && <p className="text-sm text-text-primary">{done}</p>}
     </section>
   );
 }

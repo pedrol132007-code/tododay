@@ -71,6 +71,13 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: O banco já tem o registro das migrations?
+        run: |
+          n=$(psql "$SUPABASE_DB_URL" -tAc "select count(*) from supabase_migrations.schema_migrations" 2>/dev/null || echo 0)
+          if [ "$n" = "0" ]; then
+            echo "::error::Este banco ainda não tem o registro das migrations coladas à mão. Rode este workflow à mão com o campo 'registrar' (ver o topo do arquivo) antes do primeiro deploy."
+            exit 1
+          fi
       - name: Migrations que faltam
         run: |
           supabase migration list --db-url "$SUPABASE_DB_URL"
@@ -98,6 +105,13 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+      - name: O banco já tem o registro das migrations?
+        run: |
+          n=$(psql "$SUPABASE_DB_URL" -tAc "select count(*) from supabase_migrations.schema_migrations" 2>/dev/null || echo 0)
+          if [ "$n" = "0" ]; then
+            echo "::error::Este banco ainda não tem o registro das migrations coladas à mão. Rode este workflow à mão com o campo 'registrar' (ver o topo do arquivo) antes do primeiro deploy."
+            exit 1
+          fi
       - name: Migrations que faltam
         run: |
           supabase migration list --db-url "$SUPABASE_DB_URL"

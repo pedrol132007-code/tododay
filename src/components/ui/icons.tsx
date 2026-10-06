@@ -121,6 +121,12 @@ export const IconSignOut = (p: IconProps) => (
   </Icon>
 );
 
+export const IconMail = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zM3 6l9 7 9-7" />
+  </Icon>
+);
+
 export const IconFlag = (p: IconProps) => (
   <Icon {...p}>
     <path d="M5 21V4M5 4h11l-2 4 2 4H5" />

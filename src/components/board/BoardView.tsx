@@ -471,7 +471,7 @@ export function BoardView({
                 title="Nenhuma coluna ainda"
                 description={
                   isAdmin
-                    ? "Crie a primeira coluna ao lado, por exemplo “A fazer”, “Fazendo” e “Feito”."
+                    ? "Crie a primeira coluna ao lado, por exemplo “A fazer”, “Em andamento” e “Concluído”."
                     : "Quando o admin da equipe criar as colunas, elas aparecem aqui."
                 }
               />

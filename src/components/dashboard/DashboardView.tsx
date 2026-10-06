@@ -96,7 +96,7 @@ export function DashboardView({ teamName, data, onGenerate, onExit, onOpenBoard 
             description={
               onGenerate
                 ? "As métricas reais chegam com o status do card. Enquanto isso, veja como fica com dados de exemplo."
-                : "As métricas aparecem depois de algumas semanas de uso do board."
+                : "Aqui vão aparecer as entregas, o tempo das tarefas, os atrasos e a carga de cada pessoa, a partir do uso do board. Enquanto isso, use o board normalmente."
             }
             action={
               onGenerate && (

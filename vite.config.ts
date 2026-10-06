@@ -35,6 +35,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     define: {
       __APP_VERSION__: JSON.stringify(pkg.version),
+      // Commit publicado (a Vercel define no build); "local" fora dela. Liga o erro do Sentry à versão.
+      __APP_RELEASE__: JSON.stringify(process.env.VERCEL_GIT_COMMIT_SHA ?? "local"),
     },
     build: {
       rollupOptions: {

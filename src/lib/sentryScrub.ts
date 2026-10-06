@@ -2,13 +2,12 @@
 // pessoas (?responsavel=ana, ?pessoa=...) e a do Supabase tem ids e filtros: nenhuma URL sai com
 // ?... ou #.... Usuário só pelo id. Sem dependência do SDK, para testar como função pura.
 
-type Headers = Record<string, string>;
+// Só os campos que a limpeza lê; os tipos do SDK (ErrorEvent, Breadcrumb) já se encaixam.
 export type ScrubbableEvent = {
-  request?: { url?: string; query_string?: unknown; headers?: Headers; [k: string]: unknown };
-  user?: { id?: string | number; [k: string]: unknown };
-  [k: string]: unknown;
+  request?: { url?: string; query_string?: unknown; headers?: Record<string, string> };
+  user?: { id?: string | number };
 };
-export type ScrubbableBreadcrumb = { category?: string; data?: Record<string, unknown>; [k: string]: unknown };
+export type ScrubbableBreadcrumb = { data?: Record<string, unknown> };
 
 export function stripQuery(url: string): string {
   const cut = url.search(/[?#]/);

@@ -10,6 +10,7 @@ import { CommandPalette } from "./components/search/CommandPalette";
 import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
+import { setSentryUser } from "./sentry";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { AppMenu, type AppView } from "./components/ui/AppMenu";
 import { BrandMark } from "./components/ui/BrandMark";
@@ -50,6 +51,10 @@ function storeTeamId(teamId: number) {
 
 export default function App({ userId }: { userId: string }) {
   const { data: teams, isError, refetch } = useMyTeams(userId);
+  useEffect(() => {
+    setSentryUser(userId);
+    return () => setSentryUser(null);
+  }, [userId]);
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(readStoredTeamId);
   const [inviteToken, setInviteToken] = useState(getPendingInvite);
 

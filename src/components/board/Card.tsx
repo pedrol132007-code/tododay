@@ -3,11 +3,10 @@ import { CSS } from "@dnd-kit/utilities";
 import { motion } from "framer-motion";
 import type { Card as CardType, Label, ListStatus } from "../../types";
 import { cardRisk, localDay } from "../../lib/dashboardRules";
-import { useArchiveCard, useRenameCard, useRestoreCard } from "../../hooks/useCards";
+import { useArchiveCard, useRestoreCard } from "../../hooks/useCards";
 import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { useTeamMembers } from "../../hooks/useTeams";
-import { InlineEditableText } from "../ui/InlineEditableText";
 import { IconArchive } from "../ui/icons";
 import { useToast } from "../ui/Toast";
 import { CardFace } from "./CardFace";
@@ -23,7 +22,6 @@ interface CardProps {
 }
 
 export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress, attachments = 0, cover }: CardProps) {
-  const renameCard = useRenameCard(card.list_id);
   const archiveCard = useArchiveCard(card.list_id);
   // Precisa existir antes do arquivamento: o card some da tela, mas o "Desfazer" do aviso ainda
   // chama esta mutation (as invalidações dela rodam mesmo com o componente desmontado).
@@ -58,14 +56,8 @@ export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress
     >
       <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
         <CardFace
-          title={
-            <InlineEditableText
-              value={card.title}
-              onSave={(title) => renameCard.mutate({ id: card.id, title })}
-              className="flex-1"
-              readOnly={!canEdit}
-            />
-          }
+          // Clicar em qualquer lugar do card abre o painel; renomear fica lá.
+          title={<span className="flex-1 px-2 py-1">{card.title}</span>}
           actions={
             canEdit && (
               <button

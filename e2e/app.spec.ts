@@ -84,7 +84,9 @@ test("dashboard gera demonstração, troca período e pessoa, mostra tabela e sa
   await expect(page.getByText("Demonstração", { exact: true })).toBeVisible();
   await expect(page.getByText("Entregas por semana")).toBeVisible();
 
-  await page.getByRole("radio", { name: "26 sem." }).click();
+  // O período fica num seletor que abre a lista de atalhos.
+  await page.getByRole("button", { name: /Últim|Personalizado/ }).first().click();
+  await page.getByRole("radio", { name: "Últimos 6 meses" }).click();
   await page.getByRole("radio", { name: /Carla Dias/ }).click();
   await expect(page.getByText("Carga ao longo do tempo")).toBeVisible();
 
@@ -103,7 +105,7 @@ test("renomeia e exclui um board", async ({ page }) => {
   await page.getByPlaceholder("Nome do board...").fill(name);
   await page.getByPlaceholder("Nome do board...").press("Enter");
   // Board novo já nasce com as colunas padrão.
-  for (const column of ["A fazer", "Em andamento", "Feito"]) {
+  for (const column of ["A fazer", "Em andamento", "Concluído"]) {
     await expect(page.locator("div.bg-bg-column").filter({ hasText: column })).toBeVisible();
   }
   await page.getByPlaceholder("Nova coluna...").fill("Coluna do board");

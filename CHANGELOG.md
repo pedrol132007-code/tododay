@@ -13,7 +13,8 @@ Primeira versão para uso real por uma equipe pequena (piloto).
 - Busca e filtros no board: texto, responsável (inclusive "Eu"), prioridade, etiqueta, prazo, paradas, tipo de coluna e ordenação. Tudo fica na URL. O atalho `/` leva à busca do board.
 - Busca global (`Ctrl+K`) em todos os boards da equipe.
 - Arquivamento, com Desfazer, restauração e exclusão definitiva. A coluna Concluído arquiva de uma vez o que está lá há mais de 7 dias.
-- Board novo já nasce com as colunas A fazer, Em andamento e Feito.
+- Board novo já nasce com as colunas A fazer, Em andamento e Concluído.
+- Clicar em qualquer lugar do card abre o card; o título se renomeia no painel.
 - Atualização em tempo real: as mudanças dos colegas aparecem sem recarregar.
 - Histórico de atividade por card e por equipe.
 

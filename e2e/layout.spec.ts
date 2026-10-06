@@ -549,3 +549,9 @@ test("boas-vindas do membro: dica de perfil, e Ver minhas tarefas abre a tela", 
   await dialog.getByRole("button", { name: "Ver minhas tarefas" }).click();
   await expect(page.getByRole("heading", { name: "Minhas tarefas" })).toBeVisible();
 });
+
+test("clicar no título do card abre o card (renomear fica no painel)", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByText("Card 3", { exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Card 3" })).toBeVisible();
+});

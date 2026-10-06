@@ -11,6 +11,8 @@ import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
 import { MyTasksView } from "./components/my-tasks/MyTasksView";
+import { WelcomeDialog, markWelcomed, shouldWelcome } from "./components/ui/WelcomeDialog";
+import { useProfile } from "./hooks/useAuth";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { AppMenu, type AppView } from "./components/ui/AppMenu";
 import { BrandMark } from "./components/ui/BrandMark";
@@ -105,6 +107,8 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const [activeBoardId, setActiveBoardId] = useState<number | null>(null);
   const [view, setView] = useState<AppView>("board");
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const { data: profile } = useProfile(userId);
+  const [welcome, setWelcome] = useState(shouldWelcome);
   const [pendingCardId, setPendingCardId] = useState<number | null>(null);
   const [pendingListId, setPendingListId] = useState<number | null>(null);
   // Demonstração em memória: enquanto existe, o Board e o Dashboard mostram as mesmas tarefas fictícias.
@@ -159,6 +163,12 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   function navigate(next: AppView) {
     dropBoardLinkOrigin();
     setView(next);
+  }
+
+  function closeWelcome(next?: AppView) {
+    markWelcomed();
+    setWelcome(false);
+    if (next) navigate(next);
   }
 
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
@@ -237,6 +247,14 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
             description="Crie o primeiro board em “Novo board”, no topo da tela."
           />
         </div>
+      )}
+      {welcome && profile && (
+        <WelcomeDialog
+          name={profile.display_name}
+          isAdmin={team.role === "admin"}
+          onClose={() => closeWelcome()}
+          onOpenMyTasks={() => closeWelcome("my-tasks")}
+        />
       )}
       <AnimatePresence>
         {paletteOpen && <CommandPalette teamId={team.id} onNavigate={handleNavigate} onClose={() => setPaletteOpen(false)} />}

@@ -515,3 +515,37 @@ test("Minhas tarefas: cards meus por prazo, sem os concluídos e arquivados, e o
   await page.getByRole("button", { name: /Card 5/ }).click();
   await expect(page.getByRole("dialog", { name: "Card 5" })).toBeVisible();
 });
+
+test("boas-vindas: aparecem uma vez, com a dica de admin, e não voltam depois de fechar", async ({ page }) => {
+  await mockSession(page);
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem("primeira")) {
+      sessionStorage.setItem("primeira", "1");
+      localStorage.removeItem("tododay.welcomed");
+    }
+  });
+  await page.route("**/rest/v1/**", (route) => fulfillRest(route));
+  await page.goto("/");
+  const dialog = page.getByRole("dialog", { name: /Bem-vindo ao Tododay, E2E/ });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(/Gerar link de acesso/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Começar" }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Card 30")).toBeAttached();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("boas-vindas do membro: dica de perfil, e Ver minhas tarefas abre a tela", async ({ page }) => {
+  await mockSession(page);
+  await page.addInitScript(() => localStorage.removeItem("tododay.welcomed"));
+  await page.route("**/rest/v1/**", (route) =>
+    fulfillRest(route, { team_member: [{ role: "member", team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }] }),
+  );
+  await page.goto("/");
+  const dialog = page.getByRole("dialog", { name: /Bem-vindo/ });
+  await expect(dialog.getByText(/troque a senha/)).toBeVisible();
+  await expect(dialog.getByText(/Gerar link de acesso/)).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Ver minhas tarefas" }).click();
+  await expect(page.getByRole("heading", { name: "Minhas tarefas" })).toBeVisible();
+});

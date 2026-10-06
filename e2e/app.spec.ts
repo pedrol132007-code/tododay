@@ -4,6 +4,7 @@ import { BOARD_NAME, readEnv } from "./seed";
 const env = readEnv();
 
 async function signIn(page: Page) {
+  await page.addInitScript(() => localStorage.setItem("tododay.welcomed", "1"));
   await page.goto("/");
   await page.getByLabel("E-mail").fill(env.E2E_EMAIL);
   await page.getByLabel("Senha").fill(env.E2E_PASSWORD);

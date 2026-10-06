@@ -27,5 +27,5 @@ Revisão feita para o piloto (v1.0.0-beta). Para conferir o banco a qualquer mom
 5. **App desktop (Tauri) sem CSP** (`csp: null` em `src-tauri/tauri.conf.json`). Ele carrega só o próprio frontend, empacotado.
 6. **E-mail pelo Gmail.** Limite de ~500 por dia, e pode cair no lixo eletrônico (a Benner faz isso). O "Gerar link de acesso" cobre o convite.
 7. **Repositório público.** Nenhum segredo nele. A segurança não depende do código ser secreto.
-8. **Supabase Free.** Pausa depois de 7 dias sem uso e não tem backup nativo. Ver o backup no LANCAMENTO.md.
+8. **Supabase Free.** Pausa depois de 7 dias sem uso e não tem backup nativo. Backup diário criptografado pelo GitHub Actions, com teste de restauração: `docs/BACKUP.md`.
 9. **Quem é desativado** continua com a conta: consegue entrar, mas só vê "Você ainda não está em nenhuma equipe".

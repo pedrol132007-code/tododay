@@ -47,6 +47,8 @@ Fonte autoritativa: `supabase/migrations/`. Resumo:
 - Dois projetos Supabase: `tododay-dev` (usado no `.env` local) e `tododay-prod` (variáveis na Vercel).
 - `.env` precisa de `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (ver `.env.example`). Sem elas o app lança erro ao abrir.
 - Antes de publicar, `npm run check:prod`: lê o Supabase que o site publicado usa (do JavaScript dele, só a chave pública) e confere se tem as tabelas, colunas e buckets das migrations e as Edge Functions de `supabase/functions/`. Já aconteceu de uma migration e uma função ficarem só no dev.
+- Backup: `.github/workflows/backup.yml` salva todo dia os dados do prod (criptografados com `age`, artifact de 90 dias) e testa a restauração num Postgres descartável. Recuperar: `docs/BACKUP.md`.
+- Erros: `src/sentry.ts` manda erros ao Sentry só com `VITE_SENTRY_DSN` (Vercel e `.env.desktop`), sem dado pessoal; toda URL passa por `src/lib/sentryScrub.ts`. Source maps sobem no build da Vercel com `SENTRY_AUTH_TOKEN` e saem do `dist`.
 - Web: `vercel.json` (SPA, tudo reescreve para `index.html`). Templates de e-mail em PT em `supabase/templates/`, colados no painel do Supabase.
 
 ## Como rodar em dev

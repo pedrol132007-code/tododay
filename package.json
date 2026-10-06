@@ -17,6 +17,7 @@
     "lint": "eslint .",
     "gen:setup": "node scripts/gen-setup.mjs",
     "admin:primeiro": "node --use-system-ca scripts/primeiro-admin.mjs",
+    "admin:link": "node --use-system-ca scripts/link-de-acesso.mjs",
     "auth:configurar": "node --use-system-ca scripts/configurar-auth.mjs",
     "test:e2e:csp": "playwright test -c playwright.csp.config.ts"
   },

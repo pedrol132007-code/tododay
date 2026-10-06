@@ -45,7 +45,9 @@ baixo; cada passo diz em qual projeto ele mexe. **Dev** = `tododay-dev` (`aakske
    arquivo do token e revogue o token no painel.
 4. **Primeiro admin (prod).** `npm run admin:primeiro`: pede a URL e a service_role na hora (não
    grava nada), cria a equipe e convida o admin por e-mail. Se o e-mail não chegar, ele mostra um
-   link de acesso.
+   link de acesso; se o link chegar cortado no navegador ("Verify requires a verification type"),
+   gere outro com `npm run admin:link`, que copia o link inteiro para a área de transferência. Não
+   rode o `admin:primeiro` de novo: ele criaria outra equipe.
 5. **Conferência.** `npm run check:prod` verde; entrar no site com o admin, criar o primeiro board
    (nasce com A fazer, Em andamento e Feito) e ver o selo Beta.
 6. **Release.** `gh release create v1.0.0-beta --title "v1.0.0-beta" --notes-file <trecho do CHANGELOG>`.

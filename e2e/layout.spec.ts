@@ -48,6 +48,10 @@ async function fulfillRest(route: Route, overrides: Overrides = {}) {
       json: [{ team_id: 1, user_id: USER_ID, role: "admin", job_title: "", joined_at: NOW, profile: { email: env.E2E_EMAIL, display_name: "E2E" } }],
     });
   }
+  // Minhas tarefas: a consulta com os nomes de board e coluna.
+  if (table === "card" && url.searchParams.get("select")?.includes("board!inner")) {
+    return route.fulfill({ json: overrides.myTasks ?? [] });
+  }
   if (request.method() === "HEAD") {
     return route.fulfill({ status: 200, headers: { "content-range": `0-0/${ofList ? 0 : cards.length}` }, body: "" });
   }
@@ -463,4 +467,85 @@ test("convite por e-mail: admin convida, vê o convite pendente e gera um link d
   await page.getByRole("button", { name: "Gerar link de acesso" }).click();
   await expect(page.getByText(/auth\/v1\/verify\?token=abc/)).toBeVisible();
   expect(calls.find((c) => c.action === "link")).toMatchObject({ teamId: 1, userId: PENDING_ID });
+});
+
+test("perfil: salvar o nome manda só o nome aparado, e nome vazio não salva", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("menuitem", { name: "Configurações" }).click();
+  const name = page.getByLabel("Nome");
+  await expect(name).toHaveValue("E2E");
+  await name.fill("  Ana Souza  ");
+  const saved = page.waitForRequest((r) => r.method() === "PATCH" && r.url().includes("/rest/v1/profile"));
+  await page.getByRole("button", { name: "Salvar" }).click();
+  expect((await saved).postDataJSON()).toEqual({ display_name: "Ana Souza" });
+  await expect(page.getByText("Nome salvo")).toBeVisible();
+  await name.fill("   ");
+  await expect(page.getByRole("button", { name: "Salvar" })).toBeDisabled();
+});
+
+const dayFromToday = (offset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+test("Minhas tarefas: cards meus por prazo, sem os concluídos e arquivados, e o clique abre o card", async ({ page }) => {
+  const task = (id: number, title: string, due_date: string | null) => ({
+    id,
+    title,
+    due_date,
+    priority: null,
+    board_id: 1,
+    board: { name: "Board E2E" },
+    list: { name: "Coluna longa" },
+  });
+  await openLongBoard(page, "/", { myTasks: [task(3, "Card 3", dayFromToday(-1)), task(5, "Card 5", dayFromToday(0)), task(7, "Card 7", null)] });
+  await page.getByRole("button", { name: "Menu" }).click();
+  const request = page.waitForRequest((r) => r.url().includes("/rest/v1/card") && decodeURIComponent(r.url()).includes("board!inner"));
+  await page.getByRole("menuitem", { name: "Minhas tarefas" }).click();
+  const url = new URL((await request).url());
+  expect(url.searchParams.get("assignee_id")).toBe(`eq.${USER_ID}`);
+  expect(url.searchParams.get("archived_at")).toBe("is.null");
+  expect(url.searchParams.get("list.status")).toBe("neq.done");
+  expect(url.searchParams.get("board.team_id")).toBe("eq.1");
+  await expect(page.getByRole("heading", { name: /Atrasadas/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Hoje/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Sem prazo/ })).toBeVisible();
+  await page.getByRole("button", { name: /Card 5/ }).click();
+  await expect(page.getByRole("dialog", { name: "Card 5" })).toBeVisible();
+});
+
+test("boas-vindas: aparecem uma vez, com a dica de admin, e não voltam depois de fechar", async ({ page }) => {
+  await mockSession(page);
+  await page.addInitScript(() => {
+    if (!sessionStorage.getItem("primeira")) {
+      sessionStorage.setItem("primeira", "1");
+      localStorage.removeItem("tododay.welcomed");
+    }
+  });
+  await page.route("**/rest/v1/**", (route) => fulfillRest(route));
+  await page.goto("/");
+  const dialog = page.getByRole("dialog", { name: /Bem-vindo ao Tododay, E2E/ });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByText(/Gerar link de acesso/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Começar" }).click();
+  await expect(dialog).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("Card 30")).toBeAttached();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("boas-vindas do membro: dica de perfil, e Ver minhas tarefas abre a tela", async ({ page }) => {
+  await mockSession(page);
+  await page.addInitScript(() => localStorage.removeItem("tododay.welcomed"));
+  await page.route("**/rest/v1/**", (route) =>
+    fulfillRest(route, { team_member: [{ role: "member", team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }] }),
+  );
+  await page.goto("/");
+  const dialog = page.getByRole("dialog", { name: /Bem-vindo/ });
+  await expect(dialog.getByText(/troque a senha/)).toBeVisible();
+  await expect(dialog.getByText(/Gerar link de acesso/)).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Ver minhas tarefas" }).click();
+  await expect(page.getByRole("heading", { name: "Minhas tarefas" })).toBeVisible();
 });

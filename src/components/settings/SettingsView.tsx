@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { usePreferences } from "../../hooks/usePreferences";
 import type { Density, ThemePref } from "../../lib/preferences";
 import { PageHeader } from "../ui/PageHeader";
+import { ProfileSection } from "./ProfileSection";
 
 const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
   { value: "system", label: "Sistema" },
@@ -45,7 +46,7 @@ function Segmented<T extends string>({
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-border bg-bg-surface p-5">
       <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
@@ -54,7 +55,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+export function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm text-text-muted">{label}</span>
@@ -63,7 +64,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-export function SettingsView({ onBack }: { onBack: () => void }) {
+export function SettingsView({ userId, onBack }: { userId: string; onBack: () => void }) {
   const { themePref, theme, density, setThemePref, setDensity } = usePreferences();
   const compact = density === "compact";
 
@@ -72,6 +73,8 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
       <PageHeader title="Configurações" onBack={onBack} />
 
       <div className="flex max-w-2xl flex-col gap-6">
+        <ProfileSection userId={userId} />
+
         <Section title="Aparência">
           <Row label="Tema">
             <div className="flex flex-wrap items-center gap-3">
@@ -98,7 +101,7 @@ export function SettingsView({ onBack }: { onBack: () => void }) {
 
         <Section title="Sobre">
           <p className="text-sm text-text-primary">Tododay v{__APP_VERSION__}</p>
-          <p className="text-sm text-text-muted">Tema e densidade ficam salvos só neste navegador ou computador.</p>
+          <p className="text-sm text-text-muted">Tema e densidade ficam salvos só neste navegador ou computador; o nome vale em todo lugar.</p>
         </Section>
       </div>
     </div>

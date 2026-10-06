@@ -18,6 +18,7 @@ const messages: Record<string, string> = {
   over_request_rate_limit: "Muitas tentativas. Espere alguns minutos e tente de novo.",
   otp_expired: "O link expirou ou já foi usado. Peça um novo.",
   validation_failed: "Confira o e-mail digitado.",
+  reauthentication_needed: "Por segurança, saia e entre de novo para trocar a senha.",
 };
 
 function toMessage(error: AuthError): string {
@@ -83,4 +84,10 @@ export async function getMyProfile(userId: string): Promise<Profile> {
   const { data, error } = await supabase.from("profile").select("*").eq("id", userId).single();
   if (error) throw error;
   return data;
+}
+
+/** A RLS só deixa cada um mudar o próprio nome (0001_profile.sql). */
+export async function updateDisplayName(userId: string, name: string): Promise<void> {
+  const { error } = await supabase.from("profile").update({ display_name: name.trim() }).eq("id", userId);
+  if (error) throw error;
 }

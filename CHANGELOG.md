@@ -43,6 +43,9 @@ Primeira versão para uso real por uma equipe pequena (piloto).
 - Identidade visual da Benner, com tema claro, escuro ou do sistema e densidade normal ou compacta.
 - Versão web (Vercel) e app desktop para Windows (Tauri).
 - Selo **Beta** e **Enviar feedback** no menu, que abre um e-mail para o time do app.
+- **Minhas tarefas**: no menu da pessoa, os cards atribuídos a ela em todos os boards, por prazo (atrasadas, hoje, esta semana, depois, sem prazo).
+- **Perfil** em Configurações: editar o próprio nome e trocar a senha.
+- Boas-vindas no primeiro acesso, com onde ficam cards, tarefas, busca e perfil (ou convites, para o admin).
 
 ### Segurança e operação
 - Cabeçalhos de segurança (CSP, HSTS) no site e nada liberado para quem não entrou.

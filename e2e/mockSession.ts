@@ -23,4 +23,6 @@ export async function mockSession(page: Page) {
     user: { id: USER_ID, email: env.E2E_EMAIL, aud: "authenticated", role: "authenticated" },
   };
   await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [`sb-${ref}-auth-token`, JSON.stringify(session)]);
+  // Os testes começam como quem já viu as boas-vindas; os testes delas apagam a chave.
+  await page.addInitScript(() => localStorage.setItem("tododay.welcomed", "1"));
 }

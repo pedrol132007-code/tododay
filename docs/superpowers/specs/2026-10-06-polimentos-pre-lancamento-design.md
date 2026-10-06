@@ -74,7 +74,7 @@ Nenhuma migration: a RLS de `profile` já deixa cada um atualizar o próprio `di
   4. Membro/viewer: **Perfil** — confira seu nome e troque a senha em *Configurações*. Admin:
      **Equipe** — convide pelo menu *Equipe*; se o e-mail não chegar, *Gerar link de acesso*.
 - Botões: "Ver minhas tarefas" (secundário: fecha e abre a tela) e **"Começar"** (principal).
-- Não aparece na demonstração do dev? Aparece igual: é por pessoa, não por board.
+- Com a demonstração aberta (só no dev) aparece igual: é por pessoa, não por board.
 
 ## Testes
 

@@ -14,7 +14,7 @@ export function BrandMark({ light = false }: { light?: boolean }) {
       <span className={`text-base font-semibold tracking-tight ${light ? "text-white" : "text-text-primary"}`}>
         Tododay
       </span>
-      {!isProduction && <DevBadge />}
+      {isProduction ? <BetaBadge /> : <DevBadge />}
     </span>
   );
 }
@@ -27,6 +27,18 @@ function DevBadge() {
       className="rounded bg-highlight px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wider text-black"
     >
       Dev
+    </span>
+  );
+}
+
+/** Em produção, durante o piloto: avisa que é versão de teste e onde contar problemas. */
+function BetaBadge() {
+  return (
+    <span
+      title="Versão de teste. Achou um problema? Use Enviar feedback no menu."
+      className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase leading-none tracking-wider text-on-accent"
+    >
+      Beta
     </span>
   );
 }

@@ -404,6 +404,16 @@ test("fora de produção: selo Dev ao lado do nome e (dev) no título da aba", a
   await openLongBoard(page);
   await expect(page.getByTitle(/Ambiente de desenvolvimento/)).toHaveText("Dev");
   await expect(page).toHaveTitle("Tododay (dev)");
+  await expect(page.getByText("Beta", { exact: true })).toHaveCount(0);
+});
+
+test("menu: Enviar feedback abre um e-mail para o app com a versão e a plataforma", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Menu" }).click();
+  const link = page.getByRole("menuitem", { name: "Enviar feedback" });
+  const href = (await link.getAttribute("href")) ?? "";
+  expect(href.startsWith("mailto:todoapp70@gmail.com?")).toBe(true);
+  expect(new URLSearchParams(href.split("?")[1]).get("body")).toMatch(/Tododay \d+\.\d+\.\d+ \(web\)$/);
 });
 
 test("membro usa o board, mas não vê os controles da estrutura (colunas e boards são do admin)", async ({ page }) => {

@@ -101,6 +101,10 @@ test("renomeia e exclui um board", async ({ page }) => {
   await page.getByRole("button", { name: "Novo board" }).click();
   await page.getByPlaceholder("Nome do board...").fill(name);
   await page.getByPlaceholder("Nome do board...").press("Enter");
+  // Board novo já nasce com as colunas padrão.
+  for (const column of ["A fazer", "Em andamento", "Feito"]) {
+    await expect(page.locator("div.bg-bg-column").filter({ hasText: column })).toBeVisible();
+  }
   await page.getByPlaceholder("Nova coluna...").fill("Coluna do board");
   await page.getByPlaceholder("Nova coluna...").press("Enter");
   await expect(page.locator("div.bg-bg-column").filter({ hasText: "Coluna do board" })).toBeVisible();
@@ -115,7 +119,7 @@ test("renomeia e exclui um board", async ({ page }) => {
   await page.getByRole("button", { name: `Opções do board ${renamed}` }).click();
   await page.getByRole("button", { name: "Excluir board" }).click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText("1 coluna e 0 cards")).toBeVisible();
+  await expect(dialog.getByText("4 colunas e 0 cards")).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Excluir board" })).toBeDisabled();
   await dialog.getByRole("textbox").fill(renamed);
   await dialog.getByRole("button", { name: "Excluir board" }).click();

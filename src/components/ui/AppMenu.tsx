@@ -3,7 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { signOut } from "../../db/auth";
 import { useProfile } from "../../hooks/useAuth";
 import { Avatar } from "./Avatar";
-import { IconCheck, IconChevronDown, IconSettings, IconSignOut, IconUsers } from "./icons";
+import { feedbackMailto } from "../../lib/feedback";
+import { IconCheck, IconChevronDown, IconMail, IconSettings, IconSignOut, IconUsers } from "./icons";
 
 export type AppView = "board" | "archive" | "team" | "settings" | "dashboard";
 
@@ -73,6 +74,15 @@ export function AppMenu({ userId, view, onNavigate }: AppMenuProps) {
           <div className="flex flex-col py-1">
             <Item view={view} onGo={go} target="team" icon={<IconUsers size={16} />}>Equipe</Item>
             <Item view={view} onGo={go} target="settings" icon={<IconSettings size={16} />}>Configurações</Item>
+            <a
+              role="menuitem"
+              href={feedbackMailto(__APP_VERSION__, "__TAURI_INTERNALS__" in window ? "desktop" : "web")}
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
+            >
+              <IconMail size={16} />
+              Enviar feedback
+            </a>
           </div>
           <div className="border-t border-border pt-1">
             <button

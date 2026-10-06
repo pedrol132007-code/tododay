@@ -193,7 +193,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
           </Suspense>
         </DashboardErrorBoundary>
       ) : view === "settings" ? (
-        <SettingsView onBack={() => setView("board")} />
+        <SettingsView userId={userId} onBack={() => setView("board")} />
       ) : view === "team" ? (
         <TeamView userId={userId} team={team} onBack={() => setView("board")} />
       ) : demo && newDemo && view === "board" ? (

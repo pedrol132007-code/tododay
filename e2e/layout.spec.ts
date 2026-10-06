@@ -464,3 +464,18 @@ test("convite por e-mail: admin convida, vê o convite pendente e gera um link d
   await expect(page.getByText(/auth\/v1\/verify\?token=abc/)).toBeVisible();
   expect(calls.find((c) => c.action === "link")).toMatchObject({ teamId: 1, userId: PENDING_ID });
 });
+
+test("perfil: salvar o nome manda só o nome aparado, e nome vazio não salva", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Menu" }).click();
+  await page.getByRole("menuitem", { name: "Configurações" }).click();
+  const name = page.getByLabel("Nome");
+  await expect(name).toHaveValue("E2E");
+  await name.fill("  Ana Souza  ");
+  const saved = page.waitForRequest((r) => r.method() === "PATCH" && r.url().includes("/rest/v1/profile"));
+  await page.getByRole("button", { name: "Salvar" }).click();
+  expect((await saved).postDataJSON()).toEqual({ display_name: "Ana Souza" });
+  await expect(page.getByText("Nome salvo")).toBeVisible();
+  await name.fill("   ");
+  await expect(page.getByRole("button", { name: "Salvar" })).toBeDisabled();
+});

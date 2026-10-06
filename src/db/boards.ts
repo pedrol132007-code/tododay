@@ -1,5 +1,6 @@
 import { must, supabase } from "./supabase";
 import { purgeAttachmentTrash } from "./attachments";
+import { defaultListRows } from "../lib/defaultLists";
 import type { Board } from "../types";
 
 export async function listBoards(teamId: number): Promise<Board[]> {
@@ -12,6 +13,8 @@ export async function createBoard(teamId: number, name: string): Promise<number>
   );
   const position = (last[0]?.position ?? 0) + 1;
   const row = must(await supabase.from("board").insert({ team_id: teamId, name, position }).select("id").single());
+  // Se isto falhar, o board fica sem colunas e o admin cria na mão; o erro aparece no toast.
+  must(await supabase.from("list").insert(defaultListRows(row.id)));
   return row.id;
 }
 

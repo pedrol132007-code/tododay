@@ -10,6 +10,8 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-06-backup-e-erros-design.md`
 
+> **Atualização (2026-10-06):** as Tasks 5–8 (Sentry) foram feitas e revertidas: o Sentry é bloqueado na rede da Benner e o usuário tirou a parte de erros do escopo. Valem as Tasks 1–4 e 9 (sem os passos do Sentry).
+
 ## Global Constraints
 
 - Tudo grátis: GitHub Actions em repositório público, Supabase Free, Sentry Developer.

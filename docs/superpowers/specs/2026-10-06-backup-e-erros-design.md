@@ -1,6 +1,11 @@
 # Backup e erros — design (fase 5 do piloto)
 
-Data: 2026-10-06 · Aprovado na conversa, aguardando revisão desta spec.
+Data: 2026-10-06 · Aprovada.
+
+**Atualização (2026-10-06): a parte de erros (Sentry, seção 4) saiu do escopo.** O Sentry é
+bloqueado pela rede da Benner (site e ingestão), então os erros de quem usa o app no trabalho não
+chegariam sem um túnel. Fica só o backup. O código do Sentry foi implementado e revertido na mesma
+branch.
 
 ## Objetivo
 

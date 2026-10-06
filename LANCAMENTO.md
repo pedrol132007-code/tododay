@@ -49,7 +49,7 @@ baixo; cada passo diz em qual projeto ele mexe. **Dev** = `tododay-dev` (`aakske
    gere outro com `npm run admin:link`, que copia o link inteiro para a área de transferência. Não
    rode o `admin:primeiro` de novo: ele criaria outra equipe.
 5. **Conferência.** `npm run check:prod` verde; entrar no site com o admin, criar o primeiro board
-   (nasce com A fazer, Em andamento e Feito) e ver o selo Beta.
+   (nasce com A fazer, Em andamento e Concluído) e ver o selo Beta.
 6. **Release.** `gh release create v1.0.0-beta --title "v1.0.0-beta" --notes-file <trecho do CHANGELOG>`.
 
 ## Convidar a equipe

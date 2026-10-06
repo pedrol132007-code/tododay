@@ -48,6 +48,10 @@ async function fulfillRest(route: Route, overrides: Overrides = {}) {
       json: [{ team_id: 1, user_id: USER_ID, role: "admin", job_title: "", joined_at: NOW, profile: { email: env.E2E_EMAIL, display_name: "E2E" } }],
     });
   }
+  // Minhas tarefas: a consulta com os nomes de board e coluna.
+  if (table === "card" && url.searchParams.get("select")?.includes("board!inner")) {
+    return route.fulfill({ json: overrides.myTasks ?? [] });
+  }
   if (request.method() === "HEAD") {
     return route.fulfill({ status: 200, headers: { "content-range": `0-0/${ofList ? 0 : cards.length}` }, body: "" });
   }
@@ -478,4 +482,36 @@ test("perfil: salvar o nome manda só o nome aparado, e nome vazio não salva", 
   await expect(page.getByText("Nome salvo")).toBeVisible();
   await name.fill("   ");
   await expect(page.getByRole("button", { name: "Salvar" })).toBeDisabled();
+});
+
+const dayFromToday = (offset: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+test("Minhas tarefas: cards meus por prazo, sem os concluídos e arquivados, e o clique abre o card", async ({ page }) => {
+  const task = (id: number, title: string, due_date: string | null) => ({
+    id,
+    title,
+    due_date,
+    priority: null,
+    board_id: 1,
+    board: { name: "Board E2E" },
+    list: { name: "Coluna longa" },
+  });
+  await openLongBoard(page, "/", { myTasks: [task(3, "Card 3", dayFromToday(-1)), task(5, "Card 5", dayFromToday(0)), task(7, "Card 7", null)] });
+  await page.getByRole("button", { name: "Menu" }).click();
+  const request = page.waitForRequest((r) => r.url().includes("/rest/v1/card") && decodeURIComponent(r.url()).includes("board!inner"));
+  await page.getByRole("menuitem", { name: "Minhas tarefas" }).click();
+  const url = new URL((await request).url());
+  expect(url.searchParams.get("assignee_id")).toBe(`eq.${USER_ID}`);
+  expect(url.searchParams.get("archived_at")).toBe("is.null");
+  expect(url.searchParams.get("list.status")).toBe("neq.done");
+  expect(url.searchParams.get("board.team_id")).toBe("eq.1");
+  await expect(page.getByRole("heading", { name: /Atrasadas/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Hoje/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Sem prazo/ })).toBeVisible();
+  await page.getByRole("button", { name: /Card 5/ }).click();
+  await expect(page.getByRole("dialog", { name: "Card 5" })).toBeVisible();
 });

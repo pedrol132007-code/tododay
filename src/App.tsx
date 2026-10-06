@@ -10,6 +10,7 @@ import { CommandPalette } from "./components/search/CommandPalette";
 import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
+import { MyTasksView } from "./components/my-tasks/MyTasksView";
 import { InviteScreen } from "./components/team/InviteScreen";
 import { AppMenu, type AppView } from "./components/ui/AppMenu";
 import { BrandMark } from "./components/ui/BrandMark";
@@ -192,6 +193,13 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
             />
           </Suspense>
         </DashboardErrorBoundary>
+      ) : view === "my-tasks" ? (
+        <MyTasksView
+          teamId={team.id}
+          userId={userId}
+          onBack={() => setView("board")}
+          onOpenCard={(task) => handleNavigate({ type: "card", id: task.id, title: task.title, board_id: task.board_id, board_name: task.board.name })}
+        />
       ) : view === "settings" ? (
         <SettingsView userId={userId} onBack={() => setView("board")} />
       ) : view === "team" ? (

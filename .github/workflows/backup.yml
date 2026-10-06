@@ -1,0 +1,112 @@
+# Backup diário dos DADOS do prod (schemas public e auth), criptografado com age, guardado como
+# artifact por 90 dias; logo depois, o job "restaurar" prova que ele carrega num banco limpo.
+# A estrutura (tabelas, RLS, funções) vem das migrations. Recuperar de verdade: docs/BACKUP.md.
+#
+# Secrets do ambiente "prod": SUPABASE_DB_URL (Session pooler) e BACKUP_AGE_KEY (chave privada).
+# A chave pública abaixo só tranca; a privada fica com o dono do projeto e no secret.
+# O log do Actions é público: nenhum passo imprime dados, só contagens por tabela.
+name: Backup do banco
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # 03:00 de Brasília
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-banco
+  cancel-in-progress: false
+
+env:
+  AGE_RECIPIENT: age1d0s62ext30jhvyznyz0yuym2y5mfq0jqw3zvcuher2s00m8d69mqvt05kl
+
+jobs:
+  backup:
+    name: Backup (tododay-prod)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: prod
+    outputs:
+      nome: ${{ steps.nome.outputs.nome }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Instala o age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+      - id: nome
+        run: echo "nome=tododay-prod-$(date -u +%F)" >> "$GITHUB_OUTPUT"
+      # auth.schema_migrations é das versões do próprio Auth: o banco novo já tem as dele.
+      - name: Dump dos dados
+        run: supabase db dump --db-url "$SUPABASE_DB_URL" --data-only --schema public,auth -x auth.schema_migrations -f dados.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      - name: Manifesto (contagem por tabela)
+        run: |
+          node scripts/backup-dados.mjs contar dados.sql > manifesto.txt
+          cat manifesto.txt
+          grep -qP '\t[1-9]' manifesto.txt || { echo "::error::Backup sem dados."; exit 1; }
+      - name: Criptografa
+        run: |
+          tar -cf - dados.sql manifesto.txt | age -r "$AGE_RECIPIENT" -o "${{ steps.nome.outputs.nome }}.tar.age"
+          rm dados.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.nome.outputs.nome }}
+          path: ${{ steps.nome.outputs.nome }}.tar.age
+          retention-days: 90
+          if-no-files-found: error
+
+  restaurar:
+    name: Teste de restauração
+    needs: backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Instala o age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.backup.outputs.nome }}
+      - name: Descriptografa
+        run: |
+          printf '%s\n' "$BACKUP_AGE_KEY" > "$RUNNER_TEMP/chave.txt"
+          age -d -i "$RUNNER_TEMP/chave.txt" "${{ needs.backup.outputs.nome }}.tar.age" | tar -xf -
+          rm "$RUNNER_TEMP/chave.txt"
+        env:
+          BACKUP_AGE_KEY: ${{ secrets.BACKUP_AGE_KEY }}
+      # Postgres descartável, igual ao do job Banco do CI, com todas as migrations do repositório.
+      - name: Sobe o Postgres local
+        run: supabase db start
+      - name: Migrations do zero
+        run: node scripts/test-db.mjs
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+      # psql de dentro do contêiner (aceita INSERT e COPY), numa transação só e com os triggers
+      # desligados (session_replication_role = replica): sem isso, carregar os cards geraria de novo
+      # atividade e histórico de status. VERBOSITY=terse: um erro não ecoa valores no log público.
+      - name: Carrega os dados
+        run: |
+          docker exec -i supabase_db_tododay psql -U supabase_admin -d postgres -q -1 \
+            -v ON_ERROR_STOP=1 -v VERBOSITY=terse \
+            -c "set session_replication_role = replica" -f - < dados.sql
+      - name: Confere com o manifesto
+        run: node scripts/backup-restaurar.mjs manifesto.txt
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres

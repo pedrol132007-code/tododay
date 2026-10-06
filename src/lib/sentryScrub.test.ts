@@ -30,7 +30,7 @@ describe("scrubEvent", () => {
   });
 
   it("evento sem request nem user passa igual", () => {
-    expect(scrubEvent({ message: "x", request: undefined, user: undefined })).toEqual({ message: "x" });
+    expect(scrubEvent({ message: "x" })).toEqual({ message: "x" });
   });
 });
 
@@ -41,7 +41,7 @@ describe("scrubBreadcrumb", () => {
   });
 
   it("breadcrumb sem data passa igual", () => {
-    expect(scrubBreadcrumb({ category: "ui.click", message: "button", data: undefined })).toEqual({ category: "ui.click", message: "button" });
+    expect(scrubBreadcrumb({ category: "ui.click", message: "button" })).toEqual({ category: "ui.click", message: "button" });
   });
 });
 

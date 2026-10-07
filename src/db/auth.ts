@@ -2,6 +2,7 @@ import type { AuthError, Session } from "@supabase/supabase-js";
 import { initialAuthHash, supabase } from "./supabase";
 import { avatarPublicUrl } from "./avatars";
 import { appOrigin, redirectUrlWithInvite } from "../lib/pendingInvite";
+import { parseEmailLink, type EmailLink } from "../lib/emailLink";
 import type { Profile } from "../types";
 
 // Links de e-mail voltam para a origem pública (em dev, http://localhost:1420; no desktop,
@@ -30,6 +31,15 @@ export class AuthFailure extends Error {}
 
 function fail(error: AuthError): never {
   throw new AuthFailure(toMessage(error));
+}
+
+/** Link de e-mail que ainda não foi usado: a tela pede um clique antes de gastar o token. */
+export const initialEmailLink: EmailLink | null = parseEmailLink(initialAuthHash);
+
+/** Gasta o token do link (só no clique da pessoa) e entra na conta. */
+export async function verifyEmailLink(link: EmailLink): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({ token_hash: link.tokenHash, type: link.type });
+  if (error) fail(error);
 }
 
 /** Link de recuperação (ou convite, a partir da E6) abriu o app: o usuário precisa definir uma senha. */
@@ -69,6 +79,13 @@ export async function signOut(): Promise<void> {
 export async function requestPasswordReset(email: string): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   if (error) fail(error);
+}
+
+/** Quem abriu o convite e recarregou antes de criar a senha ainda não tem senha (0019). */
+export async function hasPassword(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("has_password");
+  if (error) throw error;
+  return data !== false;
 }
 
 export async function updatePassword(password: string): Promise<void> {

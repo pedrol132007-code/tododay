@@ -438,7 +438,7 @@ test("convite por e-mail: admin convida, vê o convite pendente e gera um link d
     calls.push(body);
     if (body.action === "invite") return route.fulfill({ json: { status: "invited", userId: PENDING_ID } });
     if (body.action === "pending") return route.fulfill({ json: { userIds: [PENDING_ID] } });
-    return route.fulfill({ json: { link: "https://exemplo.supabase.co/auth/v1/verify?token=abc&type=recovery" } });
+    return route.fulfill({ json: { link: "http://localhost:1420#token_hash=abc&type=recovery" } });
   });
   await mockSession(page);
   await page.route("**/rest/v1/**", (route) => {
@@ -465,7 +465,7 @@ test("convite por e-mail: admin convida, vê o convite pendente e gera um link d
 
   await expect(page.getByText("· convite pendente")).toBeVisible();
   await page.getByRole("button", { name: "Gerar link de acesso" }).click();
-  await expect(page.getByText(/auth\/v1\/verify\?token=abc/)).toBeVisible();
+  await expect(page.getByText(/#token_hash=abc&type=recovery/)).toBeVisible();
   expect(calls.find((c) => c.action === "link")).toMatchObject({ teamId: 1, userId: PENDING_ID });
 });
 
@@ -587,4 +587,52 @@ test("notificações: sino com contador, filtro Do líder e clique abre o card",
 
   await page.getByText("Ana Líder atribuiu a você").click();
   await expect(page.getByRole("dialog").getByText("Card 3")).toBeVisible();
+});
+
+test("link de convite: só gasta o token no clique e depois pede a senha", async ({ page }) => {
+  const verifies: unknown[] = [];
+  await page.route("**/auth/v1/verify**", (route) => {
+    verifies.push(route.request().postDataJSON());
+    return route.fulfill({
+      json: {
+        access_token: "x.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEifQ.x",
+        token_type: "bearer",
+        expires_in: 3600,
+        expires_at: 4102444800,
+        refresh_token: "fake",
+        user: { id: USER_ID, email: env.E2E_EMAIL, aud: "authenticated", role: "authenticated" },
+      },
+    });
+  });
+  await page.goto("/#token_hash=abc&type=invite");
+
+  // Abrir o link (como um antivírus faria) não gasta o token.
+  await expect(page.getByRole("button", { name: "Criar minha senha" })).toBeVisible();
+  expect(verifies).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Criar minha senha" }).click();
+  await expect(page.getByLabel("Nova senha")).toBeVisible();
+  expect(verifies).toEqual([expect.objectContaining({ token_hash: "abc", type: "invite" })]);
+  expect(page.url()).not.toContain("token_hash");
+});
+
+test("link de convite vencido: volta ao login com a mensagem", async ({ page }) => {
+  await page.route("**/auth/v1/verify**", (route) =>
+    route.fulfill({ status: 403, json: { code: 403, error_code: "otp_expired", msg: "Email link is invalid or has expired" } }),
+  );
+  await page.goto("/#token_hash=abc&type=invite");
+  await page.getByRole("button", { name: "Criar minha senha" }).click();
+  await expect(page.getByText("O link expirou ou já foi usado. Peça um novo.")).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
+});
+
+test("conta sem senha (abriu o convite e recarregou): só a tela de criar senha", async ({ page }) => {
+  await mockSession(page);
+  await page.route("**/rest/v1/**", (route) => fulfillRest(route));
+  // A rota registrada por último vence.
+  await page.route("**/rest/v1/rpc/has_password", (route) => route.fulfill({ json: false }));
+  await page.goto("/");
+  await expect(page.getByLabel("Nova senha")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveCount(0);
 });

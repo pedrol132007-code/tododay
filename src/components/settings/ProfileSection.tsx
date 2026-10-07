@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthFailure } from "../../db/auth";
-import { useProfile, useUpdateDisplayName, useUpdatePassword } from "../../hooks/useAuth";
+import { useProfile, useRemoveAvatar, useSetAvatar, useUpdateDisplayName, useUpdatePassword } from "../../hooks/useAuth";
+import { avatarFileError } from "../../lib/avatarImage";
 import { nameError, passwordError } from "../../lib/profileRules";
+import { Avatar } from "../ui/Avatar";
 import { useToast } from "../ui/Toast";
 import { Row, Section } from "./SettingsView";
 
@@ -13,6 +15,22 @@ export function ProfileSection({ userId }: { userId: string }) {
   const updateName = useUpdateDisplayName(userId);
   const updatePassword = useUpdatePassword();
   const toast = useToast();
+  const setAvatar = useSetAvatar(userId);
+  const removeAvatar = useRemoveAvatar(userId);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  function pickPhoto(file: File | undefined) {
+    if (!file || !profile) return;
+    const problem = avatarFileError(file);
+    if (problem) return toast({ message: problem });
+    setAvatar.mutate(
+      { file, previousPath: profile.avatar_path },
+      {
+        onSuccess: () => toast({ message: "Foto salva" }),
+        onError: () => toast({ message: "Não foi possível salvar a foto. Tente outra imagem." }),
+      },
+    );
+  }
 
   const [name, setName] = useState("");
   useEffect(() => {
@@ -53,6 +71,45 @@ export function ProfileSection({ userId }: { userId: string }) {
 
   return (
     <Section title="Perfil">
+      <Row label="Foto">
+        <div className="flex flex-wrap items-center gap-3">
+          <Avatar userId={userId} name={profile.display_name} avatarUrl={profile.avatar_url} large />
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              pickPhoto(e.target.files?.[0]);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            disabled={setAvatar.isPending}
+            onClick={() => fileInput.current?.click()}
+            className="btn-primary px-4 py-2 disabled:opacity-50"
+          >
+            {setAvatar.isPending ? "Enviando..." : profile.avatar_path ? "Trocar foto" : "Enviar foto"}
+          </button>
+          {profile.avatar_path && (
+            <button
+              type="button"
+              disabled={removeAvatar.isPending}
+              onClick={() =>
+                removeAvatar.mutate(profile.avatar_path!, {
+                  onSuccess: () => toast({ message: "Foto removida" }),
+                  onError: () => toast({ message: "Não foi possível remover a foto." }),
+                })
+              }
+              className="rounded-lg px-3 py-2 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary disabled:opacity-50"
+            >
+              Remover foto
+            </button>
+          )}
+        </div>
+      </Row>
+
       <Row label="Nome">
         <form
           className="flex flex-wrap items-center gap-2"

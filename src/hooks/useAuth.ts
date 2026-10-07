@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
 import { getMyProfile, onSessionChange, updateDisplayName, updatePassword } from "../db/auth";
+import { removeMyAvatar, setMyAvatar } from "../db/avatars";
+import { toAvatarBlob } from "../lib/avatarImage";
 
 /** undefined enquanto o Supabase ainda restaura a sessão salva. */
 export function useSession(): Session | null | undefined {
@@ -22,6 +24,30 @@ export function useUpdateDisplayName(userId: string) {
   return useMutation({
     mutationFn: (name: string) => updateDisplayName(userId, name),
     // O nome aparece no menu (profile) e em avatares, filtros e responsáveis (teamMembers).
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["teamMembers"] });
+    },
+  });
+}
+
+/** Foto nova: recorta e reduz no navegador, envia e atualiza perfil e avatares da equipe. */
+export function useSetAvatar(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ file, previousPath }: { file: File; previousPath: string | null }) =>
+      setMyAvatar(userId, await toAvatarBlob(file), previousPath),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      queryClient.invalidateQueries({ queryKey: ["teamMembers"] });
+    },
+  });
+}
+
+export function useRemoveAvatar(userId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (path: string) => removeMyAvatar(userId, path),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", userId] });
       queryClient.invalidateQueries({ queryKey: ["teamMembers"] });

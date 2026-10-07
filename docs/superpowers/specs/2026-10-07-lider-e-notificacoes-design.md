@@ -112,13 +112,15 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
   `card_attachment` (insert), quando quem mudou não é o responsável. Se já existe notificação
   `changed` **não lida** desse card para essa pessoa, ela é atualizada: junta `changes` (somando
   anexos), troca `actor_*` pelo mais recente e sobe `updated_at`. Senão, cria outra.
+  Realizado como upsert único no índice de mudança não lida, para que alterações concorrentes
+  (ex.: dois anexos ao mesmo tempo) nunca falhem.
   Mudança dentro de 1 minuto depois de um `assigned` não lido do mesmo card é absorvida (quem
   atribui costuma ajeitar o prazo em seguida).
 - **Avisos de prazo** — no máximo três por card e prazo, cada um uma vez só (índice único):
   - `due_3d`: faltam de 2 a 3 dias ("Vence em 3 dias" / "Vence em 2 dias", com os dias de verdade
     no `payload.days_left`);
   - `due_1d`: falta 1 dia ("Vence amanhã");
-  - `overdue`: o prazo passou ("Atrasou"); `overdue` só para prazos vencidos há 1 a 3 dias: sai no dia seguinte e tolera o job falhar, sem despejar avisos de cards vencidos há meses.
+  - `overdue`: o prazo passou ("Atrasou"), só para prazos vencidos há 1 a 3 dias — sai no dia seguinte e tolera o job falhar, sem despejar avisos de cards vencidos há meses.
   A regra fica numa função `notify_due_for_card(card_id)`, chamada de dois lugares: pelo
   `pg_cron` todo dia às 11:00 UTC (8h de Brasília), para todos os cards abertos, via
   `notify_due_dates()`; e pelo trigger de `card` quando `due_date` ou `assignee_id` muda, para o

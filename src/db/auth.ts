@@ -1,5 +1,6 @@
 import type { AuthError, Session } from "@supabase/supabase-js";
 import { initialAuthHash, supabase } from "./supabase";
+import { avatarPublicUrl } from "./avatars";
 import { appOrigin, redirectUrlWithInvite } from "../lib/pendingInvite";
 import type { Profile } from "../types";
 
@@ -80,10 +81,12 @@ export function onSessionChange(callback: (session: Session | null) => void): ()
   return () => data.subscription.unsubscribe();
 }
 
-export async function getMyProfile(userId: string): Promise<Profile> {
+export type MyProfile = Profile & { avatar_url: string | null };
+
+export async function getMyProfile(userId: string): Promise<MyProfile> {
   const { data, error } = await supabase.from("profile").select("*").eq("id", userId).single();
   if (error) throw error;
-  return data;
+  return { ...data, avatar_url: avatarPublicUrl(data.avatar_path ?? null) };
 }
 
 /** A RLS só deixa cada um mudar o próprio nome (0001_profile.sql). */

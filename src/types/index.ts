@@ -200,6 +200,9 @@ export interface AppNotification {
 export interface DashboardPerson {
   id: string;
   name: string;
+  /** Só a demonstração preenche (imagem gerada no navegador). */
+  avatarUrl?: string | null;
+  isLeader?: boolean;
 }
 
 /** Status de uma tarefa do dashboard (docs/superpowers/specs/2026-09-28-dashboard-gestor-design.md). */

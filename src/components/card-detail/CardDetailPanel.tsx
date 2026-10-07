@@ -126,7 +126,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
 
         <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-x-3 gap-y-3">
           <DetailRow icon={<IconUsers size={16} />} label="Responsável">
-            {assignee && <Avatar userId={assignee.user_id} name={assignee.profile.display_name} />}
+            {assignee && <Avatar userId={assignee.user_id} name={assignee.profile.display_name} avatarUrl={assignee.profile.avatar_url} leader={assignee.is_leader} />}
             {canEdit ? (
               <select
                 aria-label="Responsável"

@@ -1,4 +1,5 @@
 import { must, supabase } from "./supabase";
+import { avatarPublicUrl } from "./avatars";
 import type { MemberRole, MyTeam, Profile, Team, TeamInvite, TeamMember } from "../types";
 
 export async function listMyTeams(userId: string): Promise<MyTeam[]> {
@@ -22,23 +23,27 @@ export async function renameTeam(teamId: number, name: string): Promise<void> {
   must(await supabase.from("team").update({ name }).eq("id", teamId));
 }
 
-export type TeamMemberWithProfile = TeamMember & { profile: Pick<Profile, "email" | "display_name"> };
+export type TeamMemberWithProfile = TeamMember & {
+  profile: Pick<Profile, "email" | "display_name" | "avatar_path"> & { avatar_url: string | null };
+};
 
 export async function listTeamMembers(teamId: number): Promise<TeamMemberWithProfile[]> {
   const rows = must(
     await supabase
       .from("team_member")
-      .select("*, profile(email, display_name)")
+      .select("*, profile(email, display_name, avatar_path)")
       .eq("team_id", teamId)
-      .returns<TeamMemberWithProfile[]>(),
+      .returns<(TeamMember & { profile: Pick<Profile, "email" | "display_name" | "avatar_path"> })[]>(),
   );
-  return rows.sort((a, b) => a.profile.display_name.localeCompare(b.profile.display_name));
+  return rows
+    .map((m) => ({ ...m, profile: { ...m.profile, avatar_url: avatarPublicUrl(m.profile.avatar_path ?? null) } }))
+    .sort((a, b) => a.profile.display_name.localeCompare(b.profile.display_name));
 }
 
 export async function updateTeamMember(
   teamId: number,
   userId: string,
-  changes: Partial<Pick<TeamMember, "role" | "job_title" | "deactivated_at">>,
+  changes: Partial<Pick<TeamMember, "role" | "job_title" | "deactivated_at" | "is_leader">>,
 ): Promise<void> {
   must(await supabase.from("team_member").update(changes).eq("team_id", teamId).eq("user_id", userId));
 }

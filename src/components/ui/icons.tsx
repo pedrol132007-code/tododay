@@ -191,3 +191,17 @@ export const IconImage = (p: IconProps) => (
     <path d="M20.5 16l-4.8-4.8L6 19.5" />
   </Icon>
 );
+
+/** Coroa do líder: preenchida, para ler bem em 9–11px sobre a foto. */
+export const IconCrown = (p: IconProps) => (
+  <Icon fill="currentColor" strokeWidth={1.2} {...p}>
+    <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z" />
+  </Icon>
+);
+
+export const IconBell = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 16v-5a6 6 0 1 1 12 0v5l2 2H4l2-2z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </Icon>
+);

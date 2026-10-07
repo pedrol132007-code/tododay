@@ -59,7 +59,7 @@ export function AppMenu({ userId, view, onNavigate }: AppMenuProps) {
         aria-expanded={open}
         className="flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
       >
-        {profile && <Avatar userId={userId} name={name} title="" />}
+        {profile && <Avatar userId={userId} name={name} title="" avatarUrl={profile.avatar_url} />}
         <span className="max-w-40 truncate">{name}</span>
         <IconChevronDown size={14} />
       </button>

@@ -172,7 +172,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   }
 
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
-  useRealtimeSync(team.id, activeBoard?.id ?? null);
+  useRealtimeSync(team.id, activeBoard?.id ?? null, userId);
 
   return (
     <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin" }}>

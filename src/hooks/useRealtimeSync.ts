@@ -7,7 +7,7 @@ import { subscribeToChanges, type RealtimeTable } from "../db/realtime";
  * queries afetadas e o React Query busca de novo. Um rebalanceamento gera dezenas de
  * eventos seguidos, então eles são agrupados antes de invalidar.
  */
-export function useRealtimeSync(teamId: number, boardId: number | null) {
+export function useRealtimeSync(teamId: number, boardId: number | null, userId: string) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -27,6 +27,8 @@ export function useRealtimeSync(teamId: number, boardId: number | null) {
           return [["checklistItems"], ["checklistProgress"]];
         case "card_attachment":
           return [["attachments"], ["boardAttachments"]];
+        case "notification":
+          return [["notifications"]];
         case "activity":
           return [["activity"]];
       }
@@ -42,7 +44,7 @@ export function useRealtimeSync(teamId: number, boardId: number | null) {
       pending.clear();
     };
 
-    const unsubscribe = subscribeToChanges(teamId, boardId, (table) => {
+    const unsubscribe = subscribeToChanges(teamId, boardId, userId, (table) => {
       pending.add(table);
       timer ??= setTimeout(flush, 150);
     });
@@ -50,5 +52,5 @@ export function useRealtimeSync(teamId: number, boardId: number | null) {
       unsubscribe();
       if (timer) clearTimeout(timer);
     };
-  }, [queryClient, teamId, boardId]);
+  }, [queryClient, teamId, boardId, userId]);
 }

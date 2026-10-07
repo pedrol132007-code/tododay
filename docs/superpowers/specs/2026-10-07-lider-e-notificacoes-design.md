@@ -124,7 +124,8 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
   A regra fica numa função `notify_due_for_card(card_id)`, chamada de dois lugares: pelo
   `pg_cron` todo dia às 11:00 UTC (8h de Brasília), para todos os cards abertos, via
   `notify_due_dates()`; e pelo trigger de `card` quando `due_date` ou `assignee_id` muda, para o
-  aviso de 3 dias sair na hora em quem recebe um card com prazo já perto. Card com prazo para hoje
+  aviso de 3 dias sair na hora em quem recebe um card com prazo já perto (só quando foi outra
+  pessoa que mudou; quem põe prazo no próprio card recebe pelo job, `0018`). Card com prazo para hoje
   não gera aviso novo (só o `overdue` amanhã). Só cards não arquivados, com responsável, fora de
   coluna de concluídos. "Hoje" no fuso `America/Sao_Paulo`.
 - O ator é lido de `auth.uid()` dentro do trigger; quando nulo (job), `actor_id` fica nulo e a UI

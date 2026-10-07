@@ -6,16 +6,18 @@
 // perfil, para os problemas ficarem espalhados: uma sobrecarregada, uma com tarefas paradas, uma com
 // atrasos leves e duas em dia. Ninguém concentra todos os problemas.
 import type { CardPriority, DashboardData, DashboardPerson, DashboardStatusChange, DashboardTask } from "../types";
+import { demoAvatarUrl } from "./demoAvatars";
 import { DEMO_DONE_DAYS, DEMO_LABELS, demoBoard, type DemoLabelId } from "./demoBoard";
 import { isDueSoon, isInProgress, isOverdue, isOverloaded, isOverWip, localDay, STALLED_DAYS, stalledDays } from "./dashboardRules";
 import { addDays, daysBetween, statusOn } from "./metrics";
 
+// Ana é a líder (coroa). Parte da equipe tem foto e parte fica com as iniciais, para mostrar os dois.
 export const DEMO_PEOPLE: DashboardPerson[] = [
-  { id: "demo-ana", name: "Ana Souza" },
+  { id: "demo-ana", name: "Ana Souza", isLeader: true, avatarUrl: demoAvatarUrl("demo-ana", "Ana Souza") },
   { id: "demo-bruno", name: "Bruno Lima" },
-  { id: "demo-carla", name: "Carla Dias" },
+  { id: "demo-carla", name: "Carla Dias", avatarUrl: demoAvatarUrl("demo-carla", "Carla Dias") },
   { id: "demo-diego", name: "Diego Rocha" },
-  { id: "demo-elisa", name: "Elisa Prado" },
+  { id: "demo-elisa", name: "Elisa Prado", avatarUrl: demoAvatarUrl("demo-elisa", "Elisa Prado") },
 ];
 
 // Títulos montados a partir de modelos, para o board não repetir o mesmo card. Nomes de empresas

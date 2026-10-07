@@ -12,7 +12,7 @@ import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
 import { NotificationBell } from "./components/notifications/NotificationBell";
 import { NotificationsView } from "./components/notifications/NotificationsView";
-import { useTeamNotifications } from "./hooks/useNotifications";
+import { useDemoNotifications, useTeamNotifications } from "./hooks/useNotifications";
 import { MyTasksView } from "./components/my-tasks/MyTasksView";
 import { WelcomeDialog, markWelcomed, shouldWelcome } from "./components/ui/WelcomeDialog";
 import { useProfile } from "./hooks/useAuth";
@@ -176,7 +176,10 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
 
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
   useRealtimeSync(team.id, activeBoard?.id ?? null, userId);
-  const notifications = useTeamNotifications(team.id);
+  const teamNotifications = useTeamNotifications(team.id);
+  const demoNotificationsState = useDemoNotifications(newDemo ? demo : null);
+  const showDemo = Boolean(demo && newDemo);
+  const notifications = showDemo ? demoNotificationsState : teamNotifications;
 
   return (
     <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin" }}>
@@ -211,10 +214,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
       ) : view === "notifications" ? (
         <NotificationsView
           state={notifications}
-          isDemo={false}
+          isDemo={showDemo}
           onBack={() => setView("board")}
           onOpen={(item) => {
             notifications.markRead(item);
+            if (showDemo) return setView("board");
             if (item.cardId !== null && item.boardId !== null) {
               handleNavigate({ type: "card", id: item.cardId, title: item.cardTitle, board_id: item.boardId, board_name: item.boardName });
             }

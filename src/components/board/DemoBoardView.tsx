@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { AnimatePresence } from "framer-motion";
 import type { DashboardData, DashboardTask, ListStatus } from "../../types";
 import { LIST_STATUS_LABEL, showsListStatus } from "../../lib/boardVisuals";
 import { hasFilters, matchesFilters, personSlugs, slugify, sortCards } from "../../lib/boardFilters";
 import { cardRisk } from "../../lib/dashboardRules";
 import { DEMO_BOARD_NAME, DEMO_LABELS, demoAttachments, demoBoard, demoFilterable, enteredDayOf, type DemoAttachment } from "../../lib/demoBoard";
-import { makeDemoFiles, revokeDemoFiles, type DemoFile } from "../../lib/demoFiles";
+import type { DemoFile } from "../../lib/demoFiles";
+import { useDemoFiles } from "../../hooks/useDemoFiles";
 import { setOpenCard, useBoardFilters, useBoardLink } from "../../hooks/useBoardFilters";
 import { useCompact } from "../../hooks/usePreferences";
 import { DemoActions, DemoBadge } from "../ui/Demo";
@@ -41,7 +42,7 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
   );
   const lists = useMemo(() => demoBoard(data), [data]);
   const attachments = useMemo(() => demoAttachments(data), [data]);
-  const files = useDemoFiles(attachments, data);
+  const files = useDemoFiles(useMemo(() => [...attachments.values()].flat(), [attachments]), data);
 
   const filterable = (task: DashboardTask, listStatus: ListStatus) => demoFilterable(task, listStatus, slugs, data.today);
   const shownLists = lists.map((list) => ({
@@ -147,26 +148,6 @@ export function DemoBoardView({ data, onRegenerate, onExit, onBackToDashboard }:
       </AnimatePresence>
     </div>
   );
-}
-
-/** Cria os arquivos dos anexos de exemplo (URLs blob:) e os libera ao trocar de demonstração. */
-function useDemoFiles(attachments: Map<string, DemoAttachment[]>, data: DashboardData): Map<string, DemoFile> {
-  const [files, setFiles] = useState<Map<string, DemoFile>>(new Map());
-  useEffect(() => {
-    let current: Map<string, DemoFile> | null = null;
-    let alive = true;
-    const titleOf = (id: string) => data.tasks.find((t) => t.id === id)?.title ?? "";
-    void makeDemoFiles([...attachments.values()].flat(), titleOf).then((made) => {
-      if (!alive) return revokeDemoFiles(made);
-      current = made;
-      setFiles(made);
-    });
-    return () => {
-      alive = false;
-      if (current) revokeDemoFiles(current);
-    };
-  }, [attachments, data]);
-  return files;
 }
 
 function DemoCard({ task, listStatus, data, compact, attachments, files, onOpen }: {

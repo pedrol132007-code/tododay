@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listNotificationAttachments,
@@ -6,9 +6,13 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../db/notifications";
+import type { DashboardData } from "../types";
+import { demoAttachments } from "../lib/demoBoard";
+import { demoNotifications } from "../lib/demoNotifications";
 import { localDay } from "../lib/dashboardRules";
 import { toNotificationItem, type NotificationItem, type NotificationThumb } from "../lib/notifications";
 import { useAttachmentUrls } from "./useAttachments";
+import { useDemoFiles } from "./useDemoFiles";
 import { useTeamMembers } from "./useTeams";
 
 /** O que o sino e a aba precisam, venha do banco ou da demonstração. */
@@ -71,5 +75,34 @@ export function useTeamNotifications(teamId: number): NotificationsState {
       if (!item.read) markOne.mutate(Number(item.id));
     },
     markAllRead: () => markAll.mutate(),
+  };
+}
+
+/** Notificações fictícias da demonstração: ler e marcar mudam só a memória. */
+export function useDemoNotifications(demo: DashboardData | null): NotificationsState {
+  const attachments = useMemo(() => (demo ? demoAttachments(demo) : new Map()), [demo]);
+  const base = useMemo(() => (demo ? demoNotifications(demo, attachments) : []), [demo, attachments]);
+  // Só os arquivos que aparecem nas notificações.
+  const shown = useMemo(() => {
+    const ids = new Set(base.flatMap((i) => i.thumbs.map((t) => t.id)));
+    return [...attachments.values()].flat().filter((a) => ids.has(a.id));
+  }, [base, attachments]);
+  const files = useDemoFiles(shown, demo);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setReadIds(new Set());
+  }, [demo]);
+
+  const items = base.map((i) => ({
+    ...i,
+    read: i.read || readIds.has(i.id),
+    thumbs: i.thumbs.map((t) => ({ ...t, url: files.get(t.id)?.url ?? null })),
+  }));
+  return {
+    items,
+    unread: items.filter((i) => !i.read).length,
+    isError: false,
+    markRead: (item) => setReadIds((s) => new Set(s).add(item.id)),
+    markAllRead: () => setReadIds(new Set(items.map((i) => i.id))),
   };
 }

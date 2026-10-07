@@ -70,7 +70,7 @@ export function NotificationsView({ state, isDemo, onBack, onOpen }: Notificatio
           <ul className="flex flex-col gap-2">
             {visible.map((item) => (
               <li key={item.id}>
-                <NotificationRow item={item} onOpen={() => onOpen(item)} />
+                <NotificationRow item={item} isDemo={isDemo} onOpen={() => onOpen(item)} />
               </li>
             ))}
           </ul>
@@ -80,12 +80,16 @@ export function NotificationsView({ state, isDemo, onBack, onOpen }: Notificatio
   );
 }
 
-function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen: () => void }) {
+function NotificationRow({ item, isDemo, onOpen }: { item: NotificationItem; isDemo: boolean; onOpen: () => void }) {
+  // Sem card para abrir (apagado ou arquivado): clicar só marca como lida, então não parece link.
+  const unlinked = item.cardId === null && !isDemo;
   return (
     <button
       type="button"
       onClick={onOpen}
-      className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left hover:border-highlight ${
+      className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left ${
+        unlinked ? "cursor-default" : "hover:border-highlight"
+      } ${
         item.read ? "border-border bg-bg-card" : "border-border bg-bg-elevated"
       }`}
     >
@@ -100,7 +104,7 @@ function NotificationRow({ item, onOpen }: { item: NotificationItem; onOpen: () 
         <span className="flex flex-wrap items-center gap-2">
           {!item.read && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-label="Não lida" />}
           <span className={`text-sm ${item.read ? "text-text-primary" : "font-semibold text-text-primary"}`}>{item.sentence}</span>
-          {item.fromLeader && (
+          {item.kind === "assigned" && item.fromLeader && (
             <span className="rounded-full border border-highlight px-2 text-[11px] font-semibold text-highlight">Pedido do líder</span>
           )}
           <span className="ml-auto text-xs text-text-muted">{relativeTime(item.at)}</span>

@@ -83,7 +83,9 @@ export function demoNotifications(d: DashboardData, attachments: Map<string, Dem
   });
 
   const changedTask = open.find((t) => t !== assignedTask) ?? assignedTask;
-  items.push(item("changed", "changed", changedTask, { changes: ["due_date", "attachments"], attachments: 2 }, {
+  const nChanged = (attachments.get(changedTask.id) ?? []).length;
+  const changes: NotificationPayload["changes"] = nChanged > 0 ? ["due_date", "attachments"] : ["due_date"];
+  items.push(item("changed", "changed", changedTask, { changes, attachments: nChanged }, {
     fromLeader: true, read: true, hoursAgo: 30,
   }));
 

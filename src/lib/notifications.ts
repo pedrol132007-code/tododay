@@ -58,13 +58,14 @@ export function notificationSentence(kind: NotificationKind, p: NotificationPayl
     case "due_1d":
       return "Vence amanhã";
     case "overdue": {
-      const late = p.due_date ? daysBetween(p.due_date, today) : 1;
+      // O que valia no aviso (days_left); só avisos antigos, sem isso, contam a partir do prazo.
+      const late = p.days_left != null ? -p.days_left : p.due_date ? daysBetween(p.due_date, today) : 1;
       return late <= 1 ? "Atrasou: venceu ontem" : `Atrasada há ${late} dias`;
     }
     case "changed": {
       const n = p.attachments ?? 0;
       const changeOrder: Record<string, number> = { due_date: 0, description: 1, list: 2, attachments: 3 };
-      const sorted = (p.changes ?? []).sort((a, b) => (changeOrder[a] ?? 999) - (changeOrder[b] ?? 999));
+      const sorted = [...(p.changes ?? [])].sort((a, b) => (changeOrder[a] ?? 999) - (changeOrder[b] ?? 999));
       const parts = sorted.map((c) =>
         c === "due_date"
           ? "mudou o prazo"
@@ -78,7 +79,7 @@ export function notificationSentence(kind: NotificationKind, p: NotificationPayl
                   : `anexou ${n} arquivos`
                 : "",
       );
-      return `${p.actor_name ?? "Alguém"} ${joinPt(parts.filter(p => p))}`;
+      return `${p.actor_name ?? "Alguém"} ${joinPt(parts.filter((part) => part))}`;
     }
   }
 }
@@ -90,7 +91,8 @@ export function splitThumbs(all: NotificationThumb[]): { thumbs: NotificationThu
 /** Descrição em uma linha, sem os marcadores de markdown mais comuns. */
 export function excerptOf(description: string | null | undefined): string {
   const text = (description ?? "")
-    .replace(/[#*_`>~-]+/g, " ")
+    .replace(/^\s*(?:[-*+>]|#{1,6})\s+/gm, "")
+    .replace(/\*\*|__|~~|`/g, "")
     .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\s+/g, " ")
     .trim();
@@ -121,6 +123,8 @@ export function toNotificationItem(
 ): NotificationItem {
   const p = row.payload;
   const split = splitThumbs(thumbs);
+  // Conta apagada: o id sumiu, mas o nome e o destaque de líder da época ficam no payload.
+  const leftTeam = row.actor_id === null && p.actor_name !== null && (row.kind === "assigned" || row.kind === "changed");
   const linkable = row.card_id !== null && row.card !== null && row.card.archived_at === null;
   return {
     id: String(row.id),
@@ -134,8 +138,10 @@ export function toNotificationItem(
           avatarUrl: actor?.avatarUrl ?? null,
           isLeader: p.actor_was_leader,
         }
-      : null,
-    fromLeader: row.actor_id !== null && p.actor_was_leader,
+      : leftTeam
+        ? { id: `name:${p.actor_name}`, name: p.actor_name!, avatarUrl: null, isLeader: p.actor_was_leader }
+        : null,
+    fromLeader: (row.actor_id !== null || leftTeam) && p.actor_was_leader,
     sentence: notificationSentence(row.kind, p, today),
     cardTitle: p.card_title,
     boardName: p.board_name,

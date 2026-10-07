@@ -33,9 +33,18 @@ describe("notificationSentence", () => {
     expect(notificationSentence("due_3d", { ...base, days_left: 2 }, TODAY)).toBe("Vence em 2 dias");
     expect(notificationSentence("due_1d", base, TODAY)).toBe("Vence amanhã");
   });
-  it("atraso conta a partir do prazo, não da notificação", () => {
+  it("atraso usa o que valia no aviso (days_left), não o dia de hoje", () => {
+    expect(notificationSentence("overdue", { ...base, due_date: "2026-10-02", days_left: -1 }, "2026-12-01")).toBe("Atrasou: venceu ontem");
+    expect(notificationSentence("overdue", { ...base, days_left: -3 }, "2026-12-01")).toBe("Atrasada há 3 dias");
+  });
+  it("atraso sem days_left (aviso antigo) conta a partir do prazo", () => {
     expect(notificationSentence("overdue", { ...base, due_date: "2026-10-06" }, TODAY)).toBe("Atrasou: venceu ontem");
     expect(notificationSentence("overdue", { ...base, due_date: "2026-10-02" }, TODAY)).toBe("Atrasada há 5 dias");
+  });
+  it("não reordena o payload de quem chama", () => {
+    const changes: NotificationPayload["changes"] = ["attachments", "due_date"];
+    notificationSentence("changed", { ...base, changes, attachments: 1 }, TODAY);
+    expect(changes).toEqual(["attachments", "due_date"]);
   });
   it("mudanças agrupadas", () => {
     expect(notificationSentence("changed", { ...base, changes: ["due_date"] }, TODAY)).toBe("Ana Souza mudou o prazo");
@@ -60,6 +69,13 @@ describe("excerptOf", () => {
     expect(excerptOf("## Título\n\n**Pode** assumir?")).toBe("Título Pode assumir?");
     expect(excerptOf("x".repeat(200))).toBe(`${"x".repeat(159)}…`);
     expect(excerptOf(null)).toBe("");
+  });
+  it("mantém hífens dentro de palavras e datas", () => {
+    expect(excerptOf("Mandar o e-mail até 07-10")).toBe("Mandar o e-mail até 07-10");
+  });
+  it("tira marcadores de lista e links", () => {
+    expect(excerptOf("- item um\n- item dois")).toBe("item um item dois");
+    expect(excerptOf("veja [o doc](https://x.y/z) e `código`")).toBe("veja o doc e código");
   });
 });
 
@@ -113,6 +129,11 @@ describe("toNotificationItem", () => {
   it("card apagado ou arquivado fica sem link", () => {
     expect(toNotificationItem(row({ card_id: null, card: null }), null, [], TODAY).cardId).toBeNull();
     expect(toNotificationItem(row({ card: { description: "", archived_at: "2026-10-01T00:00:00Z" } }), null, [], TODAY).cardId).toBeNull();
+  });
+  it("conta apagada: o nome e o destaque de líder da época continuam", () => {
+    const item = toNotificationItem(row({ actor_id: null }), null, [], TODAY);
+    expect(item.actor).toEqual({ id: "name:Ana Souza", name: "Ana Souza", avatarUrl: null, isLeader: true });
+    expect(item.fromLeader).toBe(true);
   });
   it("aviso do sistema não tem ator", () => {
     const item = toNotificationItem(row({ kind: "due_1d", actor_id: null, payload: { ...base, actor_name: null } }), null, [], TODAY);

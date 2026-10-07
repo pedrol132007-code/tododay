@@ -118,7 +118,7 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
   - `due_3d`: faltam de 2 a 3 dias ("Vence em 3 dias" / "Vence em 2 dias", com os dias de verdade
     no `payload.days_left`);
   - `due_1d`: falta 1 dia ("Vence amanhã");
-  - `overdue`: o prazo passou ("Atrasou").
+  - `overdue`: o prazo passou ("Atrasou"); `overdue` só para prazos vencidos há 1 a 3 dias: sai no dia seguinte e tolera o job falhar, sem despejar avisos de cards vencidos há meses.
   A regra fica numa função `notify_due_for_card(card_id)`, chamada de dois lugares: pelo
   `pg_cron` todo dia às 11:00 UTC (8h de Brasília), para todos os cards abertos, via
   `notify_due_dates()`; e pelo trigger de `card` quando `due_date` ou `assignee_id` muda, para o
@@ -154,9 +154,8 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
 
 - `demoData.ts`: uma ou duas pessoas fictícias com `is_leader`; parte delas com foto desenhada no
   navegador (`demoFiles.ts`, canvas → URL `blob:`), as outras com iniciais.
-- `src/lib/demoNotifications.ts`: gera, a partir dos cards da própria demo, ao menos um item de
-  cada tipo (atribuição pelo líder com descrição e anexos de exemplo, atraso, vence em 3 dias, vence amanhã,
-  mudança agrupada), parte lida e parte não. Nada vai para o banco ou o Storage.
+- `src/lib/demoNotifications.ts`: gera, a partir dos cards da própria demo, atribuição e mudança
+  sempre; avisos de prazo só quando a pessoa tem tarefa naquela janela (nunca se inventa data); parte lida e parte não. Nada vai para o banco ou o Storage.
 - Enquanto a demonstração existe, o sino e a aba mostram essas notificações; marcar como lida muda
   só o estado em memória.
 

@@ -67,6 +67,8 @@ declare
   c1 bigint; c2 bigint; c3 bigint; c4 bigint; c5 bigint;
   v_today date := (now() at time zone 'America/Sao_Paulo')::date;
   v_membro uuid;
+  n_c2 bigint;
+  n_aff bigint;
 begin
   insert into auth.users (id, email, raw_user_meta_data, aud, role)
   select gen_random_uuid(), n || '@rls-test.local', json_build_object('display_name', n)::jsonb, 'authenticated', 'authenticated'
@@ -112,7 +114,10 @@ begin
   perform pg_temp.assert_that(pg_temp.fails('update public.notification set payload = ''{}''::jsonb'),
     'cliente só muda read_at');
   perform pg_temp.assert_that(pg_temp.fails('delete from public.notification'), 'cliente não apaga');
+  perform pg_temp.assert_that(pg_temp.affected('update public.notification set read_at = now() where read_at is null') >= 1,
+    'cada um marca as próprias como lidas');
   perform pg_temp.logout();
+  update public.notification set read_at = null where card_id = c1;
 
   -- ── Ajuste logo depois de atribuir entra na própria atribuição ──
   perform pg_temp.login('admin');
@@ -149,10 +154,24 @@ begin
     'depois de lida, mudança nova cria outra');
 
   perform pg_temp.login('membro');
-  update public.card set description = 'Eu mesmo' where id = c1;
+  n_aff := pg_temp.affected('update public.card set description = ''Eu mesmo'' where id = ' || c1);
   perform pg_temp.logout();
+  perform pg_temp.assert_that(n_aff = 1, 'o membro conseguiu editar o próprio card');
   perform pg_temp.assert_that((select count(*) from public.notification where card_id = c1 and kind = 'changed') = 2,
     'quem mexe no próprio card não se notifica');
+
+  -- Conflito direto: com uma mudança não lida já existente, o anexo novo entra nela (upsert).
+  update public.notification set read_at = now() where card_id = c1;
+  insert into public.notification (user_id, team_id, board_id, card_id, kind, payload)
+    values (v_membro, t, b, c1, 'changed', '{"changes":["due_date"],"attachments":1}');
+  insert into public.card_attachment (card_id, name, mime_type, size_bytes, storage_path, uploaded_by, uploaded_by_name)
+    values (c1, 'c.png', 'image/png', 1, c1 || '/' || gen_random_uuid(), pg_temp.uid('admin'), 'admin');
+  perform pg_temp.assert_that((select count(*) from public.notification where card_id = c1 and kind = 'changed' and read_at is null) = 1,
+    'conflito: continua uma só não lida');
+  perform pg_temp.assert_that((select (payload->>'attachments')::int from public.notification where card_id = c1 and kind = 'changed' and read_at is null) = 2,
+    'conflito: soma os anexos');
+  perform pg_temp.assert_that((select payload->'changes' from public.notification where card_id = c1 and kind = 'changed' and read_at is null)
+    @> '["due_date","attachments"]'::jsonb, 'conflito: junta o que mudou');
 
   -- ── Avisos de prazo ──
   perform pg_temp.login('admin');
@@ -167,8 +186,9 @@ begin
     'aviso de 3 dias sai uma vez só');
   perform public.notify_due_for_card(c2, v_today + 2);
   perform pg_temp.assert_that((select count(*) from public.notification where card_id = c2 and kind = 'due_1d') = 1, 'aviso de 1 dia');
-  perform public.notify_due_for_card(c2, v_today + 1);
-  perform pg_temp.assert_that((select count(*) from public.notification where card_id = c2 and kind = 'due_1d') = 1, 'sem repetir no dia do prazo');
+  select count(*) into n_c2 from public.notification where card_id = c2;
+  perform public.notify_due_for_card(c2, v_today + 3);
+  perform pg_temp.assert_that((select count(*) from public.notification where card_id = c2) = n_c2, 'sem aviso no dia do prazo');
   perform public.notify_due_for_card(c2, v_today + 4);
   perform public.notify_due_for_card(c2, v_today + 5);
   perform pg_temp.assert_that((select count(*) from public.notification where card_id = c2 and kind = 'overdue') = 1, 'atraso uma vez só');

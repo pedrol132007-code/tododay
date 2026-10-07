@@ -83,9 +83,6 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  v_id bigint;
-  v_payload jsonb;
 begin
   update public.notification n
   set payload = n.payload || jsonb_build_object('card_title', p_card.title, 'due_date', p_card.due_date),
@@ -96,29 +93,23 @@ begin
     return;
   end if;
 
-  select n.id, n.payload into v_id, v_payload from public.notification n
-  where n.user_id = p_card.assignee_id and n.card_id = p_card.id and n.kind = 'changed' and n.read_at is null
-  for update;
-
-  if found then
-    update public.notification
-    set actor_id = p_actor,
-        payload = v_payload || public.notification_card_payload(p_card, p_team_id, p_actor) || jsonb_build_object(
-          'changes', (select jsonb_agg(distinct c) from (
-                        select jsonb_array_elements_text(coalesce(v_payload->'changes', '[]')) c
-                        union select unnest(p_changes)) s),
-          'attachments', coalesce((v_payload->>'attachments')::int, 0) + p_attachments,
-          'list_name', (select l.name from public.list l where l.id = p_card.list_id)),
-        updated_at = now()
-    where id = v_id;
-  else
-    insert into public.notification (user_id, team_id, board_id, card_id, actor_id, kind, payload)
-    values (p_card.assignee_id, p_team_id, p_card.board_id, p_card.id, p_actor, 'changed',
-      public.notification_card_payload(p_card, p_team_id, p_actor) || jsonb_build_object(
-        'changes', to_jsonb(p_changes),
-        'attachments', p_attachments,
-        'list_name', (select l.name from public.list l where l.id = p_card.list_id)));
-  end if;
+  -- Upsert, não select + insert: dois envios ao mesmo tempo (uploads em paralelo) não têm linha
+  -- para travar, e o segundo estouraria o índice único de "uma mudança não lida por card".
+  insert into public.notification as n (user_id, team_id, board_id, card_id, actor_id, kind, payload)
+  values (p_card.assignee_id, p_team_id, p_card.board_id, p_card.id, p_actor, 'changed',
+    public.notification_card_payload(p_card, p_team_id, p_actor) || jsonb_build_object(
+      'changes', to_jsonb(p_changes),
+      'attachments', p_attachments,
+      'list_name', (select l.name from public.list l where l.id = p_card.list_id)))
+  on conflict (user_id, card_id) where kind = 'changed' and read_at is null
+  do update set
+    actor_id = excluded.actor_id,
+    payload = n.payload || excluded.payload || jsonb_build_object(
+      'changes', (select jsonb_agg(distinct c) from (
+                    select jsonb_array_elements_text(coalesce(n.payload->'changes', '[]')) c
+                    union select jsonb_array_elements_text(excluded.payload->'changes')) s),
+      'attachments', coalesce((n.payload->>'attachments')::int, 0) + p_attachments),
+    updated_at = now();
 end;
 $$;
 

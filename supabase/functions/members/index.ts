@@ -5,10 +5,10 @@
 // Ações (POST, JSON, com o token de quem está logado; só admin ATIVO da equipe):
 //   { action: "invite", teamId, email, name, role, jobTitle } → quem não tem conta recebe o e-mail de
 //     convite e entra na equipe (define a senha pelo link); quem já tem conta só entra na equipe.
-//   { action: "pending", teamId } → ids dos membros que ainda não entraram nenhuma vez.
+//   { action: "pending", teamId } → ids dos membros que ainda não definiram senha.
 //   { action: "link", teamId, userId, redirectTo } → link para definir a senha, para o admin mandar
-//     por outro canal quando o e-mail não chega. Só para quem ainda não entrou nenhuma vez: assim um
-//     admin nunca consegue entrar na conta de quem já usa o app.
+//     por outro canal quando o e-mail não chega. Só para quem ainda não tem senha: assim um admin
+//     nunca consegue entrar na conta de quem já usa o app.
 // O link vale o tempo de "Email OTP expiration" (Authentication → Providers → Email).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
@@ -129,16 +129,20 @@ async function invite(admin: SupabaseClient, teamId: number, actorId: string, bo
   return reply({ status, userId });
 }
 
-/** Membros da equipe que nunca entraram (convite ainda não aceito). */
+/** Membros da equipe que ainda não definiram senha (convite não aceito até o fim). */
 async function pendingIds(admin: SupabaseClient, teamId: number): Promise<string[]> {
   const { data: members, error } = await admin.from("team_member").select("user_id").eq("team_id", teamId);
   if (error) throw error;
-  const pending: string[] = [];
-  for (const { user_id } of members ?? []) {
-    const { data } = await admin.auth.admin.getUserById(user_id);
-    if (data.user && !data.user.last_sign_in_at) pending.push(user_id);
-  }
-  return pending;
+  return withoutPassword(admin, (members ?? []).map((m) => m.user_id));
+}
+
+// Abrir o link do convite já conta como entrada (last_sign_in_at): quem fechava antes de criar a
+// senha ficava sem link e sem senha. Por isso o critério é a senha (0019_users_without_password).
+async function withoutPassword(admin: SupabaseClient, userIds: string[]): Promise<string[]> {
+  if (userIds.length === 0) return [];
+  const { data, error } = await admin.rpc("users_without_password", { p_ids: userIds });
+  if (error) throw error;
+  return (data ?? []) as string[];
 }
 
 async function link(admin: SupabaseClient, teamId: number, body: Body): Promise<Response> {
@@ -153,19 +157,24 @@ async function link(admin: SupabaseClient, teamId: number, body: Body): Promise<
 
   const { data: found } = await admin.auth.admin.getUserById(userId);
   if (!found.user?.email) return reply({ error: "Essa pessoa não está na equipe." }, 404);
-  if (found.user.last_sign_in_at) {
-    return reply({ error: "Essa pessoa já entrou no Tododay. Para trocar a senha, ela usa \"Esqueci minha senha\"." }, 409);
+  if ((await withoutPassword(admin, [userId])).length === 0) {
+    return reply({ error: "Essa pessoa já tem senha. Para trocar, ela usa \"Esqueci minha senha\"." }, 409);
   }
+  const redirectTo = redirectOf(body);
+  if (!redirectTo) return reply({ error: "Pedido inválido." }, 400);
 
   // recovery: abre o app na tela de definir senha, e não invalida o link do e-mail de convite.
   const { data, error } = await admin.auth.admin.generateLink({
     type: "recovery",
     email: found.user.email,
-    options: { redirectTo: redirectOf(body) },
+    options: { redirectTo },
   });
-  if (error || !data.properties?.action_link) {
+  if (error || !data.properties?.hashed_token) {
     console.error(error);
     return reply({ error: "Não foi possível gerar o link. Tente de novo." }, 502);
   }
-  return reply({ link: data.properties.action_link });
+  // Link para o próprio app, não para o /verify do Supabase: o token só é gasto quando a pessoa
+  // clica no botão da página (src/lib/emailLink.ts). Antivírus de e-mail e prévias de chat abrem
+  // links sozinhos e gastavam o token antes ("O link expirou ou já foi usado").
+  return reply({ link: `${redirectTo}#token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=recovery` });
 }

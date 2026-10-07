@@ -4,7 +4,7 @@
   <h2 style="color: #7c5cd6;">Bem-vindo ao Tododay</h2>
   <p>Falta só confirmar seu e-mail para ativar sua conta.</p>
   <p>
-    <a href="{{ .ConfirmationURL }}"
+    <a href="{{ .RedirectTo }}#token_hash={{ .TokenHash }}&type=email"
        style="display: inline-block; background: #a78bfa; color: #16121f; padding: 12px 20px; border-radius: 12px; text-decoration: none; font-weight: bold;">
       Confirmar meu e-mail
     </a>

@@ -39,6 +39,16 @@ begin
   perform pg_temp.assert_that(not has_function_privilege('anon', 'public.users_without_password(uuid[])', 'execute'),
     'anon não executa');
 
+  -- has_password: cada um só sabe da própria conta.
+  perform set_config('request.jwt.claims', json_build_object('sub', v_vazia, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+  perform pg_temp.assert_that(public.has_password() = false, 'sem senha: has_password é false');
+  perform set_config('request.jwt.claims', json_build_object('sub', v_com, 'role', 'authenticated')::text, true);
+  perform pg_temp.assert_that(public.has_password() = true, 'com senha: has_password é true');
+  perform set_config('role', 'none', true);
+  perform pg_temp.assert_that(not has_function_privilege('anon', 'public.has_password()', 'execute'),
+    'anon não executa has_password');
+
   raise exception 'PASSOU: todos os testes da 0019 passaram';
 end;
 $$;

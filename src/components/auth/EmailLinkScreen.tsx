@@ -18,9 +18,10 @@ function clearLinkFromUrl() {
  * Primeira tela de um link de e-mail (ver lib/emailLink.ts): o token só é gasto no clique, para
  * quem abre o link sem clicar (antivírus, prévia de chat) não invalidá-lo.
  */
-export function EmailLinkScreen({ link, onDone, onFailed }: { link: EmailLink; onDone: () => void; onFailed: (message: string) => void }) {
+export function EmailLinkScreen({ link, onDone, onFailed }: { link: EmailLink; onDone: () => void; onFailed: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   const copy = COPY[link.type];
 
   async function handleSubmit(e: FormEvent) {
@@ -34,12 +35,24 @@ export function EmailLinkScreen({ link, onDone, onFailed }: { link: EmailLink; o
     } catch (err) {
       if (err instanceof AuthFailure) {
         clearLinkFromUrl();
-        onFailed(err.message);
+        setFailed(err.message);
       } else {
         setError("Não foi possível conectar. Verifique sua internet.");
         setBusy(false);
       }
     }
+  }
+
+  // Na própria tela, e não no login: com outra conta aberta neste navegador, o login nem aparece.
+  if (failed) {
+    return (
+      <AuthLayout title={copy.title}>
+        <FormError message={failed} />
+        <button type="button" onClick={onFailed} className="w-full btn-primary px-3 py-2.5">
+          Continuar
+        </button>
+      </AuthLayout>
+    );
   }
 
   return (

@@ -20,3 +20,19 @@ $$;
 
 revoke execute on function public.users_without_password(uuid[]) from public, anon, authenticated;
 grant execute on function public.users_without_password(uuid[]) to service_role;
+
+-- A própria pessoa: tem senha? Sem senha o app só mostra a tela de criar senha (AuthGate). Assim
+-- ninguém usa o app sem senha depois de abrir o convite e recarregar a página, e quem não tem
+-- senha nunca é uma conta em uso (é só para essas que o admin gera link).
+create function public.has_password()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(u.encrypted_password, '') <> '' from auth.users u where u.id = auth.uid();
+$$;
+
+revoke execute on function public.has_password() from public, anon;
+grant execute on function public.has_password() to authenticated;

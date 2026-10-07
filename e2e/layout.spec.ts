@@ -623,5 +623,16 @@ test("link de convite vencido: volta ao login com a mensagem", async ({ page }) 
   await page.goto("/#token_hash=abc&type=invite");
   await page.getByRole("button", { name: "Criar minha senha" }).click();
   await expect(page.getByText("O link expirou ou já foi usado. Peça um novo.")).toBeVisible();
+  await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("button", { name: "Entrar" })).toBeVisible();
+});
+
+test("conta sem senha (abriu o convite e recarregou): só a tela de criar senha", async ({ page }) => {
+  await mockSession(page);
+  await page.route("**/rest/v1/**", (route) => fulfillRest(route));
+  // A rota registrada por último vence.
+  await page.route("**/rest/v1/rpc/has_password", (route) => route.fulfill({ json: false }));
+  await page.goto("/");
+  await expect(page.getByLabel("Nova senha")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveCount(0);
 });

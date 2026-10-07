@@ -81,6 +81,13 @@ export async function requestPasswordReset(email: string): Promise<void> {
   if (error) fail(error);
 }
 
+/** Quem abriu o convite e recarregou antes de criar a senha ainda não tem senha (0019). */
+export async function hasPassword(): Promise<boolean> {
+  const { data, error } = await supabase.rpc("has_password");
+  if (error) throw error;
+  return data !== false;
+}
+
 export async function updatePassword(password: string): Promise<void> {
   const { error } = await supabase.auth.updateUser({ password });
   if (error) fail(error);

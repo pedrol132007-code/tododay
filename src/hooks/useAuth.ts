@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Session } from "@supabase/supabase-js";
-import { getMyProfile, onSessionChange, updateDisplayName, updatePassword } from "../db/auth";
+import { getMyProfile, hasPassword, onSessionChange, updateDisplayName, updatePassword } from "../db/auth";
 import { removeMyAvatar, setMyAvatar } from "../db/avatars";
 import { toAvatarBlob } from "../lib/avatarImage";
 
@@ -10,6 +10,15 @@ export function useSession(): Session | null | undefined {
   const [session, setSession] = useState<Session | null | undefined>(undefined);
   useEffect(() => onSessionChange(setSession), []);
   return session;
+}
+
+export function useHasPassword(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["hasPassword", userId],
+    queryFn: hasPassword,
+    enabled: !!userId,
+    staleTime: Infinity,
+  });
 }
 
 export function useProfile(userId: string) {

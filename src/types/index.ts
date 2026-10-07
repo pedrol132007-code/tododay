@@ -117,6 +117,8 @@ export interface TeamMember {
   joined_at: string;
   /** Desativado: sem acesso à equipe, mas continua nos cards e no histórico (0013). */
   deactivated_at: string | null;
+  /** Coroa de líder (0016): um selo, não muda permissão. Leitor não é líder. */
+  is_leader: boolean;
 }
 
 export interface TeamInvite {
@@ -139,6 +141,8 @@ export interface Profile {
   id: string;
   email: string;
   display_name: string;
+  /** Caminho da foto no bucket público "avatars" ("<id>/<uuid>.webp"); null = iniciais. */
+  avatar_path: string | null;
   created_at: string;
 }
 

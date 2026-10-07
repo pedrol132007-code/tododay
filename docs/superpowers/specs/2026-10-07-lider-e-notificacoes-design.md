@@ -7,7 +7,7 @@ Data: 2026-10-07 · Aprovado na conversa; aguardando revisão da spec escrita.
 1. Marcar quem é **líder** na equipe, com uma coroa visível onde a pessoa aparece.
 2. Cada pessoa pode ter uma **foto de perfil**, mostrada no lugar das iniciais.
 3. Uma aba **Notificações** avisa a pessoa do que é dela: card atribuído (com descrição, anexos e a
-   foto de quem atribuiu, destacado quando foi um líder), card atrasado, card que vence amanhã e
+   foto de quem atribuiu, destacado quando foi um líder), card atrasado, avisos 3 dias e 1 dia antes do prazo e
    mudanças que outra pessoa fez num card dela.
 
 **Sucesso:** o líder atribui um card com descrição e anexos a alguém; essa pessoa vê o sino com o
@@ -82,7 +82,7 @@ notification(
   board_id bigint null -> board on delete set null,
   card_id bigint null -> card on delete set null,
   actor_id uuid null -> profile(id) on delete set null,     -- quem fez (null = sistema)
-  kind text not null check (kind in ('assigned','overdue','due_soon','changed')),
+  kind text not null check (kind in ('assigned','due_3d','due_1d','overdue','changed')),
   payload jsonb not null default '{}',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -94,7 +94,7 @@ notification(
   `board_name`, `actor_name`, `actor_was_leader`, `due_date`, e em `changed` a lista
   `changes` (ex.: `["due_date","description","list","attachments:2"]`) e `list_name` quando moveu.
 - Coluna `due_key date null` (o prazo que gerou o aviso) e índice único parcial
-  `(user_id, card_id, kind, due_key) where kind in ('overdue','due_soon')`: uma só por card, tipo e
+  `(user_id, card_id, kind, due_key) where kind in ('due_3d','due_1d','overdue')`: uma só por card, tipo e
   prazo. Mudou o prazo, pode avisar de novo.
 - Índice `(user_id, read_at, updated_at desc)` para a lista e o contador.
 - RLS: `select` e `update (read_at)` só onde `user_id = auth.uid()`. Sem `insert`/`delete` pelo
@@ -114,10 +114,17 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
   anexos), troca `actor_*` pelo mais recente e sobe `updated_at`. Senão, cria outra.
   Mudança dentro de 1 minuto depois de um `assigned` não lido do mesmo card é absorvida (quem
   atribui costuma ajeitar o prazo em seguida).
-- **`overdue`** e **`due_soon`** — função `notify_due_dates()` rodada pelo `pg_cron` todo dia às
-  11:00 UTC (8h de Brasília): cards abertos, não arquivados, com responsável, com prazo
-  `< hoje` (`overdue`) ou `= amanhã` (`due_soon`), em coluna que não é de concluídos. O índice
-  único garante uma só. "Hoje" no fuso `America/Sao_Paulo`.
+- **Avisos de prazo** — no máximo três por card e prazo, cada um uma vez só (índice único):
+  - `due_3d`: faltam de 2 a 3 dias ("Vence em 3 dias" / "Vence em 2 dias", com os dias de verdade
+    no `payload.days_left`);
+  - `due_1d`: falta 1 dia ("Vence amanhã");
+  - `overdue`: o prazo passou ("Atrasou").
+  A regra fica numa função `notify_due_for_card(card_id)`, chamada de dois lugares: pelo
+  `pg_cron` todo dia às 11:00 UTC (8h de Brasília), para todos os cards abertos, via
+  `notify_due_dates()`; e pelo trigger de `card` quando `due_date` ou `assignee_id` muda, para o
+  aviso de 3 dias sair na hora em quem recebe um card com prazo já perto. Card com prazo para hoje
+  não gera aviso novo (só o `overdue` amanhã). Só cards não arquivados, com responsável, fora de
+  coluna de concluídos. "Hoje" no fuso `America/Sao_Paulo`.
 - O ator é lido de `auth.uid()` dentro do trigger; quando nulo (job), `actor_id` fica nulo e a UI
   mostra o ícone do Tododay em vez de um avatar.
 
@@ -126,7 +133,7 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
 - `src/db/notifications.ts`: listar (últimas 100 da equipe atual), contar não lidas, marcar uma,
   marcar todas, URLs assinadas das miniaturas (reaproveita `src/db/attachments.ts`).
 - `src/lib/notificationText.ts` (pura, com teste): frase de cada item ("Ana atribuiu a você",
-  "Atrasou há 2 dias", "Vence amanhã", "Ana mudou o prazo e anexou 2 arquivos").
+  "Atrasou há 2 dias", "Vence em 3 dias", "Vence amanhã", "Ana mudou o prazo e anexou 2 arquivos").
 - `useNotifications` (React Query) + assinatura Realtime por usuário em `src/db/realtime.ts`, que só
   invalida as queries.
 
@@ -148,7 +155,7 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
 - `demoData.ts`: uma ou duas pessoas fictícias com `is_leader`; parte delas com foto desenhada no
   navegador (`demoFiles.ts`, canvas → URL `blob:`), as outras com iniciais.
 - `src/lib/demoNotifications.ts`: gera, a partir dos cards da própria demo, ao menos um item de
-  cada tipo (atribuição pelo líder com descrição e anexos de exemplo, atraso, vence amanhã,
+  cada tipo (atribuição pelo líder com descrição e anexos de exemplo, atraso, vence em 3 dias, vence amanhã,
   mudança agrupada), parte lida e parte não. Nada vai para o banco ou o Storage.
 - Enquanto a demonstração existe, o sino e a aba mostram essas notificações; marcar como lida muda
   só o estado em memória.
@@ -161,7 +168,7 @@ responsável desativado (`team_member.deactivated_at`) ou leitor.
     e só grava na própria pasta do bucket.
   - cada pessoa só lê e marca as próprias notificações; cliente não insere.
   - `assigned` gerado ao atribuir a outro e não ao atribuir a si mesmo; `changed` agrupa enquanto
-    não lida e cria nova depois de lida; `notify_due_dates()` rodada duas vezes gera uma só;
+    não lida e cria nova depois de lida; `notify_due_dates()` rodada duas vezes gera uma só; prazo a 2 dias gera `due_3d` na hora; mudar o prazo libera avisos novos;
     arquivado, desativado e leitor não recebem.
 - Vitest: `notificationText`, agrupamento/limite de miniaturas, `demoNotifications` (um de cada
   tipo).

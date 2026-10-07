@@ -555,3 +555,36 @@ test("clicar no título do card abre o card (renomear fica no painel)", async ({
   await page.getByText("Card 3", { exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Card 3" })).toBeVisible();
 });
+
+test("notificações: sino com contador, filtro Do líder e clique abre o card", async ({ page }) => {
+  const payload = (over: object) => ({
+    card_title: "Card 3",
+    board_name: "Board E2E",
+    actor_name: "Ana Líder",
+    actor_was_leader: true,
+    due_date: null,
+    ...over,
+  });
+  const notification = [
+    { id: 1, user_id: USER_ID, team_id: 1, board_id: 1, card_id: 3, actor_id: "00000000-0000-0000-0000-0000000000aa", kind: "assigned", due_key: null,
+      payload: payload({}), created_at: NOW, updated_at: NOW, read_at: null, card: { description: "**Pode** assumir?", archived_at: null } },
+    { id: 2, user_id: USER_ID, team_id: 1, board_id: 1, card_id: 4, actor_id: null, kind: "due_1d", due_key: "2026-09-29",
+      payload: payload({ card_title: "Card 4", actor_name: null, actor_was_leader: false }), created_at: NOW, updated_at: NOW, read_at: null,
+      card: { description: "", archived_at: null } },
+  ];
+  await openLongBoard(page, "/", { notification });
+
+  const bell = page.getByRole("button", { name: /Notificações/ });
+  await expect(bell).toContainText("2");
+  await bell.click();
+  await expect(page.getByText("Ana Líder atribuiu a você")).toBeVisible();
+  await expect(page.getByText("Pedido do líder")).toBeVisible();
+  await expect(page.getByText("Pode assumir?")).toBeVisible();
+  await expect(page.getByText("Vence amanhã")).toBeVisible();
+
+  await page.getByRole("button", { name: "Do líder", exact: true }).click();
+  await expect(page.getByText("Vence amanhã")).toBeHidden();
+
+  await page.getByText("Ana Líder atribuiu a você").click();
+  await expect(page.getByRole("dialog").getByText("Card 3")).toBeVisible();
+});

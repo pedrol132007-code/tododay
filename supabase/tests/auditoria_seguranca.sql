@@ -31,8 +31,9 @@ anon_funcao as (
     and has_function_privilege('anon', p.oid, 'execute')
 ),
 -- 5. Bucket público: os arquivos abririam sem URL assinada.
+--    "avatars" é público de propósito (fotos de perfil, nome do arquivo é um uuid; 0016_leader_and_avatar.sql).
 bucket_publico as (
-  select 'Bucket público no Storage: ' || id as problema from storage.buckets where public
+  select 'Bucket público no Storage: ' || id as problema from storage.buckets where public and id <> 'avatars'
 ),
 -- 6. Tabela com RLS mas sem nenhuma policy de leitura (não é falha de segurança, mas o app não lê).
 sem_leitura as (

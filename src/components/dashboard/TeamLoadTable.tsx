@@ -73,7 +73,7 @@ export function TeamLoadTable({
                     }}
                     className="inline-flex items-center gap-2 whitespace-nowrap text-left text-text-primary hover:text-primary"
                   >
-                    <Avatar userId={r.person.id} name={r.person.name} />
+                    <Avatar userId={r.person.id} name={r.person.name} avatarUrl={r.person.avatarUrl} leader={r.person.isLeader} />
                     {r.person.name}
                   </button>
                 </td>

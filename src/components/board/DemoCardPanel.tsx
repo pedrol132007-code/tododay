@@ -53,7 +53,7 @@ export function DemoCardPanel({ task, person, done, attachments, files, onClose 
         <dl className="grid grid-cols-[8rem_1fr] items-center gap-x-3 gap-y-3 text-sm">
           <dt className="text-text-muted">Responsável</dt>
           <dd className="flex items-center gap-2 text-text-primary">
-            {person && <Avatar userId={person.id} name={person.name} />}
+            {person && <Avatar userId={person.id} name={person.name} avatarUrl={person.avatarUrl} leader={person.isLeader} />}
             {person?.name ?? "Ninguém"}
           </dd>
           <dt className="text-text-muted">Prioridade</dt>

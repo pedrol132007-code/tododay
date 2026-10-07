@@ -70,7 +70,8 @@ export function TaskListPanel({
   }, [onClose]);
 
   const sorted = [...tasks].sort(byUrgency(day));
-  const nameOf = (id: string) => people.find((p) => p.id === id)?.name ?? "?";
+  const personOf = (id: string) => people.find((p) => p.id === id);
+  const nameOf = (id: string) => personOf(id)?.name ?? "?";
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -127,7 +128,7 @@ export function TaskListPanel({
                   </span>
                   <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted">
                     <span className="inline-flex items-center gap-1.5">
-                      <Avatar userId={t.assigneeId} name={nameOf(t.assigneeId)} />
+                      <Avatar userId={t.assigneeId} name={nameOf(t.assigneeId)} avatarUrl={personOf(t.assigneeId)?.avatarUrl} leader={personOf(t.assigneeId)?.isLeader} />
                       {nameOf(t.assigneeId)}
                     </span>
                     {status && <span>{STATUS_LABEL[status]}</span>}

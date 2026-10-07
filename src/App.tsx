@@ -10,6 +10,10 @@ import { CommandPalette } from "./components/search/CommandPalette";
 import { NoTeamScreen } from "./components/team/NoTeamScreen";
 import { TeamSwitcher } from "./components/team/TeamSwitcher";
 import { TeamView } from "./components/team/TeamView";
+import { NotificationBell } from "./components/notifications/NotificationBell";
+import { NotificationsView } from "./components/notifications/NotificationsView";
+import { useDemoNotifications } from "./hooks/useDemoNotifications";
+import { useTeamNotifications } from "./hooks/useNotifications";
 import { MyTasksView } from "./components/my-tasks/MyTasksView";
 import { WelcomeDialog, markWelcomed, shouldWelcome } from "./components/ui/WelcomeDialog";
 import { useProfile } from "./hooks/useAuth";
@@ -172,7 +176,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   }
 
   const activeBoard = boards?.find((board) => board.id === activeBoardId);
-  useRealtimeSync(team.id, activeBoard?.id ?? null);
+  useRealtimeSync(team.id, activeBoard?.id ?? null, userId);
+  const teamNotifications = useTeamNotifications(team.id);
+  const demoNotificationsState = useDemoNotifications(newDemo ? demo : null);
+  const showDemo = Boolean(demo && newDemo);
+  const notifications = showDemo ? demoNotificationsState : teamNotifications;
 
   return (
     <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin" }}>
@@ -186,6 +194,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
         <div className="h-5 w-px shrink-0 bg-border" />
         <BoardSwitcher teamId={team.id} activeBoardId={activeBoardId} onSelect={handleSelectBoard} onOpenArchive={() => setView("archive")} />
         <ViewTabs view={view} onNavigate={navigate} />
+        <NotificationBell unread={notifications.unread} active={view === "notifications"} onClick={() => navigate("notifications")} />
         <AppMenu userId={userId} view={view} onNavigate={navigate} />
       </div>
       {view === "dashboard" ? (
@@ -203,6 +212,19 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
             />
           </Suspense>
         </DashboardErrorBoundary>
+      ) : view === "notifications" ? (
+        <NotificationsView
+          state={notifications}
+          isDemo={showDemo}
+          onBack={() => setView("board")}
+          onOpen={(item) => {
+            notifications.markRead(item);
+            if (showDemo) return setView("board");
+            if (item.cardId !== null && item.boardId !== null) {
+              handleNavigate({ type: "card", id: item.cardId, title: item.cardTitle, board_id: item.boardId, board_name: item.boardName });
+            }
+          }}
+        />
       ) : view === "my-tasks" ? (
         <MyTasksView
           teamId={team.id}

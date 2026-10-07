@@ -86,7 +86,7 @@ export function Card({ card, listStatus, onOpenDetail, labels, checklistProgress
           due={card.due_date}
           done={listStatus === "done"}
           stalledDays={risk.stalledDays}
-          assignee={assignee && { id: assignee.user_id, name: assignee.profile.display_name }}
+          assignee={assignee && { id: assignee.user_id, name: assignee.profile.display_name, avatarUrl: assignee.profile.avatar_url, isLeader: assignee.is_leader }}
           labels={labels}
           checklist={checklistProgress}
           attachments={attachments}

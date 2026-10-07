@@ -200,7 +200,7 @@ function DashboardBody({ data, period, personId, onSelectPerson, onOpenBoard }: 
             onClick={() => onSelectPerson(p.id)}
             className={`inline-flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 text-sm ${personId === p.id ? "border-primary bg-primary/10 text-text-primary" : "border-border text-text-primary hover:bg-bg-elevated"}`}
           >
-            <Avatar userId={p.id} name={p.name} />
+            <Avatar userId={p.id} name={p.name} avatarUrl={p.avatarUrl} leader={p.isLeader} />
             {p.name}
           </button>
         ))}

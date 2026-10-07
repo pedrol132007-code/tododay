@@ -4,9 +4,9 @@ import { signOut } from "../../db/auth";
 import { useProfile } from "../../hooks/useAuth";
 import { Avatar } from "./Avatar";
 import { feedbackMailto } from "../../lib/feedback";
-import { IconCheck, IconChevronDown, IconMail, IconSettings, IconSignOut, IconTasks, IconUsers } from "./icons";
+import { IconBell, IconCheck, IconChevronDown, IconMail, IconSettings, IconSignOut, IconTasks, IconUsers } from "./icons";
 
-export type AppView = "board" | "archive" | "team" | "settings" | "dashboard" | "my-tasks";
+export type AppView = "board" | "archive" | "team" | "settings" | "dashboard" | "my-tasks" | "notifications";
 
 interface AppMenuProps {
   userId: string;
@@ -59,7 +59,7 @@ export function AppMenu({ userId, view, onNavigate }: AppMenuProps) {
         aria-expanded={open}
         className="flex items-center gap-2 rounded-xl px-2 py-1 text-sm text-text-muted hover:bg-bg-elevated hover:text-text-primary"
       >
-        {profile && <Avatar userId={userId} name={name} title="" />}
+        {profile && <Avatar userId={userId} name={name} title="" avatarUrl={profile.avatar_url} />}
         <span className="max-w-40 truncate">{name}</span>
         <IconChevronDown size={14} />
       </button>
@@ -72,6 +72,7 @@ export function AppMenu({ userId, view, onNavigate }: AppMenuProps) {
             </div>
           )}
           <div className="flex flex-col py-1">
+            <Item view={view} onGo={go} target="notifications" icon={<IconBell size={16} />}>Notificações</Item>
             <Item view={view} onGo={go} target="my-tasks" icon={<IconTasks size={16} />}>Minhas tarefas</Item>
             <Item view={view} onGo={go} target="team" icon={<IconUsers size={16} />}>Equipe</Item>
             <Item view={view} onGo={go} target="settings" icon={<IconSettings size={16} />}>Configurações</Item>

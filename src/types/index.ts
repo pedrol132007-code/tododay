@@ -117,6 +117,8 @@ export interface TeamMember {
   joined_at: string;
   /** Desativado: sem acesso à equipe, mas continua nos cards e no histórico (0013). */
   deactivated_at: string | null;
+  /** Coroa de líder (0016): um selo, não muda permissão. Leitor não é líder. */
+  is_leader: boolean;
 }
 
 export interface TeamInvite {
@@ -139,6 +141,8 @@ export interface Profile {
   id: string;
   email: string;
   display_name: string;
+  /** Caminho da foto no bucket público "avatars" ("<id>/<uuid>.webp"); null = iniciais. */
+  avatar_path: string | null;
   created_at: string;
 }
 
@@ -155,10 +159,50 @@ export interface Activity {
   created_at: string;
 }
 
+/** O que gerou a notificação (0017_notifications.sql). */
+export type NotificationKind = "assigned" | "due_3d" | "due_1d" | "overdue" | "changed";
+export type NotificationChange = "due_date" | "description" | "list" | "attachments";
+
+/** Guardado na época: a lista mostra isto mesmo se o card ou a pessoa mudarem depois. */
+export interface NotificationPayload {
+  card_title: string;
+  board_name: string;
+  actor_name: string | null;
+  actor_was_leader: boolean;
+  due_date: string | null;
+  /** Avisos de prazo: dias que faltavam (negativo = atrasado). */
+  days_left?: number;
+  /** changed: o que mudou, sem repetição. */
+  changes?: NotificationChange[];
+  /** changed: quantos anexos novos. */
+  attachments?: number;
+  /** changed: coluna atual do card. */
+  list_name?: string;
+}
+
+/** "Notification" sozinho colide com a API de notificações do navegador. */
+export interface AppNotification {
+  id: number;
+  user_id: string;
+  team_id: number;
+  board_id: number | null;
+  card_id: number | null;
+  actor_id: string | null;
+  kind: NotificationKind;
+  due_key: string | null;
+  payload: NotificationPayload;
+  created_at: string;
+  updated_at: string;
+  read_at: string | null;
+}
+
 /** Dashboard (docs/superpowers/specs/2026-09-25-dashboard-design.md). Hoje só a demonstração gera. */
 export interface DashboardPerson {
   id: string;
   name: string;
+  /** Só a demonstração preenche (imagem gerada no navegador). */
+  avatarUrl?: string | null;
+  isLeader?: boolean;
 }
 
 /** Status de uma tarefa do dashboard (docs/superpowers/specs/2026-09-28-dashboard-gestor-design.md). */

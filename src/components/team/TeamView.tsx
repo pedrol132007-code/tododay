@@ -12,6 +12,8 @@ import {
 } from "../../hooks/useTeams";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { ActivityList } from "../ui/ActivityList";
+import { Avatar } from "../ui/Avatar";
+import { IconCrown } from "../ui/icons";
 import { useTeamActivity } from "../../hooks/useActivity";
 import { inviteUrl } from "../../lib/pendingInvite";
 import type { MemberRole, MyTeam, TeamInvite } from "../../types";
@@ -110,10 +112,12 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                   deactivated ? "border-dashed border-border" : "border-border bg-bg-elevated"
                 }`}
               >
+                <Avatar userId={member.user_id} name={member.profile.display_name} avatarUrl={member.profile.avatar_url} leader={member.is_leader} large />
                 <div className="flex min-w-[12rem] flex-1 flex-col">
                   <span className={deactivated ? "text-text-muted" : "text-text-primary"}>
                     {member.profile.display_name}
                     {isSelf && <span className="text-text-muted"> (você)</span>}
+                    {member.is_leader && <span className="text-highlight"> · Líder</span>}
                     {deactivated && <span className="text-text-muted"> · desativado</span>}
                     {pending?.includes(member.user_id) && <span className="text-text-muted"> · convite pendente</span>}
                   </span>
@@ -142,9 +146,13 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                 {isAdmin ? (
                   <select
                     value={member.role}
-                    onChange={(e) =>
-                      updateMember.mutate({ userId: member.user_id, changes: { role: e.target.value as MemberRole } })
-                    }
+                    onChange={(e) => {
+                      const role = e.target.value as MemberRole;
+                      updateMember.mutate({
+                        userId: member.user_id,
+                        changes: role === "viewer" && member.is_leader ? { role, is_leader: false } : { role },
+                      });
+                    }}
                     className="rounded-lg border border-border bg-bg-surface px-2 py-1 text-sm text-text-primary outline-none focus:border-primary"
                   >
                     {roleOptions.map((option) => (
@@ -155,6 +163,17 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                   </select>
                 ) : (
                   <span className="text-sm text-text-muted">{roleLabel(member.role)}</span>
+                )}
+                {isAdmin && !deactivated && member.role !== "viewer" && (
+                  <button
+                    type="button"
+                    onClick={() => updateMember.mutate({ userId: member.user_id, changes: { is_leader: !member.is_leader } })}
+                    title={member.is_leader ? "Tira a coroa de líder" : "Marca como líder: a coroa aparece onde a pessoa aparece"}
+                    className="flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-surface hover:text-text-primary"
+                  >
+                    <IconCrown size={14} className={member.is_leader ? "text-highlight" : ""} />
+                    {member.is_leader ? "Tirar coroa" : "Tornar líder"}
+                  </button>
                 )}
                 {isAdmin && !isSelf && (
                   <button

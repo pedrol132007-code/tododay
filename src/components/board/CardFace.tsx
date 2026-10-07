@@ -27,7 +27,7 @@ export interface CardFaceProps {
   /** Coluna "Concluído": prazo e parada não alertam. */
   done: boolean;
   stalledDays: number | null;
-  assignee?: { id: string; name: string };
+  assignee?: { id: string; name: string; avatarUrl?: string | null; isLeader?: boolean };
   labels?: { id: number | string; name: string; color: string }[];
   checklist?: { done: number; total: number };
   /** Quantos anexos o card tem (0 ou ausente: não mostra nada). */
@@ -96,7 +96,7 @@ export function CardFace({ title, actions, priority, due, done, stalledDays, ass
         // Metadados numa linha própria, para o título usar a largura toda do card.
         // O responsável abre a linha, colado ao prazo: quem e até quando ficam juntos.
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2">
-          {assignee && <Avatar userId={assignee.id} name={assignee.name} title={`Responsável: ${assignee.name}`} small />}
+          {assignee && <Avatar userId={assignee.id} name={assignee.name} title={`Responsável: ${assignee.name}`} avatarUrl={assignee.avatarUrl} leader={assignee.isLeader} small />}
           {due && <DueBadge due={due} done={done} />}
           {stalledDays != null && (
             <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px] text-text-muted" title="Sem mudar de coluna">

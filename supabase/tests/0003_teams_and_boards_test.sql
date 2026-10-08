@@ -112,6 +112,10 @@ begin
   -- Colunas são do admin desde a 0013 (o membro não cria: ver 0013_admin_lists_and_deactivation_test).
   insert into public.list (board_id, name, position) values (b, 'A fazer', 1) returning id into l;
   insert into public.list (board_id, name, position) values (b, 'Feito', 2) returning id into l2;
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
   perform pg_temp.logout();
 
   -- ── membro

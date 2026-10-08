@@ -61,6 +61,10 @@ begin
   insert into public.list (board_id, name, position) values (b, 'A fazer', 1) returning id into l_todo;
   perform pg_temp.logout();
   insert into public.team_member (team_id, user_id, role) values (t, v_membro, 'member');
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
 
   -- ── Prazo no próprio card: sem aviso na hora ──
   perform pg_temp.login('membro');

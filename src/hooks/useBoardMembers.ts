@@ -22,7 +22,7 @@ export function useSetBoardMember(boardId: number) {
   });
 }
 
-/** Admin e líder veem todos os boards; os outros, só os boards em que estão. */
-export function seesAllBoards(member: Pick<TeamMember, "role" | "is_leader">): boolean {
-  return member.role === "admin" || member.is_leader;
+/** Só o líder vê todos os boards (0021); os outros, admin inclusive, só os boards em que estão. */
+export function seesAllBoards(member: Pick<TeamMember, "is_leader">): boolean {
+  return member.is_leader;
 }

@@ -8,7 +8,7 @@ import { formatBytes, LIST_STATUS_LABEL } from "../../lib/boardVisuals";
 import { ARCHIVE_DONE_AFTER_DAYS, localDay, staleDone } from "../../lib/dashboardRules";
 import { IconArchive, IconDots, IconTrash } from "../ui/icons";
 import { useToast } from "../ui/Toast";
-import { useIsAdmin } from "../../hooks/useCurrentTeam";
+import { useCanManageBoards } from "../../hooks/useCurrentTeam";
 
 const STATUSES: ListStatus[] = ["todo", "doing", "done"];
 
@@ -37,7 +37,7 @@ function menuPosition(button: HTMLElement): CSSProperties {
  * para admin (a RLS garante). Membros veem o menu só na coluna Concluído, para arquivar os antigos.
  */
 export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete: boolean; onDelete: () => void }) {
-  const isAdmin = useIsAdmin();
+  const canManage = useCanManageBoards();
   const updateSettings = useUpdateListSettings(list.board_id);
   const [open, setOpen] = useState(false);
   const [wipDraft, setWipDraft] = useState("");
@@ -101,7 +101,7 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
     setWipDraft(limit == null ? "" : String(limit));
   }
 
-  if (!isAdmin && list.status !== "done") return null;
+  if (!canManage && list.status !== "done") return null;
 
   return (
     // O cabeçalho da coluna é a alça de arrastar (mouse e teclado): o menu não pode começar um arrasto.
@@ -134,7 +134,7 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
             className="fixed z-40 flex w-60 cursor-default flex-col rounded-xl border border-border bg-bg-surface p-2 shadow-lg"
           >
             {/* Sem espaço, só esta parte rola: o Excluir fica sempre à vista, embaixo. */}
-            {isAdmin && (
+            {canManage && (
             <div className="min-h-0 overflow-y-auto">
               <fieldset className="flex flex-col gap-0.5">
                 <legend className="px-2 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted">Tipo</legend>
@@ -175,7 +175,7 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
             </div>
             )}
 
-            <div className={isAdmin ? "mt-3 shrink-0 border-t border-border pt-2" : "shrink-0"}>
+            <div className={canManage ? "mt-3 shrink-0 border-t border-border pt-2" : "shrink-0"}>
               {list.status === "done" && (
                 <button
                   type="button"
@@ -187,13 +187,13 @@ export function ListMenu({ list, canDelete, onDelete }: { list: List; canDelete:
                   <IconArchive size={14} /> Arquivar concluídos há mais de {ARCHIVE_DONE_AFTER_DAYS} dias ({stale.length})
                 </button>
               )}
-              {isAdmin && confirming && attachments && (
+              {canManage && confirming && attachments && (
                 <p role="alert" className="px-2 pb-2 text-xs text-danger">
                   Excluir a coluna apaga também {attachments.count === 1 ? "1 anexo" : `${attachments.count} anexos`} ({formatBytes(attachments.bytes)}) de cards
                   arquivados nela. Não dá para desfazer.
                 </p>
               )}
-              {isAdmin && (
+              {canManage && (
               <button
                 type="button"
                 disabled={!canDelete}

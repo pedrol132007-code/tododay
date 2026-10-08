@@ -48,8 +48,9 @@ export function useUpdateTeamMember(teamId: number) {
   const queryClient = useQueryClient();
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["teamMembers", teamId] });
-    // O próprio papel pode ter mudado.
+    // O próprio papel pode ter mudado; e a coroa muda quem vê todos os boards (0020).
     queryClient.invalidateQueries({ queryKey: ["teams"] });
+    queryClient.invalidateQueries({ queryKey: ["boards", teamId] });
   };
   return useMutation({
     mutationFn: ({ userId, changes }: { userId: string; changes: Partial<Pick<TeamMember, "role" | "job_title" | "deactivated_at" | "is_leader">> }) =>

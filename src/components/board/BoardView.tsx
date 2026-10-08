@@ -38,7 +38,7 @@ import { useTeamMembers } from "../../hooks/useTeams";
 import { useSession } from "../../hooks/useAuth";
 import { useCreateList, useLists, useUpdateListPosition, useUpdateListPositions } from "../../hooks/useLists";
 import { resolveInsertPosition } from "../../lib/position";
-import { useCanEdit, useCurrentTeamId, useIsAdmin } from "../../hooks/useCurrentTeam";
+import { useCanEdit, useCurrentTeamId } from "../../hooks/useCurrentTeam";
 import { hasFilters, matchesFilters, personSlugs, slugify, sortCards, type FilterableCard } from "../../lib/boardFilters";
 import { localDay } from "../../lib/dashboardRules";
 import { useCompact } from "../../hooks/usePreferences";
@@ -132,7 +132,6 @@ export function BoardView({
   const moveCardToList = useMoveCardToList();
   const [newListName, setNewListName] = useState("");
   const canEdit = useCanEdit();
-  const isAdmin = useIsAdmin();
   const compact = useCompact();
 
   const computedBoard: BoardList[] = listData.map((list, index) => ({
@@ -470,9 +469,9 @@ export function BoardView({
                 icon={<IconColumns size={22} />}
                 title="Nenhuma coluna ainda"
                 description={
-                  isAdmin
+                  canEdit
                     ? "Crie a primeira coluna ao lado, por exemplo “A fazer”, “Em andamento” e “Concluído”."
-                    : "Quando o admin da equipe criar as colunas, elas aparecem aqui."
+                    : "Quando alguém da equipe criar as colunas, elas aparecem aqui."
                 }
               />
             ) : (
@@ -495,7 +494,7 @@ export function BoardView({
               ))
             )}
           </SortableContext>
-          {isAdmin && (
+          {canEdit && (
             <div className="flex w-72 shrink-0 flex-col gap-2 rounded-2xl border border-dashed border-border p-3">
               <input
                 value={newListName}

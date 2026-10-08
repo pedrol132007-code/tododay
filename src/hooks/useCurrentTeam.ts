@@ -9,6 +9,11 @@ interface CurrentTeam {
   canEdit: boolean;
   /** Só admin exclui boards (a RLS também só deixa admin). */
   isAdmin: boolean;
+  /**
+   * Admin ou líder (0020): cria e renomeia boards, escolhe as pessoas de cada board e muda tipo,
+   * limite e exclusão de colunas. A RLS garante; isto só mostra os controles.
+   */
+  canManageBoards: boolean;
 }
 
 export const CurrentTeamContext = createContext<CurrentTeam | null>(null);
@@ -25,6 +30,10 @@ export function useCanEdit(): boolean {
 
 export function useIsAdmin(): boolean {
   return useCurrentTeam().isAdmin;
+}
+
+export function useCanManageBoards(): boolean {
+  return useCurrentTeam().canManageBoards;
 }
 
 export function useCurrentTeamId(): number {

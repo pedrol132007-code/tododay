@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addBoardMember, listBoardMemberIds, removeBoardMember } from "../db/boardMembers";
-import { useTeamMembers } from "./useTeams";
 import type { TeamMember } from "../types";
 
 export function useBoardMemberIds(boardId: number) {
@@ -26,12 +25,4 @@ export function useSetBoardMember(boardId: number) {
 /** Admin e líder veem todos os boards; os outros, só os boards em que estão. */
 export function seesAllBoards(member: Pick<TeamMember, "role" | "is_leader">): boolean {
   return member.role === "admin" || member.is_leader;
-}
-
-/** Quem pode ser responsável por um card deste board: quem vê o board e está ativo. */
-export function useBoardPeople(teamId: number, boardId: number) {
-  const { data: members } = useTeamMembers(teamId);
-  const { data: ids } = useBoardMemberIds(boardId);
-  if (!members || !ids) return undefined;
-  return members.filter((m) => seesAllBoards(m) || ids.includes(m.user_id));
 }

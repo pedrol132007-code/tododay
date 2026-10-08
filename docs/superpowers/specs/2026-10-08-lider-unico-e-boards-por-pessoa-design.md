@@ -103,3 +103,10 @@ Dashboard com dados reais (projeto 2). Papel diferente por board (o papel contin
 - Testes antigos que assumiam "membro não cria coluna" ou "membro vê todos os boards" são
   atualizados para a regra nova.
 - e2e simulados: menu da coluna para membro, "Pessoas do board".
+
+## Mudança de 2026-10-08 (0021)
+
+A pedido do usuário, só o líder vê todos os boards. O admin entra nos boards como qualquer pessoa
+(marcado ou não em "Pessoas do board") e mantém os poderes de gestão nos boards que vê. No deploy,
+os admins entram em todos os boards existentes. Admin enxerga (sem o conteúdo) um board sem ninguém:
+cobre o `insert ... returning` da criação e evita board perdido.

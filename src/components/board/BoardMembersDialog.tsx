@@ -10,7 +10,7 @@ interface BoardMembersDialogProps {
   onClose: () => void;
 }
 
-/** Quem participa do board (0020). Admin e líder veem todos os boards: aparecem marcados e travados. */
+/** Quem participa do board (0020). O líder vê todos os boards (0021): aparece marcado e travado. */
 export function BoardMembersDialog({ board, onClose }: BoardMembersDialogProps) {
   const { data: members } = useTeamMembers(board.team_id);
   const { data: ids } = useBoardMemberIds(board.id);

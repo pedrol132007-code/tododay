@@ -124,7 +124,7 @@ export interface TeamMember {
   is_leader: boolean;
 }
 
-/** Quem participa de um board (0020). Admin e líder veem todos os boards sem estar aqui. */
+/** Quem participa de um board (0020). Só o líder vê todos os boards sem estar aqui (0021). */
 export interface BoardMember {
   board_id: number;
   user_id: string;

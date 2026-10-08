@@ -1,6 +1,6 @@
 import { must, supabase } from "./supabase";
 
-/** Quem participa do board (0020). Admin e líder veem todos os boards sem estar aqui. */
+/** Quem participa do board (0020). Só o líder vê todos os boards sem estar aqui (0021). */
 export async function listBoardMemberIds(boardId: number): Promise<string[]> {
   const rows = must(await supabase.from("board_member").select("user_id").eq("board_id", boardId));
   return rows.map((r) => r.user_id);

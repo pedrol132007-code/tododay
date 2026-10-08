@@ -10,7 +10,7 @@ interface BoardMembersDialogProps {
   onClose: () => void;
 }
 
-/** Quem participa do board (0020). Admin e líder veem todos os boards: aparecem marcados, sem caixa. */
+/** Quem participa do board (0020). Admin e líder veem todos os boards: aparecem marcados e travados. */
 export function BoardMembersDialog({ board, onClose }: BoardMembersDialogProps) {
   const { data: members } = useTeamMembers(board.team_id);
   const { data: ids } = useBoardMemberIds(board.id);
@@ -78,13 +78,7 @@ export function BoardMembersDialog({ board, onClose }: BoardMembersDialogProps) 
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-text-primary">{member.profile.display_name}</span>
                     <span className="block truncate text-xs text-text-muted">
-                      {all
-                        ? `${member.is_leader ? "Líder" : "Admin"}: vê todos os boards`
-                        : member.role === "viewer"
-                          ? "Leitor: só lê"
-                          : member.deactivated_at
-                            ? "Desativado"
-                            : member.job_title}
+                      {member.role === "viewer" ? "Leitor: só lê" : member.deactivated_at ? "Desativado" : member.job_title}
                     </span>
                   </span>
                 </label>

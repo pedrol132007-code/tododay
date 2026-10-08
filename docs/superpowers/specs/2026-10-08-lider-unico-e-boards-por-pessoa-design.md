@@ -57,7 +57,10 @@ líder tem tudo das duas colunas. A coroa continua só com o admin (tela Equipe)
 - Atribuir card: só a quem tem acesso ao board (`validate_card_assignee` passa a usar
   `board_role_of` do responsável, além das regras de hoje).
 - Tirar alguém de um board: os cards dele naquele board ficam sem responsável, a não ser que ele
-  continue com acesso (admin ou líder).
+  continue com acesso (admin ou líder). Perder a coroa ou deixar de ser admin faz o mesmo nos boards
+  que a pessoa deixa de ver.
+- Excluir um board apaga o histórico dele (`activity.board_id` passa a `on delete cascade`), para
+  os títulos de um board privado não virarem atividade da equipe.
 - Leitor pode estar em boards e continua só lendo.
 
 ## Outras regras que mudam
@@ -76,8 +79,9 @@ líder tem tudo das duas colunas. A coroa continua só com o admin (tela Equipe)
 
 ## Tela
 
-- `CurrentTeamContext` ganha `isLeader` e `canManageBoards` (admin ou líder); `MyTeam` ganha
-  `is_leader`.
+- `CurrentTeamContext` ganha `canManageBoards` (admin ou líder); `MyTeam` ganha `is_leader`.
+- A coroa na tela Equipe vira "Passar a coroa" quando já existe um líder. Ganhar ou perder a coroa
+  atualiza a tela da própria pessoa pelo Realtime (`team_member` filtrado pelo `user_id`).
 - Lista de boards: criar e renomear para admin e líder; excluir só admin. Menu do board ganha
   "Pessoas do board" (admin e líder): lista da equipe com caixas de marcar; admin e líder aparecem
   como "vê todos os boards".

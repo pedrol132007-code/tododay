@@ -181,7 +181,7 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                     className="flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-surface hover:text-text-primary"
                   >
                     <IconCrown size={14} className={member.is_leader ? "text-highlight" : ""} />
-                    {member.is_leader ? "Tirar coroa" : "Tornar líder"}
+                    {member.is_leader ? "Tirar coroa" : leader ? "Passar a coroa" : "Tornar líder"}
                   </button>
                 )}
                 {isAdmin && !isSelf && (

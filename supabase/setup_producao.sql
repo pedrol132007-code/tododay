@@ -2559,5 +2559,37 @@ as $$
     and public.board_role_of(p_board_id, p_user_id) is not null;
 $$;
 
--- Entrar ou sair de um board atualiza a lista de boards de quem está aberto.
-alter publication supabase_realtime add table public.board_member;
+-- O histórico de um board some com ele: com "on delete set null" (0009), as linhas de um board
+-- privado excluído ficariam com board_id null e a equipe toda leria os títulos dos cards dele.
+alter table public.activity drop constraint activity_board_id_fkey;
+alter table public.activity add constraint activity_board_id_fkey
+  foreign key (board_id) references public.board (id) on delete cascade;
+
+-- Perdeu a coroa ou deixou de ser admin: perde os boards em que não está, e os cards dele ali
+-- ficam sem responsável (como ao sair do board).
+create function public.unassign_lost_boards()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if (old.is_leader and not new.is_leader) or (old.role = 'admin' and new.role <> 'admin') then
+    update public.card c set assignee_id = null
+    from public.board b
+    where b.id = c.board_id and b.team_id = new.team_id and c.assignee_id = new.user_id
+      and public.board_role_of(c.board_id, new.user_id) is null;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger team_member_unassign_lost_boards
+  after update of is_leader, role on public.team_member
+  for each row execute function public.unassign_lost_boards();
+
+revoke execute on function public.unassign_lost_boards() from public, anon, authenticated;
+
+-- Entrar num board, ganhar ou perder a coroa: a tela de quem está aberto se atualiza (o cliente
+-- filtra pelo próprio user_id).
+alter publication supabase_realtime add table public.board_member, public.team_member;

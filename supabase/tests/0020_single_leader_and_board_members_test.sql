@@ -181,8 +181,11 @@ begin
 
   -- ── A coroa passa: o ex-líder fica só com os boards em que está ──
   perform pg_temp.login('admin');
+  update public.card set assignee_id = pg_temp.uid('lider') where id = c2;
   update public.team_member set is_leader = true where team_id = t and user_id = pg_temp.uid('membro');
   perform pg_temp.logout();
+  perform pg_temp.assert_that((select assignee_id from public.card where id = c2) is null,
+    'card de board que o ex-líder não vê fica sem responsável');
   perform pg_temp.login('lider');
   perform pg_temp.assert_that((select count(*) from public.board where team_id = t) = 1,
     'ex-líder vê só o board que criou');
@@ -194,6 +197,13 @@ begin
   delete from public.team_member where team_id = t and user_id = pg_temp.uid('leitor');
   perform pg_temp.assert_that(not exists (select 1 from public.board_member where user_id = pg_temp.uid('leitor')),
     'sair da equipe tira dos boards dela');
+
+  -- ── Excluir board leva o histórico dele junto (nada vira atividade "da equipe") ──
+  perform pg_temp.login('admin');
+  delete from public.board where id = b2;
+  perform pg_temp.logout();
+  perform pg_temp.assert_that(not exists (select 1 from public.activity where team_id = t and payload::text like '%Segredo do board 2%'),
+    'o histórico do board excluído some com ele');
 
   perform pg_temp.assert_that(t_fora is not null, 'equipe de fora criada');
   raise exception 'PASSOU: todos os testes da 0020 passaram';

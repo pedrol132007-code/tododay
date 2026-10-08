@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item" | "card_attachment" | "activity" | "notification" | "board_member";
+export type RealtimeTable = "board" | "list" | "card" | "label" | "card_label" | "checklist_item" | "card_attachment" | "activity" | "notification" | "board_member" | "team_member";
 
 /**
  * Avisa (só o nome da tabela) quando algo muda nos boards da equipe, no board aberto ou nas notificações da pessoa.
@@ -24,6 +24,8 @@ export function subscribeToChanges(
   // Entrar num board (0020) faz ele aparecer na lista. (O Realtime não filtra saídas; quem sai
   // deixa de ver o conteúdo pela RLS e o board some na próxima busca.)
   listen("board_member", `user_id=eq.${userId}`);
+  // Ganhar ou perder a coroa (ou o papel) muda o que a pessoa vê e pode fazer.
+  listen("team_member", `user_id=eq.${userId}`);
   if (boardId !== null) {
     listen("list", `board_id=eq.${boardId}`);
     listen("card", `board_id=eq.${boardId}`);

@@ -217,8 +217,24 @@ from public, anon, authenticated;
 drop policy "board_select" on public.board;
 drop policy "board_insert" on public.board;
 drop policy "board_update" on public.board;
+-- Pelo team_id da própria linha, sem consultar o board: no insert ... returning a linha nova ainda
+-- não aparece numa consulta (board_role daria null e o insert falharia).
+create function public.sees_board(p_team_id bigint, p_board_id bigint)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select public.can_manage_team_boards(p_team_id)
+    or (public.team_role(p_team_id) is not null
+        and exists (select 1 from public.board_member bm where bm.board_id = p_board_id and bm.user_id = auth.uid()));
+$$;
+
+revoke execute on function public.sees_board(bigint, bigint) from public, anon;
+
 create policy "board_select" on public.board
-  for select to authenticated using (public.board_role(id) is not null);
+  for select to authenticated using (public.sees_board(team_id, id));
 create policy "board_insert" on public.board
   for insert to authenticated with check (public.can_manage_team_boards(team_id));
 create policy "board_update" on public.board

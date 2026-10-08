@@ -84,6 +84,10 @@ begin
   insert into public.team_member (team_id, user_id, role) values
     (t, v_membro, 'member'), (t, pg_temp.uid('outro'), 'member'), (t, pg_temp.uid('leitor'), 'viewer');
   update public.team_member set is_leader = true where team_id = t and user_id = pg_temp.uid('admin');
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
 
   -- ── Atribuição ──
   perform pg_temp.login('admin');

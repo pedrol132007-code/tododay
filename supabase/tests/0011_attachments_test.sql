@@ -92,6 +92,10 @@ begin
   perform pg_temp.logout();
   insert into public.team_member (team_id, user_id, role)
   values (t, pg_temp.uid('membro'), 'member'), (t, pg_temp.uid('leitor'), 'viewer');
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
 
   -- Como a Edge Function (service_role): grava os metadados depois de aprovar o arquivo.
   p1 := c || '/' || gen_random_uuid();

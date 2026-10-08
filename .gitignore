@@ -19,3 +19,6 @@ docs/identidade-benner/screenshots/
 # Playwright
 test-results/
 playwright-report/
+
+# Arquivos temporários da CLI do Supabase
+supabase/.temp/

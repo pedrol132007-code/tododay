@@ -31,6 +31,10 @@ export function useRealtimeSync(teamId: number, boardId: number | null, userId: 
           return [["notifications"], ["notificationAttachments"]];
         case "activity":
           return [["activity"]];
+        case "team_member":
+          return [["teams"], ["boards", teamId], ["teamMembers", teamId], ["search"], ["myTasks"]];
+        case "board_member":
+          return [["boards", teamId], ["boardMembers"], ["search"], ["myTasks"]];
       }
     };
 

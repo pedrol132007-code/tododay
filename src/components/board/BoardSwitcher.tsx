@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useBoards, useCreateBoard, useRenameBoard } from "../../hooks/useBoards";
-import { useIsAdmin } from "../../hooks/useCurrentTeam";
-import { IconArchive, IconDots, IconPencil, IconPlus, IconTrash } from "../ui/icons";
+import { useCanManageBoards, useIsAdmin } from "../../hooks/useCurrentTeam";
+import { IconArchive, IconDots, IconPencil, IconPlus, IconTrash, IconUsers } from "../ui/icons";
+import { BoardMembersDialog } from "./BoardMembersDialog";
 import { DeleteBoardDialog } from "./DeleteBoardDialog";
 import type { Board } from "../../types";
 
@@ -19,6 +20,8 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
   const renameBoard = useRenameBoard(teamId);
   const [creating, setCreating] = useState(false);
   const isAdmin = useIsAdmin();
+  const canManage = useCanManageBoards();
+  const [peopleOf, setPeopleOf] = useState<Pick<Board, "id" | "team_id" | "name"> | null>(null);
   const [newBoardName, setNewBoardName] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState<Board | null>(null);
@@ -49,7 +52,11 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
       return;
     }
     createBoard.mutate(name, {
-      onSuccess: (id) => onSelect(id),
+      onSuccess: (id) => {
+        onSelect(id);
+        // Board novo: já escolhe quem participa (quem criou já está nele).
+        setPeopleOf({ id, team_id: teamId, name });
+      },
     });
     setNewBoardName("");
     setCreating(false);
@@ -108,7 +115,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
             <button
               type="button"
               onClick={() => onSelect(board.id)}
-              onDoubleClick={() => active && isAdmin && startRename(board)}
+              onDoubleClick={() => active && canManage && startRename(board)}
               className={`py-1 ${active ? "pl-3 pr-1" : "px-3"}`}
             >
               {board.name}
@@ -127,13 +134,25 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
             )}
             {active && menuOpen && (
               <div className="absolute left-0 top-full z-40 mt-1 w-48 rounded-xl border border-border bg-bg-surface p-1 font-normal shadow-lg">
-                {isAdmin && (
+                {canManage && (
                   <button
                     type="button"
                     onClick={() => startRename(board)}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-primary hover:bg-bg-elevated"
                   >
                     <IconPencil size={14} /> Renomear
+                  </button>
+                )}
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setPeopleOf(board);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-text-primary hover:bg-bg-elevated"
+                  >
+                    <IconUsers size={14} /> Pessoas do board
                   </button>
                 )}
                 <button
@@ -163,7 +182,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
           </div>
         );
       })}
-      {!isAdmin ? null : creating ? (
+      {!canManage ? null : creating ? (
         <input
           autoFocus
           value={newBoardName}
@@ -187,6 +206,7 @@ export function BoardSwitcher({ teamId, activeBoardId, onSelect, onOpenArchive }
         </button>
       )}
       <AnimatePresence>
+        {peopleOf && <BoardMembersDialog board={peopleOf} onClose={() => setPeopleOf(null)} />}
         {deleting && (
           <DeleteBoardDialog board={deleting} onDeleted={() => handleDeleted(deleting)} onClose={() => setDeleting(null)} />
         )}

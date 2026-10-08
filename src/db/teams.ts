@@ -6,12 +6,12 @@ export async function listMyTeams(userId: string): Promise<MyTeam[]> {
   const rows = must(
     await supabase
       .from("team_member")
-      .select("role, team(*)")
+      .select("role, is_leader, team(*)")
       .eq("user_id", userId)
-      .returns<(Pick<TeamMember, "role"> & { team: Team })[]>(),
+      .returns<(Pick<TeamMember, "role" | "is_leader"> & { team: Team })[]>(),
   );
   return rows
-    .map(({ role, team }) => ({ ...team, role }))
+    .map(({ role, is_leader, team }) => ({ ...team, role, is_leader }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 

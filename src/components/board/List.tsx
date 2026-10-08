@@ -7,7 +7,7 @@ import type { Card as CardType, Label, List as ListType } from "../../types";
 import type { CardAttachmentTotals } from "../../hooks/useAttachments";
 import { useCardCount, useCreateCard } from "../../hooks/useCards";
 import { useDeleteList, useRenameList } from "../../hooks/useLists";
-import { useCanEdit, useIsAdmin } from "../../hooks/useCurrentTeam";
+import { useCanEdit } from "../../hooks/useCurrentTeam";
 import { useCompact } from "../../hooks/usePreferences";
 import { InlineEditableText } from "../ui/InlineEditableText";
 import { Card } from "./Card";
@@ -58,7 +58,6 @@ export function List({
   const [newCardTitle, setNewCardTitle] = useState("");
   const canEdit = useCanEdit();
   // A estrutura (nome, ordem e configurações da coluna) é do admin; membros mexem nos cards.
-  const isAdmin = useIsAdmin();
   const compact = useCompact();
 
   // Card novo entra no fim: rola a coluna até ele, como no Trello.
@@ -72,7 +71,7 @@ export function List({
 
   const canDelete = cardCount !== undefined && cardCount === 0;
 
-  const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" }, disabled: { draggable: !isAdmin, droppable: false } });
+  const sortable = useSortable({ id: `list-${list.id}`, data: { type: "list" }, disabled: { draggable: !canEdit, droppable: false } });
   const droppable = useDroppable({
     id: `cards-of-list-${list.id}`,
     data: { type: "list-container", listId: list.id },
@@ -130,14 +129,14 @@ export function List({
           ref={sortable.setActivatorNodeRef}
           {...sortable.attributes}
           {...sortable.listeners}
-          className={`flex shrink-0 items-center justify-between gap-2 ${isAdmin ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
+          className={`flex shrink-0 items-center justify-between gap-2 ${canEdit ? "cursor-grab touch-none active:cursor-grabbing" : ""}`}
         >
           <div className="flex min-w-0 flex-col">
             <InlineEditableText
               value={list.name}
               onSave={(name) => renameList.mutate({ id: list.id, name })}
               className="text-base font-semibold"
-              readOnly={!isAdmin}
+              readOnly={!canEdit}
             />
             {/* O tipo só quando o nome não é ele mesmo ("Em revisão" → Em andamento): as colunas sobem. */}
             {showsListStatus(list.name, list.status) && (

@@ -183,7 +183,7 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
   const notifications = showDemo ? demoNotificationsState : teamNotifications;
 
   return (
-    <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin" }}>
+    <CurrentTeamContext.Provider value={{ teamId: team.id, canEdit: team.role !== "viewer", isAdmin: team.role === "admin", canManageBoards: team.role === "admin" || team.is_leader }}>
     <div className="flex h-screen w-screen flex-col overflow-hidden">
       <div className="h-1 shrink-0 bg-brand-gradient" />
       <div className="flex items-center justify-between border-b border-border bg-bg-surface">
@@ -266,7 +266,11 @@ function TeamWorkspace({ userId, teams, team, onSelectTeam }: TeamWorkspaceProps
           <EmptyState
             icon={<IconColumns size={22} />}
             title="Nenhum board ainda"
-            description="Crie o primeiro board em “Novo board”, no topo da tela."
+            description={
+              team.role === "admin" || team.is_leader
+                ? "Crie o primeiro board em “Novo board”, no topo da tela."
+                : "Você ainda não participa de nenhum board. Peça ao líder ou a um admin da equipe para incluir você."
+            }
           />
         </div>
       )}

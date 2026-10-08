@@ -107,6 +107,8 @@ export interface Team {
 /** Equipe do ponto de vista do usuário logado. */
 export interface MyTeam extends Team {
   role: MemberRole;
+  /** Líder da equipe (0016; um só desde 0020): vê todos os boards, cria e organiza boards. */
+  is_leader: boolean;
 }
 
 export interface TeamMember {
@@ -117,8 +119,16 @@ export interface TeamMember {
   joined_at: string;
   /** Desativado: sem acesso à equipe, mas continua nos cards e no histórico (0013). */
   deactivated_at: string | null;
-  /** Coroa de líder (0016): um selo, não muda permissão. Leitor não é líder. */
+  /** Coroa de líder (0016; um por equipe desde 0020): vê todos os boards, cria e renomeia boards,
+   * escolhe as pessoas de cada board e mexe no tipo e limite das colunas. Leitor não é líder. */
   is_leader: boolean;
+}
+
+/** Quem participa de um board (0020). Admin e líder veem todos os boards sem estar aqui. */
+export interface BoardMember {
+  board_id: number;
+  user_id: string;
+  added_at: string;
 }
 
 export interface TeamInvite {

@@ -420,14 +420,27 @@ test("menu: Enviar feedback abre um e-mail para o app com a versão e a platafor
   expect(new URLSearchParams(href.split("?")[1]).get("body")).toMatch(/Tododay \d+\.\d+\.\d+ \(web\)$/);
 });
 
-test("membro usa o board, mas não vê os controles da estrutura (colunas e boards são do admin)", async ({ page }) => {
+test("membro cria colunas, mas tipo, limite e boards são do admin e do líder", async ({ page }) => {
   await openLongBoard(page, "/", {
-    team_member: [{ role: "member", team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }],
+    team_member: [{ role: "member", is_leader: false, team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }],
   });
   await expect(page.getByPlaceholder("Novo card...").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Adicionar coluna" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Adicionar coluna" })).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Novo board" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Configurações da coluna/ })).toHaveCount(0);
+  await page.getByRole("button", { name: /Opções do board/ }).click();
+  await expect(page.getByRole("button", { name: "Pessoas do board" })).toHaveCount(0);
+});
+
+test("líder cria boards e escolhe as pessoas de cada board", async ({ page }) => {
+  await openLongBoard(page, "/", {
+    team_member: [{ role: "member", is_leader: true, team: { id: 1, name: "Equipe E2E", created_by: USER_ID, created_at: NOW } }],
+  });
+  await expect(page.getByRole("button", { name: "Novo board" })).toHaveCount(1);
+  await expect(page.getByRole("button", { name: /Configurações da coluna/ }).first()).toBeVisible();
+  await page.getByRole("button", { name: /Opções do board/ }).click();
+  await page.getByRole("button", { name: "Pessoas do board" }).click();
+  await expect(page.getByRole("dialog", { name: /Pessoas do board/ })).toBeVisible();
 });
 
 test("convite por e-mail: admin convida, vê o convite pendente e gera um link de acesso", async ({ page }) => {

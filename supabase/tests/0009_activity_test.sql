@@ -126,6 +126,10 @@ begin
   perform pg_temp.assert_that((pg_temp.last('card.due_date_changed')).payload ->> 'to' = '2026-10-05', 'vencimento');
   perform pg_temp.logout();
   insert into public.team_member (team_id, user_id, role) values (t, pg_temp.uid('membro'), 'member');
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
   perform pg_temp.login('admin');
   update public.card set assignee_id = pg_temp.uid('membro') where id = c;
   perform pg_temp.assert_that((pg_temp.last('card.assigned')).payload ->> 'name' = 'membro', 'responsável');

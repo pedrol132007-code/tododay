@@ -78,21 +78,28 @@ begin
   perform pg_temp.logout();
   insert into public.team_member (team_id, user_id, role) values
     (t, pg_temp.uid('admin2'), 'admin'), (t, pg_temp.uid('membro'), 'member'), (t, pg_temp.uid('leitor'), 'viewer');
+  -- Boards por pessoa (0020): todos no board.
+  insert into public.board_member (board_id, user_id) select b, m.user_id from public.team_member m where m.team_id = t
+    on conflict do nothing;
 
-  -- ── Membro usa o board, mas não mexe na estrutura ──
+  -- ── Membro usa o board e cria, renomeia e reordena colunas (0020), mas não muda tipo, limite nem exclui ──
   perform pg_temp.login('membro');
-  perform pg_temp.assert_that(pg_temp.fails(format(
-    'insert into public.list (board_id, name, position) values (%s, %L, 3)', b, 'Nova')), 'membro não cria coluna');
-  perform pg_temp.assert_that(pg_temp.affected(format('update public.list set name = %L where id = %s', 'X', l1)) = 0,
-    'membro não renomeia coluna');
-  perform pg_temp.assert_that(pg_temp.affected(format('update public.list set wip_limit = 3 where id = %s', l1)) = 0,
+  perform pg_temp.assert_that(not pg_temp.fails(format(
+    'insert into public.list (board_id, name, position) values (%s, %L, 3)', b, 'Nova')), 'membro cria coluna (0020)');
+  perform pg_temp.assert_that(pg_temp.affected(format('update public.list set name = %L where id = %s', 'A fazer', l1)) = 1,
+    'membro renomeia coluna (0020)');
+  perform pg_temp.assert_that(pg_temp.fails(format('update public.list set wip_limit = 3 where id = %s', l1)),
     'membro não muda o limite de WIP');
-  perform pg_temp.assert_that(pg_temp.affected(format('update public.list set status = %L where id = %s', 'done', l1)) = 0,
+  perform pg_temp.assert_that(pg_temp.fails(format('update public.list set status = %L where id = %s', 'done', l1)),
     'membro não muda o tipo da coluna');
   perform public.set_list_positions(jsonb_build_array(jsonb_build_object('id', l1, 'position', 9)));
-  perform pg_temp.assert_that((select position from public.list where id = l1) = 1, 'membro não reordena colunas');
+  perform pg_temp.assert_that((select position from public.list where id = l1) = 9, 'membro reordena colunas (0020)');
+  update public.list set position = 1 where id = l1;
   perform pg_temp.assert_that(pg_temp.affected(format('delete from public.list where id = %s', l1)) = 0,
     'membro não exclui coluna');
+  perform pg_temp.logout();
+  delete from public.list where board_id = b and name = 'Nova';
+  perform pg_temp.login('membro');
   perform pg_temp.assert_that(pg_temp.fails(format(
     'insert into public.board (team_id, name, position) values (%s, %L, 2)', t, 'Outro')), 'membro não cria board');
   perform pg_temp.assert_that(pg_temp.affected(format('update public.board set name = %L where id = %s', 'X', b)) = 0,

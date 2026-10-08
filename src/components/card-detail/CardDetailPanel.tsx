@@ -4,6 +4,7 @@ import type { CardPriority, Card as CardType } from "../../types";
 import { useRenameCard, useUpdateCardAssignee, useUpdateCardDescription, useUpdateCardDueDate, useUpdateCardPriority } from "../../hooks/useCards";
 import { PRIORITIES, PRIORITY_LABEL } from "../../lib/boardVisuals";
 import { useTeamMembers } from "../../hooks/useTeams";
+import { seesAllBoards, useBoardMemberIds } from "../../hooks/useBoardMembers";
 import { useLists } from "../../hooks/useLists";
 import { useCardActivity } from "../../hooks/useActivity";
 import { useAttachments, useAttachmentUploads } from "../../hooks/useAttachments";
@@ -51,6 +52,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
   const inDoneList = lists?.find((l) => l.id === card.list_id)?.status === "done";
   const canEdit = useCanEdit();
   const { data: members } = useTeamMembers(useCurrentTeamId());
+  const { data: boardMemberIds } = useBoardMemberIds(card.board_id);
   const assignee = members?.find((m) => m.user_id === card.assignee_id);
   const { data: activities } = useCardActivity(card.id);
   const { data: attachments } = useAttachments(card.id);
@@ -135,9 +137,11 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
                 className={fieldClass}
               >
                 <option value="">Ninguém</option>
-                {/* Quem está desativado não recebe cards novos, mas continua aparecendo nos que já são dele. */}
+                {/* Quem está desativado não recebe cards novos, mas continua aparecendo nos que já são dele.
+                    Só quem vê o board (0020): admin, líder e as pessoas do board. */}
                 {(members ?? [])
                   .filter((member) => !member.deactivated_at || member.user_id === card.assignee_id)
+                  .filter((member) => member.user_id === card.assignee_id || seesAllBoards(member) || !!boardMemberIds?.includes(member.user_id))
                   .map((member) => (
                     <option key={member.user_id} value={member.user_id} disabled={!!member.deactivated_at}>
                       {member.profile.display_name}

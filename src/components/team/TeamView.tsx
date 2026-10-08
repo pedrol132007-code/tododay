@@ -55,6 +55,9 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
   const [confirmingRemoval, setConfirmingRemoval] = useState<string | null>(null);
   const [confirmingDeactivation, setConfirmingDeactivation] = useState<string | null>(null);
 
+  // Um líder por equipe (0020): dar a coroa a outra pessoa tira a do líder atual.
+  const leader = members?.find((m) => m.is_leader);
+
   const actionError = updateMember.error ?? removeMember.error ?? revokeInvite.error ?? renameTeam.error;
 
   function handleRemove(memberId: string) {
@@ -168,11 +171,17 @@ export function TeamView({ userId, team, onBack }: TeamViewProps) {
                   <button
                     type="button"
                     onClick={() => updateMember.mutate({ userId: member.user_id, changes: { is_leader: !member.is_leader } })}
-                    title={member.is_leader ? "Tira a coroa de líder" : "Marca como líder: a coroa aparece onde a pessoa aparece"}
+                    title={
+                      member.is_leader
+                        ? "Tira a coroa de líder"
+                        : leader
+                          ? `A coroa passa de ${leader.profile.display_name} para ${member.profile.display_name}`
+                          : "Líder vê todos os boards, cria boards e escolhe as pessoas de cada um"
+                    }
                     className="flex items-center gap-1 rounded-lg px-3 py-1 text-sm text-text-muted hover:bg-bg-surface hover:text-text-primary"
                   >
                     <IconCrown size={14} className={member.is_leader ? "text-highlight" : ""} />
-                    {member.is_leader ? "Tirar coroa" : "Tornar líder"}
+                    {member.is_leader ? "Tirar coroa" : leader ? "Passar a coroa" : "Tornar líder"}
                   </button>
                 )}
                 {isAdmin && !isSelf && (
@@ -326,8 +335,8 @@ function InviteForm({ teamId }: { teamId: number }) {
         onSuccess: (status) => {
           setDone(
             status === "invited"
-              ? `Convite enviado para ${invited}. Se não chegar (veja o lixo eletrônico), use "Gerar link de acesso" ao lado do nome.`
-              : `${invited} já tinha conta no Tododay e entrou na equipe.`,
+              ? `Convite enviado para ${invited}. Se não chegar (veja o lixo eletrônico), use "Gerar link de acesso" ao lado do nome. Inclua a pessoa nos boards em “Pessoas do board”, no menu de cada board.`
+              : `${invited} já tinha conta no Tododay e entrou na equipe. Inclua a pessoa nos boards em “Pessoas do board”, no menu de cada board.`,
           );
           setEmail("");
           setName("");

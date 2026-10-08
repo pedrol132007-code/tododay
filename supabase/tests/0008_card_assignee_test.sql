@@ -100,6 +100,10 @@ begin
   insert into public.team_member (team_id, user_id, role) values (t, pg_temp.uid('membro'), 'member');
   -- membro também está na equipe do estranho, para ver que sair de uma não mexe na outra
   insert into public.team_member (team_id, user_id, role) values (t2, pg_temp.uid('membro'), 'member');
+  -- Boards por pessoa (0020): todo mundo da equipe em todos os boards dela, como antes.
+  insert into public.board_member (board_id, user_id)
+    select bb.id, mm.user_id from public.board bb join public.team_member mm on mm.team_id = bb.team_id
+    on conflict do nothing;
 
   perform pg_temp.login('admin');
   insert into public.card (list_id, title, position, assignee_id) values (l, 'Card', 1, pg_temp.uid('membro')) returning id into c;

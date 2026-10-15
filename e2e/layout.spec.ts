@@ -404,6 +404,43 @@ test("Mover para…: escolhe coluna e posição no painel do card", async ({ pag
   await expect(page.getByText("Movido para “Coluna curta”")).toBeVisible();
 });
 
+test("painel do card: descrição e título com Salvar e Cancelar", async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Card 5 Arquivar card" }).click({ position: { x: 200, y: 30 } });
+  const panel = page.getByRole("dialog", { name: "Card 5" });
+  const patches: string[] = [];
+  page.on("request", (r) => r.method() === "PATCH" && r.url().includes("/rest/v1/card") && patches.push(r.postData() ?? ""));
+
+  // Cancelar desfaz sem salvar (o clique no botão não pode tirar o foco e salvar pelo blur).
+  await panel.getByText("Adicionar descrição...").click();
+  await panel.getByPlaceholder("Descrição em markdown...").fill("Rascunho descartado");
+  await panel.getByRole("button", { name: "Cancelar" }).click();
+  await expect(panel.getByPlaceholder("Descrição em markdown...")).toHaveCount(0);
+  expect(patches).toEqual([]);
+
+  await panel.getByText("Adicionar descrição...").click();
+  await panel.getByPlaceholder("Descrição em markdown...").fill("Texto novo");
+  const saved = page.waitForRequest((r) => r.method() === "PATCH" && r.url().includes("/rest/v1/card?id=eq.5"));
+  await panel.getByRole("button", { name: "Salvar" }).click();
+  expect((await saved).postDataJSON()).toMatchObject({ description: "Texto novo" });
+  await expect(panel.getByRole("button", { name: "Salvar" })).toHaveCount(0);
+
+  await panel.getByText("Card 5", { exact: true }).dblclick();
+  await panel.getByRole("textbox").first().fill("Outro título");
+  await panel.getByRole("button", { name: "Cancelar" }).click();
+  await expect(panel.getByRole("button", { name: "Salvar" })).toHaveCount(0);
+  expect(patches.filter((p) => p.includes("Outro título"))).toEqual([]);
+});
+
+test('painel do card: trocar a prioridade mostra "Salvo"', async ({ page }) => {
+  await openLongBoard(page);
+  await page.getByRole("button", { name: "Card 5 Arquivar card" }).click({ position: { x: 200, y: 30 } });
+  const panel = page.getByRole("dialog", { name: "Card 5" });
+  await expect(panel.getByRole("status")).toHaveCount(0);
+  await panel.getByLabel("Prioridade").selectOption({ label: "Alta" });
+  await expect(panel.getByRole("status")).toHaveText("Salvo");
+});
+
 test("fora de produção: selo Dev ao lado do nome e (dev) no título da aba", async ({ page }) => {
   await openLongBoard(page);
   await expect(page.getByTitle(/Ambiente de desenvolvimento/)).toHaveText("Dev");

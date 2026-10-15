@@ -19,7 +19,7 @@ import { Checklist } from "./Checklist";
 import { LabelPicker } from "./LabelPicker";
 import { MarkdownEditor } from "./MarkdownEditor";
 import { PanelSection } from "./PanelSection";
-import { IconCalendar, IconChevronDown, IconFlag, IconTag, IconUsers, IconX } from "../ui/icons";
+import { IconCalendar, IconCheck, IconChevronDown, IconFlag, IconTag, IconUsers, IconX } from "../ui/icons";
 
 interface CardDetailPanelProps {
   card: CardType;
@@ -29,6 +29,24 @@ interface CardDetailPanelProps {
 
 const fieldClass =
   "w-fit rounded-lg border border-border bg-bg-elevated px-2 py-1 text-sm text-text-primary outline-none focus:border-primary";
+
+/** "Salvo" por 2 s depois que o banco confirma uma mudança que salva na hora (selects e data). */
+function SavedHint({ mutation }: { mutation: { isSuccess: boolean; submittedAt: number } }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    setVisible(mutation.isSuccess);
+    if (!mutation.isSuccess) return;
+    const timer = setTimeout(() => setVisible(false), 2000);
+    return () => clearTimeout(timer);
+  }, [mutation.isSuccess, mutation.submittedAt]);
+  if (!visible) return null;
+  return (
+    <span role="status" className="inline-flex items-center gap-1 text-xs text-text-muted">
+      <IconCheck size={12} />
+      Salvo
+    </span>
+  );
+}
 
 function DetailRow({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
@@ -112,6 +130,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             onSave={(title) => renameCard.mutate({ id: card.id, title })}
             className="text-2xl font-normal leading-tight tracking-tight"
             readOnly={!canEdit}
+            withButtons
           />
           <div className="flex shrink-0 items-center gap-1">
             {canEdit && <MoveCard card={card} />}
@@ -152,6 +171,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             ) : (
               <span className="text-sm text-text-primary">{assignee?.profile.display_name ?? "Ninguém"}</span>
             )}
+            <SavedHint mutation={updateAssignee} />
           </DetailRow>
 
           <DetailRow icon={<IconFlag size={16} />} label="Prioridade">
@@ -172,6 +192,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
             ) : (
               <span className="text-sm text-text-primary">{card.priority ? PRIORITY_LABEL[card.priority] : "Sem prioridade"}</span>
             )}
+            <SavedHint mutation={updatePriority} />
           </DetailRow>
 
           <DetailRow icon={<IconCalendar size={16} />} label="Vencimento">
@@ -184,6 +205,7 @@ export function CardDetailPanel({ card, boardId, onClose }: CardDetailPanelProps
               className={fieldClass}
             />
             {card.due_date && <DueBadge due={card.due_date} withLabel done={inDoneList} />}
+            <SavedHint mutation={updateDueDate} />
           </DetailRow>
 
           <DetailRow icon={<IconTag size={16} />} label="Etiquetas">

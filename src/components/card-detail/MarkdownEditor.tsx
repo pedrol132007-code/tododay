@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { EditActions } from "../ui/EditActions";
 
 // O reset do Tailwind tira marcadores e espaçamentos; devolve o básico ao markdown renderizado.
 const markdownClass =
@@ -34,26 +35,31 @@ export function MarkdownEditor({ value, onSave, onSaveAndClose, readOnly }: Mark
     );
   }
 
+  function cancel() {
+    setDraft(value);
+    setEditing(false);
+  }
+
   if (editing) {
     return (
-      <textarea
-        autoFocus
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            setDraft(value);
-            setEditing(false);
-          }
-          if (e.ctrlKey && e.key === "Enter") {
-            if (draft !== value) onSave(draft);
-            onSaveAndClose();
-          }
-        }}
-        placeholder="Descrição em markdown..."
-        className="min-h-[160px] w-full rounded-lg border border-primary bg-bg-elevated p-3 text-sm text-text-primary outline-none"
-      />
+      <div className="flex flex-col gap-2">
+        <textarea
+          autoFocus
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") cancel();
+            if (e.ctrlKey && e.key === "Enter") {
+              if (draft !== value) onSave(draft);
+              onSaveAndClose();
+            }
+          }}
+          placeholder="Descrição em markdown..."
+          className="min-h-[160px] w-full rounded-lg border border-primary bg-bg-elevated p-3 text-sm text-text-primary outline-none"
+        />
+        <EditActions onSave={commit} onCancel={cancel} hint="Ctrl+Enter salva e fecha" />
+      </div>
     );
   }
 

@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { EditActions } from "./EditActions";
 
 interface InlineEditableTextProps {
   value: string;
   onSave: (value: string) => void;
   className?: string;
   readOnly?: boolean;
+  /** Mostra Salvar e Cancelar enquanto edita (painel do card); clicar fora continua salvando. */
+  withButtons?: boolean;
 }
 
-export function InlineEditableText({ value, onSave, className, readOnly }: InlineEditableTextProps) {
+export function InlineEditableText({ value, onSave, className, readOnly, withButtons }: InlineEditableTextProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
 
@@ -29,10 +32,10 @@ export function InlineEditableText({ value, onSave, className, readOnly }: Inlin
   }
 
   if (editing) {
-    return (
+    const input = (
       <input
         autoFocus
-        className={`rounded-lg border border-primary bg-bg-elevated px-2 py-1 text-text-primary outline-none ${className ?? ""}`}
+        className={`rounded-lg border border-primary bg-bg-elevated px-2 py-1 text-text-primary outline-none ${withButtons ? "w-full" : ""} ${className ?? ""}`}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
@@ -42,6 +45,13 @@ export function InlineEditableText({ value, onSave, className, readOnly }: Inlin
         }}
         onPointerDown={(e) => e.stopPropagation()}
       />
+    );
+    if (!withButtons) return input;
+    return (
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        {input}
+        <EditActions onSave={commit} onCancel={cancel} hint="Enter" />
+      </div>
     );
   }
 
